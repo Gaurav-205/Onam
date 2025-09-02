@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react'
 
 const Hero = () => {
   const [videoError, setVideoError] = useState(false)
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
+  })
 
   useEffect(() => {
     // Check if video file exists
@@ -14,6 +20,83 @@ const Hero = () => {
       video.onerror = null
     }
   }, [])
+
+  useEffect(() => {
+    // Onam 2025 is on September 12th
+    const onamDate = new Date('2025-09-12T00:00:00').getTime()
+    
+    const timer = setInterval(() => {
+      const now = new Date().getTime()
+      const distance = onamDate - now
+      
+      if (distance > 0) {
+        const newTime = {
+          days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((distance % (1000 * 60)) / 1000)
+        }
+        
+        setTimeLeft(newTime)
+      } else {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+      }
+    }, 1000)
+    
+    return () => clearInterval(timer)
+  }, [])
+
+  const CountdownCard = ({ value, label, maxValue }) => {
+    const percentage = (value / maxValue) * 100
+    const radius = 30
+    const circumference = 2 * Math.PI * radius
+    const strokeDasharray = circumference
+    const strokeDashoffset = circumference - (percentage / 100) * circumference
+    
+    return (
+      <div className="text-center">
+        {/* Circular Progress Arc */}
+        <div className="relative flex items-center justify-center mb-3">
+          <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 80 80">
+            {/* Background circle */}
+            <circle
+              cx="40"
+              cy="40"
+              r={radius}
+              stroke="rgba(255, 255, 255, 0.1)"
+              strokeWidth="4"
+              fill="transparent"
+            />
+            {/* Progress arc */}
+            <circle
+              cx="40"
+              cy="40"
+              r={radius}
+              stroke="rgba(255, 255, 255, 0.6)"
+              strokeWidth="4"
+              fill="transparent"
+              strokeDasharray={strokeDasharray}
+              strokeDashoffset={strokeDashoffset}
+              strokeLinecap="round"
+              className="transition-all duration-1000 ease-out"
+            />
+          </svg>
+          
+          {/* Number overlay */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-2xl md:text-3xl font-bold text-white font-heading">
+              {value.toString().padStart(2, '0')}
+            </div>
+          </div>
+        </div>
+        
+        {/* Label */}
+        <div className="text-xs md:text-sm text-white/90 font-sans uppercase tracking-wider font-medium text-center">
+          {label}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <section id="home" className="min-h-screen flex items-center justify-center relative overflow-hidden">
@@ -42,20 +125,66 @@ const Hero = () => {
         <div className="absolute inset-0 bg-black/30"></div>
       </div>
       
-      {/* Main Content - Clean and centered */}
-      <div className="relative z-10 text-center max-w-5xl mx-auto px-4">
-        <h1 className="text-8xl md:text-9xl font-bold mb-8 text-white drop-shadow-2xl font-serif">
+      {/* Main Content - Clean and minimal like Kerala website */}
+      <div className="relative z-10 text-center max-w-5xl mx-auto px-4 mt-20 md:mt-32">
+        <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-4 text-white drop-shadow-2xl font-heading leading-tight">
           ONAM
         </h1>
-        <p className="text-3xl md:text-4xl text-white/95 mb-12 font-medium drop-shadow-lg font-serif">
+        <p className="text-lg md:text-xl lg:text-2xl text-white/90 mb-12 font-normal drop-shadow-lg font-sans max-w-3xl mx-auto">
           Celebration of Kerala's Tradition & Culture
         </p>
-        <p className="text-xl md:text-2xl text-white/90 mb-16 max-w-4xl mx-auto leading-relaxed drop-shadow-md">
-          The National Festival of Kerala - A nostalgia that brings back memories from childhood and the simple ways of life that prevailed in the villages back in the day.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-6 justify-center">
-          <button className="btn-primary text-lg px-8 py-4">Learn More</button>
-          <button className="btn-secondary text-lg px-8 py-4">Watch Video</button>
+        
+        {/* Clean Countdown Timer with Circular Progress */}
+        <div className="flex justify-center items-center space-x-3 md:space-x-6 mb-12">
+          <CountdownCard 
+            value={timeLeft.days} 
+            label="Days" 
+            maxValue={365} // Assuming a year has 365 days for simplicity
+          />
+          
+          <CountdownCard 
+            value={timeLeft.hours} 
+            label="Hours" 
+            maxValue={24}
+          />
+          
+          <CountdownCard 
+            value={timeLeft.minutes} 
+            label="Minutes" 
+            maxValue={60}
+          />
+          
+          <CountdownCard 
+            value={timeLeft.seconds} 
+            label="Seconds" 
+            maxValue={60}
+          />
+        </div>
+
+        {/* Event Details */}
+        <div className="text-center mb-20">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8">
+            {/* Open for All Badge */}
+            <div className="bg-gradient-to-r from-onam-green via-onam-gold to-onam-orange rounded-xl px-6 py-3 shadow-lg">
+              <p className="text-white font-semibold text-sm md:text-base drop-shadow-md tracking-wide">
+                🎉 Open for All - Everyone Welcome! 🎉
+              </p>
+            </div>
+            
+            {/* Location Badge */}
+            <div className="bg-white/25 backdrop-blur-lg rounded-xl px-6 py-3 shadow-lg">
+              <p className="text-white font-semibold text-sm md:text-base drop-shadow-md tracking-wide">
+                📍 MIT ADT University
+              </p>
+            </div>
+          </div>
+          
+          {/* Description */}
+          <div className="mt-8">
+            <p className="text-white/90 font-medium text-sm md:text-base drop-shadow-sm">
+              Join us in celebrating Kerala's rich traditions and culture
+            </p>
+          </div>
         </div>
       </div>
       

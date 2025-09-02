@@ -16,7 +16,8 @@ export default {
         'onam-pink': '#EC4899',
       },
       fontFamily: {
-        'sans': ['Inter', 'system-ui', 'sans-serif'],
+        'sans': ['Montserrat', 'system-ui', 'sans-serif'],
+        'heading': ['Prata', 'serif'],
       },
       animation: {
         'float': 'float 3s ease-in-out infinite',

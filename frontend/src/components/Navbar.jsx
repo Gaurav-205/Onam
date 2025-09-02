@@ -33,30 +33,34 @@ const Navbar = ({ currentSection, scrollToSection }) => {
           {/* Logo */}
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-gradient-to-br from-onam-green via-onam-gold to-onam-red rounded-full"></div>
-            <span className={`text-xl font-bold ${isScrolled ? 'text-gray-800' : 'text-white'}`}>
+            <span className={`text-xl font-bold font-heading ${isScrolled ? 'text-gray-800' : 'text-white'}`}>
               ONAM
             </span>
           </div>
 
-          {/* Navigation Links */}
-          <div className="hidden md:flex space-x-8">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => scrollToSection(item.id)}
-                className={`transition-colors duration-200 ${
-                  currentSection === item.id
-                    ? isScrolled 
-                      ? 'text-onam-green font-semibold' 
-                      : 'text-white font-semibold bg-white/20 px-3 py-1 rounded-lg'
-                    : isScrolled 
-                      ? 'text-gray-600 hover:text-onam-green' 
-                      : 'text-white/90 hover:text-white'
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
+          {/* Centered Navigation Links */}
+          <div className="hidden md:flex items-center justify-center flex-1">
+            <div className="flex space-x-8">
+              {navItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => scrollToSection(item.id)}
+                  className={`relative px-4 py-2 rounded-lg transition-all duration-300 group font-sans ${
+                    currentSection === item.id
+                      ? isScrolled 
+                        ? 'text-onam-green font-semibold' 
+                        : 'text-white font-semibold'
+                      : isScrolled 
+                        ? 'text-gray-600 hover:text-onam-green hover:bg-gray-100' 
+                        : 'text-white/90 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  {item.label}
+                  {/* Hover underline effect */}
+                  <div className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-onam-green via-onam-gold to-onam-red transform scale-x-0 transition-transform duration-300 group-hover:scale-x-100`}></div>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Mobile Menu Button */}
