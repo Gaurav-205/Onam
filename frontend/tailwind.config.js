@@ -18,6 +18,13 @@ export default {
       fontFamily: {
         'sans': ['Montserrat', 'system-ui', 'sans-serif'],
         'heading': ['Prata', 'serif'],
+        'samarkan': ['Samarkan', 'cursive'],
+        'elegant': ['Playfair Display', 'serif'],
+        'decorative': ['Cinzel', 'serif'],
+        'ornate': ['Great Vibes', 'cursive'],
+        'script': ['Dancing Script', 'cursive'],
+        'malayalam': ['Noto Serif Malayalam', 'serif'],
+        'malayalam-sans': ['Noto Sans Malayalam', 'sans-serif'],
       },
       animation: {
         'float': 'float 3s ease-in-out infinite',

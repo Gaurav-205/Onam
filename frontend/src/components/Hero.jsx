@@ -13,7 +13,7 @@ const Hero = () => {
   const [currentHeading, setCurrentHeading] = useState(0)
 
   const headings = [
-    { text: "ONAM", lang: "en" },
+    { text: "Onam", lang: "en" },
     { text: "ഓണം", lang: "ml" }
   ]
 
@@ -164,8 +164,10 @@ const Hero = () => {
       
       {/* Main Content - Clean and minimal like Kerala website */}
       <div className="relative z-10 text-center max-w-5xl mx-auto px-4 mt-20 md:mt-32">
-                  <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-4 text-white drop-shadow-2xl font-heading leading-tight transition-all duration-700 ease-in-out">
-            {headings[currentHeading].text}
+                  <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-4 text-white drop-shadow-2xl leading-tight transition-all duration-700 ease-in-out">
+            <span className={headings[currentHeading].lang === 'en' ? 'font-ornate text-yellow-400' : 'font-malayalam text-yellow-400'}>
+              {headings[currentHeading].text}
+            </span>
           </h1>
         <p className="text-lg md:text-xl lg:text-2xl text-white/90 mb-12 font-normal drop-shadow-lg font-sans max-w-3xl mx-auto">
           Celebration of Kerala's Tradition & Culture

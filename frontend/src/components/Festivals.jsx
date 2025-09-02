@@ -20,7 +20,7 @@ const Festivals = () => {
       
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6">Festivals</h2>
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6 font-elegant">Festivals</h2>
           <div className="w-24 h-1 bg-gradient-to-r from-onam-green to-onam-gold mx-auto"></div>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             The 10 days that follow the day of 'Atham' in the month of 'Chingam' are a period of big festivities in Kerala.

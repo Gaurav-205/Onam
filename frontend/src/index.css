@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Prata:wght@400&family=Montserrat:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Prata:wght@400&family=Montserrat:wght@300;400;500;600;700;800&family=Samarkan:wght@400&family=Playfair+Display:wght@400;500;600;700&family=Cinzel:wght@400;500;600;700&family=Great+Vibes:wght@400&family=Dancing+Script:wght@400;500;600;700&family=Noto+Sans+Malayalam:wght@400;500;600;700&family=Noto+Serif+Malayalam:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -37,5 +37,37 @@
   
   .text-gradient {
     @apply bg-gradient-to-r from-onam-green via-onam-gold to-onam-red bg-clip-text text-transparent;
+  }
+  
+  .elegant-heading {
+    @apply font-elegant font-semibold tracking-wide;
+  }
+  
+  .decorative-text {
+    @apply font-decorative font-medium;
+  }
+  
+  .ornate-heading {
+    @apply font-ornate font-normal tracking-wide;
+  }
+  
+  .script-text {
+    @apply font-script font-medium;
+  }
+  
+  .golden-text {
+    @apply text-yellow-400 drop-shadow-lg;
+  }
+  
+  .ornate-golden {
+    @apply font-ornate text-yellow-400 drop-shadow-lg;
+  }
+  
+  .malayalam-elegant {
+    @apply font-malayalam font-semibold tracking-wide;
+  }
+  
+  .malayalam-modern {
+    @apply font-malayalam-sans font-medium;
   }
 }
