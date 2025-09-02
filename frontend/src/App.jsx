@@ -1,19 +1,55 @@
-import './App.css'
-import Header from './components/Header.jsx'
-import FestivalEvents from './components/FestivalEvents.jsx'
-import FestivalMemories from './components/FestivalMemories.jsx'
+import { useState, useEffect } from 'react'
+import Navbar from './components/Navbar'
+import Hero from './components/Hero'
+import Shopping from './components/Shopping'
+import Sadya from './components/Sadya'
+import Events from './components/Events'
+import Festivals from './components/Festivals'
+import Rituals from './components/Rituals'
+import Memories from './components/Memories'
+import Footer from './components/Footer'
 
 function App() {
+  const [currentSection, setCurrentSection] = useState('home')
+
+  const scrollToSection = (sectionId) => {
+    const element = document.getElementById(sectionId)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' })
+      setCurrentSection(sectionId)
+    }
+  }
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = ['home', 'shopping', 'sadya', 'events', 'festivals', 'rituals', 'memories']
+      const scrollPosition = window.scrollY + 100
+
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const element = document.getElementById(sections[i])
+        if (element && element.offsetTop <= scrollPosition) {
+          setCurrentSection(sections[i])
+          break
+        }
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   return (
-    <main className="min-h-screen bg-white text-gray-900">
-      <Header />
-      <section className="mx-auto max-w-5xl px-6 py-10">
-        <FestivalEvents />
-        <div className="mt-14">
-          <FestivalMemories />
-        </div>
-      </section>
-    </main>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-red-50">
+      <Navbar currentSection={currentSection} scrollToSection={scrollToSection} />
+      <Hero />
+      <Shopping />
+      <Sadya />
+      <Events />
+      <Festivals />
+      <Rituals />
+      <Memories />
+      <Footer scrollToSection={scrollToSection} />
+    </div>
   )
 }
 
