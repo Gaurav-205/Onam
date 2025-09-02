@@ -58,7 +58,7 @@ const Shopping = () => {
         
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {shoppingItems.map((item, index) => (
-            <div key={index} className="bg-white overflow-hidden rounded-2xl shadow-lg">
+            <div key={index} className="bg-white overflow-hidden rounded-2xl shadow-lg flex flex-col h-full">
               {/* Top Section - Image Area */}
               <div className="relative h-64 bg-gradient-to-br from-gray-100 to-gray-200">
                 {/* Product Image */}
@@ -96,7 +96,7 @@ const Shopping = () => {
               </div>
               
               {/* Bottom Section - Product Details */}
-              <div className="bg-white p-6">
+              <div className="bg-white p-6 flex flex-col h-full">
                 {/* Product Name */}
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{item.name}</h3>
                 
@@ -104,10 +104,10 @@ const Shopping = () => {
                 <p className="text-gray-600 text-sm mb-3 font-medium">{item.description}</p>
                 
                 {/* Product Description */}
-                <p className="text-gray-500 text-sm mb-6 leading-relaxed">{item.details}</p>
+                <p className="text-gray-500 text-sm mb-6 leading-relaxed flex-grow">{item.details}</p>
                 
                 {/* Bottom Row - Price and Action */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mt-auto">
                   {/* Price */}
                   <div className="bg-gray-100 rounded-full px-4 py-2 flex items-center">
                     <span className="text-lg font-bold text-gray-900">{item.price}</span>
