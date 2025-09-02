@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
+import VideoSection from './components/VideoSection'
 import Shopping from './components/Shopping'
 import Sadya from './components/Sadya'
 import Events from './components/Events'
@@ -42,6 +43,7 @@ function App() {
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-red-50">
       <Navbar currentSection={currentSection} scrollToSection={scrollToSection} />
       <Hero />
+      <VideoSection />
       <Shopping />
       <Sadya />
       <Events />

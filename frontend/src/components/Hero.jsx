@@ -30,6 +30,47 @@ const Hero = () => {
   }, [])
 
   useEffect(() => {
+    // Pause video when scrolling away
+    const handleScroll = () => {
+      const heroSection = document.getElementById('home')
+      if (heroSection) {
+        const rect = heroSection.getBoundingClientRect()
+        const isVisible = rect.top < window.innerHeight && rect.bottom > 0
+        
+        // Find the background video element
+        const backgroundVideo = document.querySelector('#home video')
+        if (backgroundVideo) {
+          if (isVisible) {
+            // Resume video when in view
+            backgroundVideo.play().catch(error => {
+              console.log('Hero video auto-play prevented:', error)
+            })
+          } else {
+            // Pause video when out of view
+            backgroundVideo.pause()
+            console.log('Hero video paused - out of view')
+          }
+        }
+      }
+    }
+
+    // Throttle scroll events for better performance
+    let ticking = false
+    const throttledScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          handleScroll()
+          ticking = false
+        })
+        ticking = true
+      }
+    }
+
+    window.addEventListener('scroll', throttledScroll, { passive: true })
+    return () => window.removeEventListener('scroll', throttledScroll)
+  }, [])
+
+  useEffect(() => {
     // Show scroll indicator after 3 seconds
     const timer = setTimeout(() => {
       setShowScrollIndicator(true)
@@ -247,7 +288,7 @@ const Hero = () => {
             The National Festival of Kerala
           </h2>
           <p className="text-base md:text-lg text-gray-700 leading-relaxed max-w-3xl mx-auto font-sans">
-            Onam is a nostalgia that brings back memories from childhood and the simple ways of life that prevailed in the villages back in the day. It is the celebration of the myth of Mahabali - the demon king who once ruled the land and is believed to visit his old subjects every year around this time. Onam is also an agricultural festival that celebrates the rich harvest of the land, thus symbolising joy and prosperity.
+            Onam is a nostalgia that brings back memories from childhood and the simple ways of life that prevailed in the villages back in the day. It is the celebration of the myth of Mahabali – the demon king who once ruled the land and is believed to visit his old subjects every year around this time. Onam is also an agricultural festival that celebrates the rich harvest of the land, thus symbolising joy and prosperity.
           </p>
         </div>
       </section>
