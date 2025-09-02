@@ -6,8 +6,9 @@ const Shopping = () => {
       icon: "👔", 
       color: "from-blue-400 to-blue-500",
       details: "Pure cotton, handwoven, traditional Kerala style",
-      price: "₹1,200",
-      image: "/mundu-image.jpg"
+      price: "₹280",
+      image: "/mundu-image.jpeg",
+      googleFormUrl: "https://docs.google.com/forms/d/e/1FAIpQLSd4jEyZ9EGIBh3Cwe0yJX_6JccFUGceA0qDyW9BMLkotSb6Zw/formResponse"
     },
     { 
       name: "Kerala Saree", 
@@ -15,8 +16,9 @@ const Shopping = () => {
       icon: "👗", 
       color: "from-purple-400 to-purple-500",
       details: "Kerala Kasavu saree, golden zari work, traditional design",
-      price: "₹8,500",
-      image: "/kerala-saree-image.jpg"
+      price: "₹350",
+      image: "/kerala-saree-image.jpeg",
+      googleFormUrl: "https://docs.google.com/forms/d/e/1FAIpQLSd4jEyZ9EGIBh3Cwe0yJX_6JccFUGceA0qDyW9BMLkotSb6Zw/formResponse"
     },
     { 
       name: "Sadya", 
@@ -24,14 +26,20 @@ const Shopping = () => {
       icon: "🍽️", 
       color: "from-orange-400 to-orange-500",
       details: "Complete meal served on banana leaf with all traditional dishes",
-      price: "₹500",
-      image: "/sadya-image.jpg"
+      price: "₹250",
+      image: "/sadya-image.jpeg",
+      googleFormUrl: "https://docs.google.com/forms/d/e/1FAIpQLSd4jEyZ9EGIBh3Cwe0yJX_6JccFUGceA0qDyW9BMLkotSb6Zw/formResponse"
     }
   ]
 
-  const handleBookNow = (itemName) => {
-    // You can implement booking logic here
-    alert(`Booking request sent for ${itemName}! We'll contact you soon.`)
+  const handleBookNow = (itemName, googleFormUrl) => {
+    if (googleFormUrl && googleFormUrl !== "https://forms.google.com/your-form-url") {
+      // Open Google Form in new tab
+      window.open(googleFormUrl, '_blank')
+    } else {
+      // Fallback if no form URL is set
+      alert(`Booking request sent for ${itemName}! We'll contact you soon.`)
+    }
   }
 
   return (
@@ -50,11 +58,23 @@ const Shopping = () => {
         
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {shoppingItems.map((item, index) => (
-            <div key={index} className="card overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <div key={index} className="bg-white overflow-hidden rounded-2xl shadow-lg">
               {/* Top Section - Image Area */}
               <div className="relative h-64 bg-gradient-to-br from-gray-100 to-gray-200">
-                {/* Product Icon/Image Placeholder */}
-                <div className="absolute inset-0 flex items-center justify-center">
+                {/* Product Image */}
+                <img 
+                  src={item.image} 
+                  alt={item.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Fallback to icon if image fails to load
+                    e.target.style.display = 'none'
+                    e.target.nextSibling.style.display = 'flex'
+                  }}
+                />
+                
+                {/* Fallback Icon (hidden by default, shown if image fails) */}
+                <div className={`absolute inset-0 flex items-center justify-center ${item.image ? 'hidden' : 'flex'}`}>
                   <div className={`w-24 h-24 bg-gradient-to-br ${item.color} rounded-full flex items-center justify-center text-5xl text-white shadow-xl`}>
                     {item.icon}
                   </div>
@@ -73,13 +93,6 @@ const Shopping = () => {
                     <span className="text-xs font-bold text-gray-800">ON</span>
                   </div>
                 </div>
-                
-                {/* Image Carousel Indicator */}
-                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                  <div className="w-2 h-2 bg-white rounded-full opacity-60"></div>
-                  <div className="w-2 h-2 bg-white rounded-full"></div>
-                  <div className="w-2 h-2 bg-white rounded-full opacity-60"></div>
-                </div>
               </div>
               
               {/* Bottom Section - Product Details */}
@@ -96,7 +109,7 @@ const Shopping = () => {
                 {/* Bottom Row - Price and Action */}
                 <div className="flex items-center justify-between">
                   {/* Price */}
-                  <div className="bg-gray-100 rounded-full px-4 py-2">
+                  <div className="bg-gray-100 rounded-full px-4 py-2 flex items-center">
                     <span className="text-lg font-bold text-gray-900">{item.price}</span>
                   </div>
                   
@@ -104,12 +117,12 @@ const Shopping = () => {
                   <button 
                     onClick={(e) => {
                       e.stopPropagation()
-                      handleBookNow(item.name)
+                      handleBookNow(item.name, item.googleFormUrl)
                     }}
-                    className="bg-gray-900 hover:bg-gray-800 text-white font-semibold py-2 px-6 rounded-full transition-colors duration-300 flex items-center space-x-2"
+                    className="bg-gray-900 text-white font-semibold py-2 px-6 rounded-full flex items-center justify-center space-x-2"
                   >
                     <span>Book Now</span>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </button>
