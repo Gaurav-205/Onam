@@ -31,11 +31,12 @@ const Navbar = ({ currentSection, scrollToSection }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-onam-green via-onam-gold to-onam-red rounded-full"></div>
-            <span className={`text-xl font-bold font-heading ${isScrolled ? 'text-gray-800' : 'text-white'}`}>
-              ONAM
-            </span>
+          <div className="flex items-center">
+            <img 
+              src="/logo.png" 
+              alt="ONAM Logo" 
+              className="w-20 h-20 md:w-28 md:h-28 lg:w-32 lg:h-32 xl:w-40 xl:h-40 object-contain"
+            />
           </div>
 
           {/* Centered Navigation Links */}

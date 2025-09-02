@@ -165,14 +165,14 @@ const Hero = () => {
         <div className="text-center mb-20">
           <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8">
             {/* Open for All Badge */}
-            <div className="bg-gradient-to-r from-onam-green via-onam-gold to-onam-orange rounded-xl px-6 py-3 shadow-lg">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl px-6 py-3">
               <p className="text-white font-semibold text-sm md:text-base drop-shadow-md tracking-wide">
                 🎉 Open for All - Everyone Welcome! 🎉
               </p>
             </div>
             
             {/* Location Badge */}
-            <div className="bg-white/25 backdrop-blur-lg rounded-xl px-6 py-3 shadow-lg">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl px-6 py-3">
               <p className="text-white font-semibold text-sm md:text-base drop-shadow-md tracking-wide">
                 📍 MIT ADT University
               </p>
