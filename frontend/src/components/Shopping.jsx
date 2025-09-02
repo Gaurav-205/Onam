@@ -14,7 +14,7 @@ const Shopping = () => {
       
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6 font-elegant">Shopping</h2>
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6 font-heading">Shopping</h2>
           <div className="w-24 h-1 bg-gradient-to-r from-onam-green to-onam-gold mx-auto"></div>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             There is no bigger shopping season in Kerala than during the festival of Onam.
