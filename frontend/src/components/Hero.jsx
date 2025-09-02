@@ -8,6 +8,14 @@ const Hero = () => {
     minutes: 0,
     seconds: 0
   })
+  const [showScrollIndicator, setShowScrollIndicator] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
+  const [currentHeading, setCurrentHeading] = useState(0)
+
+  const headings = [
+    { text: "ONAM", lang: "en" },
+    { text: "ഓണം", lang: "ml" }
+  ]
 
   useEffect(() => {
     // Check if video file exists
@@ -19,6 +27,35 @@ const Hero = () => {
     return () => {
       video.onerror = null
     }
+  }, [])
+
+  useEffect(() => {
+    // Show scroll indicator after 3 seconds
+    const timer = setTimeout(() => {
+      setShowScrollIndicator(true)
+    }, 3000)
+
+    return () => clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    // Handle scroll events
+    const handleScroll = () => {
+      const scrolled = window.scrollY > 50
+      setIsScrolled(scrolled)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  useEffect(() => {
+    // Change heading every 3 seconds
+    const headingTimer = setInterval(() => {
+      setCurrentHeading(prev => (prev + 1) % headings.length)
+    }, 3000)
+
+    return () => clearInterval(headingTimer)
   }, [])
 
   useEffect(() => {
@@ -127,9 +164,9 @@ const Hero = () => {
       
       {/* Main Content - Clean and minimal like Kerala website */}
       <div className="relative z-10 text-center max-w-5xl mx-auto px-4 mt-20 md:mt-32">
-        <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-4 text-white drop-shadow-2xl font-heading leading-tight">
-          ONAM
-        </h1>
+                  <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-4 text-white drop-shadow-2xl font-heading leading-tight transition-all duration-700 ease-in-out">
+            {headings[currentHeading].text}
+          </h1>
         <p className="text-lg md:text-xl lg:text-2xl text-white/90 mb-12 font-normal drop-shadow-lg font-sans max-w-3xl mx-auto">
           Celebration of Kerala's Tradition & Culture
         </p>
@@ -188,12 +225,16 @@ const Hero = () => {
         </div>
       </div>
       
-      {/* Simple scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-        <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
-          <div className="w-1 h-3 bg-white/70 rounded-full mt-2 animate-pulse"></div>
+              {/* Simple scroll indicator */}
+        <div className={`absolute bottom-8 left-1/2 transform -translate-x-1/2 transition-all duration-500 ease-in-out ${
+          showScrollIndicator && !isScrolled 
+            ? 'opacity-100 translate-y-0' 
+            : 'opacity-0 translate-y-4 pointer-events-none'
+        }`}>
+          <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
+            <div className="w-1 h-3 bg-white/70 rounded-full mt-2 animate-pulse"></div>
+          </div>
         </div>
-      </div>
     </section>
   )
 }
