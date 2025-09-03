@@ -1,4 +1,110 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo, memo } from 'react'
+
+// Constants moved outside component to prevent recreation
+const HEADINGS = [
+  { text: "Onam", lang: "en" },
+  { text: "ഓണം", lang: "ml" }
+]
+
+const ONAM_DATE = new Date('2025-09-12T00:00:00').getTime()
+const HEADING_INTERVAL = 3000
+const FADE_DURATION = 300
+const SCROLL_THRESHOLD = 50
+
+// Font loading utility
+const loadFonts = () => {
+  return Promise.all([
+    document.fonts.load('1em Great Vibes'),
+    document.fonts.load('1em Noto Serif Malayalam'),
+    document.fonts.load('1em Prata'),
+    document.fonts.load('1em Montserrat')
+  ])
+}
+
+// Memoized CountdownCard component
+const CountdownCard = memo(({ value, label, maxValue }) => {
+  const { strokeDasharray, strokeDashoffset } = useMemo(() => {
+    const percentage = (value / maxValue) * 100
+    const radius = 30
+    const circumference = 2 * Math.PI * radius
+    const strokeDasharray = circumference
+    const strokeDashoffset = circumference - (percentage / 100) * circumference
+    
+    return { strokeDasharray, strokeDashoffset }
+  }, [value, maxValue])
+
+  return (
+    <div className="text-center">
+      {/* Circular Progress Arc */}
+      <div className="relative flex items-center justify-center mb-3">
+        <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 80 80">
+          {/* Background circle */}
+          <circle
+            cx="40"
+            cy="40"
+            r="30"
+            stroke="rgba(255, 255, 255, 0.1)"
+            strokeWidth="4"
+            fill="transparent"
+          />
+          {/* Progress arc */}
+          <circle
+            cx="40"
+            cy="40"
+            r="30"
+            stroke="rgba(255, 255, 255, 0.6)"
+            strokeWidth="4"
+            fill="transparent"
+            strokeDasharray={strokeDasharray}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            className="transition-all duration-1000 ease-out"
+          />
+        </svg>
+        
+        {/* Number overlay */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-2xl md:text-3xl font-bold text-white font-heading">
+            {value.toString().padStart(2, '0')}
+          </div>
+        </div>
+      </div>
+      
+      {/* Label */}
+      <div className="text-xs md:text-sm text-white/90 font-sans uppercase tracking-wider font-medium text-center">
+        {label}
+      </div>
+    </div>
+  )
+})
+
+CountdownCard.displayName = 'CountdownCard'
+
+// Memoized ScrollIndicator component
+const ScrollIndicator = memo(({ showScrollIndicator, isScrolled }) => (
+  <div className={`absolute bottom-8 left-1/2 transform -translate-x-1/2 transition-all duration-500 ease-in-out ${
+    showScrollIndicator && !isScrolled 
+      ? 'opacity-100 translate-y-0' 
+      : 'opacity-0 translate-y-4 pointer-events-none'
+  }`}>
+    <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
+      <div className="w-1 h-3 bg-white/70 rounded-full mt-2 animate-pulse"></div>
+    </div>
+  </div>
+))
+
+ScrollIndicator.displayName = 'ScrollIndicator'
+
+// Memoized EventBadge component
+const EventBadge = memo(({ children, className = "" }) => (
+  <div className={`bg-white/10 backdrop-blur-sm rounded-xl px-6 py-3 ${className}`}>
+    <p className="text-white font-semibold text-sm md:text-base drop-shadow-md tracking-wide">
+      {children}
+    </p>
+  </div>
+))
+
+EventBadge.displayName = 'EventBadge'
 
 const Hero = () => {
   const [videoError, setVideoError] = useState(false)
@@ -11,111 +117,127 @@ const Hero = () => {
   const [showScrollIndicator, setShowScrollIndicator] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [currentHeading, setCurrentHeading] = useState(0)
+  const [isFading, setIsFading] = useState(false)
+  const [fontsLoaded, setFontsLoaded] = useState(false)
 
-  const headings = [
-    { text: "Onam", lang: "en" },
-    { text: "ഓണം", lang: "ml" }
-  ]
+  // Memoized heading text and classes
+  const currentHeadingData = useMemo(() => HEADINGS[currentHeading], [currentHeading])
+  const headingClasses = useMemo(() => {
+    if (!fontsLoaded) {
+      return 'opacity-0' // Hide until fonts are loaded
+    }
+    
+    const baseClasses = 'transition-all duration-600 ease-in-out transform'
+    const fadeClasses = isFading 
+      ? 'opacity-0 scale-95 translate-y-2' 
+      : 'opacity-100 scale-100 translate-y-0'
+    const fontClasses = currentHeadingData.lang === 'en' 
+      ? 'font-ornate text-yellow-400' 
+      : 'font-malayalam text-yellow-400'
+    
+    return `${baseClasses} ${fadeClasses} ${fontClasses}`
+  }, [currentHeadingData.lang, isFading, fontsLoaded])
 
-  useEffect(() => {
-    // Check if video file exists
-    const video = document.createElement('video')
-    video.src = '/onam-background.mp4'
+  // Memoized countdown data
+  const countdownData = useMemo(() => [
+    { value: timeLeft.days, label: "Days", maxValue: 365 },
+    { value: timeLeft.hours, label: "Hours", maxValue: 24 },
+    { value: timeLeft.minutes, label: "Minutes", maxValue: 60 },
+    { value: timeLeft.seconds, label: "Seconds", maxValue: 60 }
+  ], [timeLeft])
+
+  // Optimized video error handling
+  const handleVideoError = useCallback(() => setVideoError(true), [])
+
+  // Optimized scroll handlers
+  const handleVideoScroll = useCallback(() => {
+    const heroSection = document.getElementById('home')
+    if (!heroSection) return
+
+    const rect = heroSection.getBoundingClientRect()
+    const isVisible = rect.top < window.innerHeight && rect.bottom > 0
     
-    video.onerror = () => setVideoError(true)
-    
-    return () => {
-      video.onerror = null
+    const backgroundVideo = document.querySelector('#home video')
+    if (backgroundVideo) {
+      if (isVisible) {
+        backgroundVideo.play().catch(() => {}) // Silent error handling
+      } else {
+        backgroundVideo.pause()
+      }
     }
   }, [])
 
-  useEffect(() => {
-    // Pause video when scrolling away
-    const handleScroll = () => {
-      const heroSection = document.getElementById('home')
-      if (heroSection) {
-        const rect = heroSection.getBoundingClientRect()
-        const isVisible = rect.top < window.innerHeight && rect.bottom > 0
-        
-        // Find the background video element
-        const backgroundVideo = document.querySelector('#home video')
-        if (backgroundVideo) {
-          if (isVisible) {
-            // Resume video when in view
-            backgroundVideo.play().catch(error => {
-              console.log('Hero video auto-play prevented:', error)
-            })
-          } else {
-            // Pause video when out of view
-            backgroundVideo.pause()
-            console.log('Hero video paused - out of view')
-          }
-        }
-      }
-    }
+  const handleScrollState = useCallback(() => {
+    const scrolled = window.scrollY > SCROLL_THRESHOLD
+    setIsScrolled(scrolled)
+  }, [])
 
-    // Throttle scroll events for better performance
+  // Throttled scroll handler
+  const throttledScroll = useCallback(() => {
     let ticking = false
-    const throttledScroll = () => {
+    return () => {
       if (!ticking) {
         requestAnimationFrame(() => {
-          handleScroll()
+          handleVideoScroll()
+          handleScrollState()
           ticking = false
         })
         ticking = true
       }
     }
+  }, [handleVideoScroll, handleScrollState])
 
-    window.addEventListener('scroll', throttledScroll, { passive: true })
-    return () => window.removeEventListener('scroll', throttledScroll)
-  }, [])
-
+  // Consolidated useEffect for scroll handling
   useEffect(() => {
-    // Show scroll indicator after 3 seconds
-    const timer = setTimeout(() => {
-      setShowScrollIndicator(true)
-    }, 3000)
+    const scrollHandler = throttledScroll()
+    window.addEventListener('scroll', scrollHandler, { passive: true })
+    return () => window.removeEventListener('scroll', scrollHandler)
+  }, [throttledScroll])
 
+  // Video file check
+  useEffect(() => {
+    const video = document.createElement('video')
+    video.src = '/onam-background.mp4'
+    video.onerror = handleVideoError
+    
+    return () => {
+      video.onerror = null
+    }
+  }, [handleVideoError])
+
+  // Scroll indicator timer
+  useEffect(() => {
+    const timer = setTimeout(() => setShowScrollIndicator(true), 3000)
     return () => clearTimeout(timer)
   }, [])
 
+  // Heading rotation with fade transition
   useEffect(() => {
-    // Handle scroll events
-    const handleScroll = () => {
-      const scrolled = window.scrollY > 50
-      setIsScrolled(scrolled)
-    }
-
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
-  useEffect(() => {
-    // Change heading every 3 seconds
     const headingTimer = setInterval(() => {
-      setCurrentHeading(prev => (prev + 1) % headings.length)
-    }, 3000)
+      setIsFading(true)
+      
+      setTimeout(() => {
+        setCurrentHeading(prev => (prev + 1) % HEADINGS.length)
+        setIsFading(false)
+      }, FADE_DURATION)
+    }, HEADING_INTERVAL)
 
     return () => clearInterval(headingTimer)
   }, [])
 
+  // Countdown timer
   useEffect(() => {
-    // Onam 2025 is on September 12th
-    const onamDate = new Date('2025-09-12T00:00:00').getTime()
-    
     const timer = setInterval(() => {
       const now = new Date().getTime()
-      const distance = onamDate - now
+      const distance = ONAM_DATE - now
       
       if (distance > 0) {
-        const newTime = {
+        setTimeLeft({
           days: Math.floor(distance / (1000 * 60 * 60 * 24)),
           hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
           minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
           seconds: Math.floor((distance % (1000 * 60)) / 1000)
-        }
-        
-        setTimeLeft(newTime)
+        })
       } else {
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 })
       }
@@ -124,57 +246,15 @@ const Hero = () => {
     return () => clearInterval(timer)
   }, [])
 
-  const CountdownCard = ({ value, label, maxValue }) => {
-    const percentage = (value / maxValue) * 100
-    const radius = 30
-    const circumference = 2 * Math.PI * radius
-    const strokeDasharray = circumference
-    const strokeDashoffset = circumference - (percentage / 100) * circumference
-    
-    return (
-      <div className="text-center">
-        {/* Circular Progress Arc */}
-        <div className="relative flex items-center justify-center mb-3">
-          <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 80 80">
-            {/* Background circle */}
-            <circle
-              cx="40"
-              cy="40"
-              r={radius}
-              stroke="rgba(255, 255, 255, 0.1)"
-              strokeWidth="4"
-              fill="transparent"
-            />
-            {/* Progress arc */}
-            <circle
-              cx="40"
-              cy="40"
-              r={radius}
-              stroke="rgba(255, 255, 255, 0.6)"
-              strokeWidth="4"
-              fill="transparent"
-              strokeDasharray={strokeDasharray}
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-              className="transition-all duration-1000 ease-out"
-            />
-          </svg>
-          
-          {/* Number overlay */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-2xl md:text-3xl font-bold text-white font-heading">
-              {value.toString().padStart(2, '0')}
-            </div>
-          </div>
-        </div>
-        
-        {/* Label */}
-        <div className="text-xs md:text-sm text-white/90 font-sans uppercase tracking-wider font-medium text-center">
-          {label}
-        </div>
-      </div>
-    )
-  }
+  // Font loading effect
+  useEffect(() => {
+    loadFonts().then(() => {
+      setFontsLoaded(true)
+    }).catch(() => {
+      // Fallback: show content even if fonts fail to load
+      setFontsLoaded(true)
+    })
+  }, [])
 
   return (
     <>
@@ -189,7 +269,7 @@ const Hero = () => {
               playsInline
               className="w-full h-full object-cover"
               style={{ objectPosition: 'center center' }}
-              onError={() => setVideoError(true)}
+              onError={handleVideoError}
             >
               <source src="/onam-background.mp4" type="video/mp4" />
             </video>
@@ -206,9 +286,9 @@ const Hero = () => {
         
         {/* Main Content - Clean and minimal like Kerala website */}
         <div className="relative z-10 text-center max-w-5xl mx-auto px-4 mt-20 md:mt-32">
-          <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-4 text-white drop-shadow-2xl leading-tight transition-all duration-700 ease-in-out">
-            <span className={headings[currentHeading].lang === 'en' ? 'font-ornate text-yellow-400' : 'font-malayalam text-yellow-400'}>
-              {headings[currentHeading].text}
+          <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-4 text-white drop-shadow-2xl leading-tight">
+            <span className={headingClasses}>
+              {currentHeadingData.text}
             </span>
           </h1>
           <p className="text-lg md:text-xl lg:text-2xl text-white/90 mb-12 font-normal drop-shadow-lg font-sans max-w-3xl mx-auto">
@@ -217,47 +297,26 @@ const Hero = () => {
           
           {/* Clean Countdown Timer with Circular Progress */}
           <div className="flex justify-center items-center space-x-3 md:space-x-6 mb-12">
-            <CountdownCard 
-              value={timeLeft.days} 
-              label="Days" 
-              maxValue={365} // Assuming a year has 365 days for simplicity
-            />
-            
-            <CountdownCard 
-              value={timeLeft.hours} 
-              label="Hours" 
-              maxValue={24}
-            />
-            
-            <CountdownCard 
-              value={timeLeft.minutes} 
-              label="Minutes" 
-              maxValue={60}
-            />
-            
-            <CountdownCard 
-              value={timeLeft.seconds} 
-              label="Seconds" 
-              maxValue={60}
-            />
+            {countdownData.map((item) => (
+              <CountdownCard 
+                key={item.label}
+                value={item.value} 
+                label={item.label} 
+                maxValue={item.maxValue}
+              />
+            ))}
           </div>
 
           {/* Event Details */}
           <div className="text-center mb-20">
             <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8">
-              {/* Open for All Badge */}
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl px-6 py-3">
-                <p className="text-white font-semibold text-sm md:text-base drop-shadow-md tracking-wide">
-                  🎉 Open for All - Everyone Welcome! 🎉
-                </p>
-              </div>
+              <EventBadge>
+                🎉 Open for All - Everyone Welcome! 🎉
+              </EventBadge>
               
-              {/* Location Badge */}
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl px-6 py-3">
-                <p className="text-white font-semibold text-sm md:text-base drop-shadow-md tracking-wide">
-                  📍 MIT ADT University
-                </p>
-              </div>
+              <EventBadge>
+                📍 MIT ADT University
+              </EventBadge>
             </div>
             
             {/* Description */}
@@ -269,16 +328,11 @@ const Hero = () => {
           </div>
         </div>
         
-        {/* Simple scroll indicator */}
-        <div className={`absolute bottom-8 left-1/2 transform -translate-x-1/2 transition-all duration-500 ease-in-out ${
-          showScrollIndicator && !isScrolled 
-            ? 'opacity-100 translate-y-0' 
-            : 'opacity-0 translate-y-4 pointer-events-none'
-        }`}>
-          <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
-            <div className="w-1 h-3 bg-white/70 rounded-full mt-2 animate-pulse"></div>
-          </div>
-        </div>
+        {/* Scroll indicator */}
+        <ScrollIndicator 
+          showScrollIndicator={showScrollIndicator} 
+          isScrolled={isScrolled} 
+        />
       </section>
       
       {/* About Onam Section */}

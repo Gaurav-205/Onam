@@ -12,6 +12,27 @@
   body {
     font-family: 'Montserrat', system-ui, sans-serif;
   }
+
+  /* Font loading optimization to prevent FOUT */
+  .font-ornate {
+    font-family: 'Great Vibes', 'Brush Script MT', cursive, serif;
+    font-display: swap;
+  }
+
+  .font-malayalam {
+    font-family: 'Noto Serif Malayalam', 'Noto Sans Malayalam', 'Malayalam Sangam MN', serif;
+    font-display: swap;
+  }
+
+  .font-heading {
+    font-family: 'Prata', Georgia, serif;
+    font-display: swap;
+  }
+
+  .font-sans {
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-display: swap;
+  }
 }
 
 @layer components {
