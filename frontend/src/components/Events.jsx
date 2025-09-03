@@ -4,38 +4,50 @@ const Events = () => {
     {
       id: 1,
       month: 'JUN',
-      day: '23',
-      image: '/onam-video-thumbnail.jpg',
-      title: 'Onam Boat Race Festival',
+      day: '12',
+      image: '/pookalam.jpg',
+      title: 'Pookalam Competition',
       location: 'MIT ADT University, Pune',
-      time: '7:00 pm - 8:00 pm',
-      description: 'Experience the thrill of traditional Kerala boat races with our special Onam celebration. Watch as teams compete in the spirit of unity and tradition.',
-      date: '2025-06-23',
-      googleFormUrl: 'https://forms.google.com/boat-race-festival'
+      time: '9:00 am - 9:00 pm',
+      description: 'Join our traditional Pookalam (flower carpet) competition! Create beautiful floral designs using fresh flowers and natural materials. Show your creativity and celebrate the essence of Onam.',
+      date: '2025-06-12',
+      googleFormUrl: 'https://forms.google.com/pookalam-competition'
     },
     {
       id: 2,
       month: 'JUL',
-      day: '04',
+      day: '12',
       image: '/sadya-image.jpeg',
       title: 'Traditional Onam Feast',
       location: 'MIT ADT University, Pune',
-      time: '6:00 pm - 9:00 pm',
+      time: '9:00 am - 9:00 pm',
       description: 'Join us for an authentic Onam Sadya featuring 26 traditional dishes served on banana leaves. Experience the rich flavors of Kerala cuisine.',
-      date: '2025-07-04',
+      date: '2025-07-12',
       googleFormUrl: 'https://forms.google.com/onam-feast'
     },
     {
       id: 3,
       month: 'AUG',
-      day: '30',
-      image: '/pachadi-image.jpeg',
+      day: '12',
+      image: '/onam-cultural-night.jpg',
       title: 'Onam Cultural Night',
       location: 'MIT ADT University, Pune',
-      time: '7:30 pm - 10:00 pm',
+      time: '9:00 am - 9:00 pm',
       description: 'Celebrate Onam with traditional music, dance performances, and cultural activities. Experience the vibrant spirit of Kerala through art and entertainment.',
-      date: '2025-08-30',
+      date: '2025-08-12',
       googleFormUrl: 'https://forms.google.com/cultural-night'
+    },
+    {
+      id: 4,
+      month: 'SEP',
+      day: '12',
+      image: '/tug-of-war-championship.jpg',
+      title: 'Tug of War Championship',
+      location: 'MIT ADT University, Pune',
+      time: '9:00 am - 9:00 pm',
+      description: 'Test your strength and teamwork in our exciting Tug of War championship! Form teams and compete in this traditional sport that symbolizes unity and collective effort.',
+      date: '2025-09-12',
+      googleFormUrl: 'https://forms.google.com/tug-of-war-championship'
     }
   ]
 
