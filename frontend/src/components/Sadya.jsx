@@ -107,10 +107,10 @@ const VideoPlayer = memo(({ onVideoError }) => {
       
       {/* Video Overlay with Title - Lower z-index to not interfere with controls */}
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 z-10 pointer-events-none">
-        <h3 className="text-xl font-bold text-white mb-1 font-heading">Traditional Onam Feast</h3>
-        <p className="text-sm text-white/90">Served on Banana Leaf</p>
+        <h3 className="text-xl font-bold text-white mb-1 font-heading text-left ml-4">Traditional Onam Feast</h3>
+        <p className="text-sm text-white/90 text-left ml-4">Served on Banana Leaf</p>
         {isPlaying && (
-          <div className="flex items-center mt-2 space-x-2">
+          <div className="flex items-center mt-2 space-x-2 ml-4">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
             <span className="text-xs text-green-400 font-medium">Playing</span>
           </div>

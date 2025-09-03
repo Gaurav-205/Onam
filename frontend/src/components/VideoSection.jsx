@@ -127,6 +127,8 @@ const VideoSection = () => {
                   preload="metadata"
                   muted
                   playsInline
+                  loop
+                  autoPlay
                   onLoadStart={() => setIsVideoLoaded(false)}
                   onLoadedData={handleVideoLoad}
                   onPlay={handleVideoPlay}
