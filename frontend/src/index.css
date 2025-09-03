@@ -1,3 +1,4 @@
+/* Font preloading with display swap for better performance */
 @import url('https://fonts.googleapis.com/css2?family=Prata:wght@400&family=Montserrat:wght@300;400;500;600;700;800&family=Samarkan:wght@400&family=Playfair+Display:wght@400;500;600;700&family=Cinzel:wght@400;500;600;700&family=Great+Vibes:wght@400&family=Dancing+Script:wght@400;500;600;700&family=Noto+Sans+Malayalam:wght@400;500;600;700&family=Noto+Serif+Malayalam:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -7,59 +8,117 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    /* Optimize for performance */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   
   body {
     font-family: 'Montserrat', system-ui, sans-serif;
+    /* Prevent layout shift */
+    line-height: 1.6;
+    /* Optimize for performance */
+    will-change: scroll-position;
   }
 
-  /* Font loading optimization to prevent FOUT */
+  /* Custom text selection colors - Onam themed */
+  ::selection {
+    background-color: #D97706; /* onam-gold */
+    color: #ffffff; /* white text */
+  }
+  
+  ::-moz-selection {
+    background-color: #D97706; /* onam-gold for Firefox */
+    color: #ffffff; /* white text */
+  }
+
+  /* Optimized font loading to prevent FOUT */
   .font-ornate {
     font-family: 'Great Vibes', 'Brush Script MT', cursive, serif;
     font-display: swap;
+    font-feature-settings: "liga" 1, "kern" 1;
   }
 
   .font-malayalam {
     font-family: 'Noto Serif Malayalam', 'Noto Sans Malayalam', 'Malayalam Sangam MN', serif;
     font-display: swap;
+    font-feature-settings: "liga" 1, "kern" 1;
   }
 
   .font-heading {
     font-family: 'Prata', Georgia, serif;
     font-display: swap;
+    font-feature-settings: "liga" 1, "kern" 1;
   }
 
   .font-sans {
     font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-display: swap;
+    font-feature-settings: "liga" 1, "kern" 1;
+  }
+
+  /* Performance optimizations */
+  * {
+    box-sizing: border-box;
+  }
+
+  /* Optimize images and videos */
+  img, video {
+    max-width: 100%;
+    height: auto;
+    /* Prevent layout shift */
+    aspect-ratio: attr(width) / attr(height);
+  }
+
+  /* Optimize animations */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
 @layer components {
+  /* Optimized button components */
   .btn-primary {
-    @apply bg-onam-green hover:bg-green-700 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl font-sans;
+    @apply bg-onam-green hover:bg-green-700 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl font-sans focus:outline-none focus:ring-2 focus:ring-onam-green focus:ring-offset-2;
   }
   
   .btn-secondary {
-    @apply bg-onam-gold hover:bg-amber-600 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl font-sans;
+    @apply bg-onam-gold hover:bg-amber-600 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl font-sans focus:outline-none focus:ring-2 focus:ring-onam-gold focus:ring-offset-2;
   }
   
+  /* Optimized section spacing */
   .section-padding {
     @apply py-16 px-4 sm:px-6 lg:px-8;
   }
   
+  /* Enhanced card component with better performance */
   .card {
-    @apply bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2;
+    @apply bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 focus:outline-none focus:ring-2 focus:ring-onam-green focus:ring-offset-2;
+    /* Optimize for performance */
+    will-change: transform, box-shadow;
+    backface-visibility: hidden;
   }
   
+  /* Optimized gradient utilities */
   .onam-gradient {
     @apply bg-gradient-to-br from-onam-green via-onam-gold to-onam-red;
+    background-size: 200% 200%;
+    animation: gradient-shift 8s ease infinite;
   }
   
   .text-gradient {
     @apply bg-gradient-to-r from-onam-green via-onam-gold to-onam-red bg-clip-text text-transparent;
   }
   
+  /* Enhanced typography utilities */
   .elegant-heading {
     @apply font-elegant font-semibold tracking-wide;
   }
@@ -76,12 +135,15 @@
     @apply font-script font-medium;
   }
   
+  /* Optimized golden text with better performance */
   .golden-text {
     @apply text-yellow-400 drop-shadow-lg;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
   
   .ornate-golden {
     @apply font-ornate text-yellow-400 drop-shadow-lg;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
   
   .malayalam-elegant {
@@ -90,5 +152,149 @@
   
   .malayalam-modern {
     @apply font-malayalam-sans font-medium;
+  }
+
+  /* Performance-optimized loading states */
+  .loading-skeleton {
+    @apply animate-pulse bg-gray-200 rounded;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading-shimmer 1.5s infinite;
+  }
+
+  /* Optimized focus states for accessibility */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-onam-green focus:ring-offset-2;
+  }
+
+  /* Performance-optimized hover effects */
+  .hover-lift {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg;
+    will-change: transform, box-shadow;
+  }
+
+  /* Optimized backdrop blur for better performance */
+  .backdrop-blur-optimized {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    background-color: rgba(255, 255, 255, 0.8);
+  }
+}
+
+@layer utilities {
+  /* Performance utilities */
+  .gpu-accelerated {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  .will-change-transform {
+    will-change: transform;
+  }
+
+  .will-change-opacity {
+    will-change: opacity;
+  }
+
+  /* Accessibility utilities */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .focus-visible {
+    @apply focus:outline-none focus:ring-2 focus:ring-onam-green focus:ring-offset-2;
+  }
+
+  /* Animation utilities */
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-bounce-slow {
+    animation: bounce 2s infinite;
+  }
+
+  /* Custom keyframes for optimized animations */
+  @keyframes float {
+    0%, 100% { 
+      transform: translateY(0px) translateZ(0); 
+    }
+    50% { 
+      transform: translateY(-20px) translateZ(0); 
+    }
+  }
+
+  @keyframes gradient-shift {
+    0%, 100% { 
+      background-position: 0% 50%; 
+    }
+    50% { 
+      background-position: 100% 50%; 
+    }
+  }
+
+  @keyframes loading-shimmer {
+    0% { 
+      background-position: -200% 0; 
+    }
+    100% { 
+      background-position: 200% 0; 
+    }
+  }
+
+  /* Optimized scrollbar styling */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #059669 #f3f4f6;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #059669;
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #047857;
+  }
+}
+
+/* Print styles for better accessibility */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    font-size: 12pt;
+    line-height: 1.4;
+    color: #000;
+    background: #fff;
+  }
+  
+  .card {
+    box-shadow: none;
+    border: 1px solid #ccc;
   }
 }

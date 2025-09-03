@@ -11,17 +11,23 @@ const HEADING_INTERVAL = 3000
 const FADE_DURATION = 300
 const SCROLL_THRESHOLD = 50
 
-// Font loading utility
-const loadFonts = () => {
-  return Promise.all([
-    document.fonts.load('1em Great Vibes'),
-    document.fonts.load('1em Noto Serif Malayalam'),
-    document.fonts.load('1em Prata'),
-    document.fonts.load('1em Montserrat')
-  ])
+// Font loading utility with error handling
+const loadFonts = async () => {
+  try {
+    await Promise.all([
+      document.fonts.load('1em Great Vibes'),
+      document.fonts.load('1em Noto Serif Malayalam'),
+      document.fonts.load('1em Prata'),
+      document.fonts.load('1em Montserrat')
+    ])
+    return true
+  } catch (error) {
+    console.warn('Some fonts failed to load:', error)
+    return false
+  }
 }
 
-// Memoized CountdownCard component
+// Memoized CountdownCard component with performance optimizations
 const CountdownCard = memo(({ value, label, maxValue }) => {
   const { strokeDasharray, strokeDashoffset } = useMemo(() => {
     const percentage = (value / maxValue) * 100
@@ -37,7 +43,7 @@ const CountdownCard = memo(({ value, label, maxValue }) => {
     <div className="text-center">
       {/* Circular Progress Arc */}
       <div className="relative flex items-center justify-center mb-3">
-        <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 80 80">
+        <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 80 80" aria-hidden="true">
           {/* Background circle */}
           <circle
             cx="40"
@@ -149,7 +155,7 @@ const Hero = () => {
   // Optimized video error handling
   const handleVideoError = useCallback(() => setVideoError(true), [])
 
-  // Optimized scroll handlers
+  // Optimized scroll handlers with useCallback
   const handleVideoScroll = useCallback(() => {
     const heroSection = document.getElementById('home')
     if (!heroSection) return
@@ -172,7 +178,7 @@ const Hero = () => {
     setIsScrolled(scrolled)
   }, [])
 
-  // Throttled scroll handler
+  // Throttled scroll handler with useCallback
   const throttledScroll = useCallback(() => {
     let ticking = false
     return () => {
@@ -194,7 +200,7 @@ const Hero = () => {
     return () => window.removeEventListener('scroll', scrollHandler)
   }, [throttledScroll])
 
-  // Video file check
+  // Video file check with error handling
   useEffect(() => {
     const video = document.createElement('video')
     video.src = '/onam-background.mp4'
@@ -225,30 +231,32 @@ const Hero = () => {
     return () => clearInterval(headingTimer)
   }, [])
 
-  // Countdown timer
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date().getTime()
-      const distance = ONAM_DATE - now
-      
-      if (distance > 0) {
-        setTimeLeft({
-          days: Math.floor(distance / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-          minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
-          seconds: Math.floor((distance % (1000 * 60)) / 1000)
-        })
-      } else {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 })
-      }
-    }, 1000)
+  // Optimized countdown timer with useCallback
+  const updateCountdown = useCallback(() => {
+    const now = new Date().getTime()
+    const distance = ONAM_DATE - now
     
-    return () => clearInterval(timer)
+    if (distance > 0) {
+      setTimeLeft({
+        days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+        seconds: Math.floor((distance % (1000 * 60)) / 1000)
+      })
+    } else {
+      setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+    }
   }, [])
 
-  // Font loading effect
+  // Countdown timer effect
   useEffect(() => {
-    loadFonts().then(() => {
+    const timer = setInterval(updateCountdown, 1000)
+    return () => clearInterval(timer)
+  }, [updateCountdown])
+
+  // Font loading effect with error handling
+  useEffect(() => {
+    loadFonts().then((success) => {
       setFontsLoaded(true)
     }).catch(() => {
       // Fallback: show content even if fonts fail to load
@@ -270,6 +278,7 @@ const Hero = () => {
               className="w-full h-full object-cover"
               style={{ objectPosition: 'center center' }}
               onError={handleVideoError}
+              aria-hidden="true"
             >
               <source src="/onam-background.mp4" type="video/mp4" />
             </video>

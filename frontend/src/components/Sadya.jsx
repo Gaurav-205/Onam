@@ -1,24 +1,152 @@
-const Sadya = () => {
-  const sadyaDishes = [
-    { name: "Rice", icon: "🍚", color: "from-amber-400 to-amber-500", image: "/rice-image.jpeg" },
-    { name: "Sambar", icon: "🥘", color: "from-orange-400 to-orange-500", image: "/sambar-image.jpeg" },
-    { name: "Rasam", icon: "🍲", color: "from-red-400 to-red-500", image: "/rasam-image.jpeg" },
-    { name: "Avial", icon: "🥬", color: "from-green-400 to-green-500", image: "/avial-image.jpeg" },
-    { name: "Thorans", icon: "🥗", color: "from-emerald-400 to-emerald-500", image: "/thorans-image.jpeg" },
-    { name: "Pachadi", icon: "🥒", color: "from-teal-400 to-teal-500", image: "/pachadi-image.jpeg" },
-    { name: "Pickles", icon: "🥭", color: "from-yellow-400 to-yellow-500", image: "/pickles-image.jpeg" },
-    { name: "Papadam", icon: "🫓", color: "from-amber-400 to-amber-600", image: "/papadam-image.jpeg" },
-    { name: "Banana", icon: "🍌", color: "from-yellow-400 to-yellow-500", image: "/banana-image.jpeg" },
-    { name: "Payasam", icon: "🍮", color: "from-pink-400 to-pink-500", image: "/payasam-image.jpeg" },
-    { name: "Jaggery", icon: "🍯", color: "from-amber-500 to-amber-600", image: "/jaggery-image.jpeg" },
-    { name: "Coconut", icon: "🥥", color: "from-gray-400 to-gray-500", image: "/coconut-image.jpeg" }
-  ]
+import { useCallback, useMemo, memo, useState } from 'react'
+
+// Memoized sadya dishes data
+const sadyaDishes = [
+  { name: "Rice", icon: "🍚", color: "from-amber-400 to-amber-500", image: "/rice-image.jpeg" },
+  { name: "Sambar", icon: "🥘", color: "from-orange-400 to-orange-500", image: "/sambar-image.jpeg" },
+  { name: "Rasam", icon: "🍲", color: "from-red-400 to-red-500", image: "/rasam-image.jpeg" },
+  { name: "Avial", icon: "🥬", color: "from-green-400 to-green-500", image: "/avial-image.jpeg" },
+  { name: "Thorans", icon: "🥗", color: "from-emerald-400 to-emerald-500", image: "/thorans-image.jpeg" },
+  { name: "Pachadi", icon: "🥒", color: "from-teal-400 to-teal-500", image: "/pachadi-image.jpeg" },
+  { name: "Pickles", icon: "🥭", color: "from-yellow-400 to-yellow-500", image: "/pickles-image.jpeg" },
+  { name: "Papadam", icon: "🫓", color: "from-amber-400 to-amber-600", image: "/papadam-image.jpeg" },
+  { name: "Banana", icon: "🍌", color: "from-yellow-400 to-yellow-500", image: "/banana-image.jpeg" },
+  { name: "Payasam", icon: "🍮", color: "from-pink-400 to-pink-500", image: "/payasam-image.jpeg" },
+  { name: "Jaggery", icon: "🍯", color: "from-amber-500 to-amber-600", image: "/jaggery-image.jpeg" },
+  { name: "Coconut", icon: "🥥", color: "from-gray-400 to-gray-500", image: "/coconut-image.jpeg" }
+]
+
+// Memoized DishItem component
+const DishItem = memo(({ item }) => {
+  const handleImageError = useCallback((e) => {
+    // Fallback to icon if image fails to load
+    e.target.style.display = 'none'
+    const fallbackIcon = e.target.nextSibling
+    if (fallbackIcon) {
+      fallbackIcon.style.display = 'flex'
+    }
+  }, [])
 
   return (
-    <section id="sadya" className="section-padding bg-gradient-to-br from-orange-50 to-yellow-50 relative overflow-hidden">
+    <div className="bg-white/95 backdrop-blur-sm rounded-lg p-3 shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-200">
+      <div className="flex items-center space-x-3">
+        {/* Ingredient Image on the left */}
+        <div className="w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 flex-shrink-0 shadow-sm">
+          <img 
+            src={item.image} 
+            alt={item.name}
+            className="w-full h-full object-cover"
+            onError={handleImageError}
+            loading="lazy"
+          />
+          {/* Fallback Icon */}
+          <div className={`w-full h-full bg-gradient-to-br ${item.color} flex items-center justify-center text-lg shadow-md`} style={{display: 'none'}}>
+            {item.icon}
+          </div>
+        </div>
+        
+        {/* Ingredient Name - No underline */}
+        <div className="flex-1">
+          <h3 className="text-gray-800 font-medium text-sm">{item.name}</h3>
+        </div>
+      </div>
+    </div>
+  )
+})
+
+DishItem.displayName = 'DishItem'
+
+// Memoized VideoPlayer component
+const VideoPlayer = memo(({ onVideoError }) => {
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false)
+
+  const handleVideoLoad = useCallback(() => {
+    setIsVideoLoaded(true)
+  }, [])
+
+  const handleVideoError = useCallback(() => {
+    onVideoError()
+  }, [onVideoError])
+
+  const handleVideoPlay = useCallback(() => {
+    setIsPlaying(true)
+  }, [])
+
+  const handleVideoPause = useCallback(() => {
+    setIsPlaying(false)
+  }, [])
+
+  const handleVideoEnded = useCallback(() => {
+    setIsPlaying(false)
+  }, [])
+
+  return (
+    <div className="w-full h-[320px] md:h-[455px] bg-black rounded-2xl overflow-hidden shadow-xl relative">
+      {/* Video Player with Zoomed Poster */}
+      <video
+        className="w-full h-full object-cover transition-all duration-300"
+        controls
+        muted
+        loop
+        preload="metadata"
+        poster="/sadya-image.jpeg"
+        playsInline
+        controlsList="nodownload"
+        onLoadStart={() => setIsVideoLoaded(false)}
+        onLoadedData={handleVideoLoad}
+        onPlay={handleVideoPlay}
+        onPause={handleVideoPause}
+        onEnded={handleVideoEnded}
+        onError={handleVideoError}
+        aria-label="Traditional Onam feast video"
+      >
+        <source src="/sadya-video.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+      
+      {/* Video Overlay with Title - Lower z-index to not interfere with controls */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 z-10 pointer-events-none">
+        <h3 className="text-xl font-bold text-white mb-1 font-heading">Traditional Onam Feast</h3>
+        <p className="text-sm text-white/90">Served on Banana Leaf</p>
+        {isPlaying && (
+          <div className="flex items-center mt-2 space-x-2">
+            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            <span className="text-xs text-green-400 font-medium">Playing</span>
+          </div>
+        )}
+      </div>
+
+      {/* Loading State */}
+      {!isVideoLoaded && (
+        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-onam-green mx-auto mb-2"></div>
+            <p className="text-gray-600 text-sm">Loading video...</p>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+})
+
+VideoPlayer.displayName = 'VideoPlayer'
+
+const Sadya = () => {
+  const [videoError, setVideoError] = useState(false)
+
+  // Memoized dishes data to prevent unnecessary re-renders
+  const memoizedSadyaDishes = useMemo(() => sadyaDishes, [])
+
+  const handleVideoError = useCallback(() => {
+    setVideoError(true)
+  }, [])
+
+  return (
+    <section id="sadya" className="section-padding bg-gradient-to-br from-orange-50 to-yellow-50 relative overflow-hidden" aria-label="Traditional Onam Feast">
       {/* Food Pattern Background */}
-      <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-orange-100/30 to-transparent"></div>
-      <div className="absolute bottom-0 right-0 w-full h-32 bg-gradient-to-t from-yellow-100/30 to-transparent"></div>
+      <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-orange-100/30 to-transparent" aria-hidden="true"></div>
+      <div className="absolute bottom-0 right-0 w-full h-32 bg-gradient-to-t from-yellow-100/30 to-transparent" aria-hidden="true"></div>
       
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-12">
@@ -30,74 +158,19 @@ const Sadya = () => {
         
         <div className="grid md:grid-cols-2 gap-8 items-start">
           <div className="order-2 md:order-1">
-                        <div className="grid grid-cols-2 gap-3">
-              {sadyaDishes.map((item, index) => (
-                <div key={index} className="bg-white/95 backdrop-blur-sm rounded-lg p-3 shadow-md border border-gray-200">
-                  <div className="flex items-center space-x-3">
-                    {/* Ingredient Image on the left */}
-                    <div className="w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 flex-shrink-0 shadow-sm">
-                      <img 
-                        src={item.image} 
-                        alt={item.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          // Fallback to icon if image fails to load
-                          e.target.style.display = 'none'
-                          e.target.nextSibling.style.display = 'flex'
-                        }}
-                      />
-                      {/* Fallback Icon */}
-                      <div className={`w-full h-full bg-gradient-to-br ${item.color} flex items-center justify-center text-lg shadow-md`} style={{display: 'none'}}>
-                        {item.icon}
-                      </div>
-                    </div>
-                    
-                    {/* Ingredient Name - No underline */}
-                    <div className="flex-1">
-                      <h3 className="text-gray-800 font-medium text-sm">{item.name}</h3>
-                    </div>
-                  </div>
-                </div>
+            <div className="grid grid-cols-2 gap-3">
+              {memoizedSadyaDishes.map((item, index) => (
+                <DishItem key={`${item.name}-${index}`} item={item} />
               ))}
             </div>
           </div>
           
           <div className="order-1 md:order-2 text-center">
-                        <div className="w-full h-[320px] md:h-[455px] bg-black rounded-2xl overflow-hidden shadow-xl relative">
-              {/* Video Player with Zoomed Poster */}
-              <video
-                className="w-full h-full object-cover transition-all duration-300"
-                controls
-                muted
-                loop
-                preload="metadata"
-                poster="/sadya-image.jpeg"
-                playsInline
-                controlsList="nodownload"
-                onPlay={() => {
-                  // Switch to object-contain when video plays to show full content
-                  const video = event.target
-                  video.classList.remove('object-cover')
-                  video.classList.add('object-contain')
-                }}
-                onPause={() => {
-                  // Switch back to object-cover when paused to show zoomed poster
-                  const video = event.target
-                  video.classList.remove('object-contain')
-                  video.classList.add('object-cover')
-                }}
-                onError={(e) => {
-                  // Hide video and show fallback if video fails to load
-                  e.target.style.display = 'none'
-                  e.target.nextSibling.style.display = 'flex'
-                }}
-              >
-                <source src="/sadya-video.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-              
-              {/* Fallback Content - Shown when video fails to load */}
-              <div className="w-full h-full bg-gradient-to-br from-orange-100 via-yellow-100 to-orange-200 flex items-center justify-center relative overflow-hidden">
+            {!videoError ? (
+              <VideoPlayer onVideoError={handleVideoError} />
+            ) : (
+              // Fallback Content - Shown when video fails to load
+              <div className="w-full h-[320px] md:h-[455px] bg-gradient-to-br from-orange-100 via-yellow-100 to-orange-200 flex items-center justify-center relative overflow-hidden rounded-2xl shadow-xl">
                 {/* Background Pattern */}
                 <div className="absolute inset-0 opacity-30">
                   <div className="absolute top-1/4 left-1/4 w-24 h-24 bg-green-300 rounded-full blur-sm"></div>
@@ -117,17 +190,17 @@ const Sadya = () => {
                       Experience the authentic taste of Kerala with our traditional 26-course feast
                     </p>
                   </div>
+                  
+                  {/* Retry Button */}
+                  <button 
+                    onClick={() => setVideoError(false)}
+                    className="mt-4 bg-onam-green text-white px-4 py-2 rounded-lg hover:bg-onam-green/80 transition-colors duration-200 font-medium"
+                  >
+                    Retry Video
+                  </button>
                 </div>
               </div>
-              
-              {/* Video Overlay with Title - Lower z-index to not interfere with controls */}
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 z-10 pointer-events-none">
-                <h3 className="text-xl font-bold text-white mb-1 font-heading">Traditional Onam Feast</h3>
-                <p className="text-sm text-white/90">Served on Banana Leaf</p>
-              </div>
-              
-
-            </div>
+            )}
           </div>
         </div>
       </div>
