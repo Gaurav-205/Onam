@@ -17,9 +17,7 @@ const Navbar = ({ currentSection, scrollToSection }) => {
     { id: 'shopping', label: 'Shopping' },
     { id: 'sadya', label: 'Sadya' },
     { id: 'events', label: 'Events' },
-    { id: 'festivals', label: 'Festivals' },
-    { id: 'rituals', label: 'Rituals' },
-    { id: 'memories', label: 'Memories' }
+    { id: 'under-development', label: 'Coming Soon' }
   ]
 
   return (

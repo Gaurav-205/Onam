@@ -5,9 +5,10 @@ import VideoSection from './components/VideoSection'
 import Shopping from './components/Shopping'
 import Sadya from './components/Sadya'
 import Events from './components/Events'
-import Festivals from './components/Festivals'
-import Rituals from './components/Rituals'
-import Memories from './components/Memories'
+// import Festivals from './components/Festivals'
+// import Rituals from './components/Rituals'
+// import Memories from './components/Memories'
+import UnderDevelopment from './components/UnderDevelopment'
 import Footer from './components/Footer'
 
 function App() {
@@ -23,7 +24,7 @@ function App() {
 
   useEffect(() => {
     const handleScroll = () => {
-      const sections = ['home', 'shopping', 'sadya', 'events', 'festivals', 'rituals', 'memories']
+      const sections = ['home', 'shopping', 'sadya', 'events', 'under-development']
       const scrollPosition = window.scrollY + 100
 
       for (let i = sections.length - 1; i >= 0; i--) {
@@ -47,9 +48,10 @@ function App() {
       <Shopping />
       <Sadya />
       <Events />
-      <Festivals />
+      {/* <Festivals />
       <Rituals />
-      <Memories />
+      <Memories /> */}
+      <UnderDevelopment />
       <Footer scrollToSection={scrollToSection} />
     </div>
   )

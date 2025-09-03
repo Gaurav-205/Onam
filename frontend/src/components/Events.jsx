@@ -1,40 +1,134 @@
 const Events = () => {
-  const eventsData = [
-    { name: "Athachamayam", description: "Grand procession marking the beginning of Onam", icon: "🎭", color: "from-blue-400 to-blue-500" },
-    { name: "Pookalam Competition", description: "Beautiful flower carpet competitions", icon: "🌸", color: "from-pink-400 to-pink-500" },
-    { name: "Vallam Kali", description: "Traditional snake boat races", icon: "🚣‍♂️", color: "from-green-400 to-green-500" },
-    { name: "Kathakali Performance", description: "Classical dance drama", icon: "🎪", color: "from-purple-400 to-purple-500" },
-    { name: "Onasadya Feast", description: "Traditional 26-course meal", icon: "🍽️", color: "from-orange-400 to-orange-500" },
-    { name: "Cultural Programs", description: "Music, dance, and traditional arts", icon: "🎨", color: "from-red-400 to-red-500" }
+
+  const upcomingEvents = [
+    {
+      id: 1,
+      month: 'JUN',
+      day: '23',
+      image: '/onam-video-thumbnail.jpg',
+      title: 'Onam Boat Race Festival',
+      location: 'MIT ADT University, Pune',
+      time: '7:00 pm - 8:00 pm',
+      description: 'Experience the thrill of traditional Kerala boat races with our special Onam celebration. Watch as teams compete in the spirit of unity and tradition.',
+      date: '2025-06-23',
+      googleFormUrl: 'https://forms.google.com/boat-race-festival'
+    },
+    {
+      id: 2,
+      month: 'JUL',
+      day: '04',
+      image: '/sadya-image.jpeg',
+      title: 'Traditional Onam Feast',
+      location: 'MIT ADT University, Pune',
+      time: '6:00 pm - 9:00 pm',
+      description: 'Join us for an authentic Onam Sadya featuring 26 traditional dishes served on banana leaves. Experience the rich flavors of Kerala cuisine.',
+      date: '2025-07-04',
+      googleFormUrl: 'https://forms.google.com/onam-feast'
+    },
+    {
+      id: 3,
+      month: 'AUG',
+      day: '30',
+      image: '/pachadi-image.jpeg',
+      title: 'Onam Cultural Night',
+      location: 'MIT ADT University, Pune',
+      time: '7:30 pm - 10:00 pm',
+      description: 'Celebrate Onam with traditional music, dance performances, and cultural activities. Experience the vibrant spirit of Kerala through art and entertainment.',
+      date: '2025-08-30',
+      googleFormUrl: 'https://forms.google.com/cultural-night'
+    }
   ]
 
+
+
   return (
-    <section id="events" className="section-padding bg-white relative overflow-hidden">
-      {/* Event Elements Pattern */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-onam-purple/5 to-transparent rounded-full translate-x-48 -translate-y-48"></div>
-      <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-onam-pink/5 to-transparent rounded-full -translate-x-40 translate-y-40"></div>
-      
-      <div className="max-w-7xl mx-auto relative z-10">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6 font-heading">Events</h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-onam-green to-onam-gold mx-auto"></div>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Experience the vibrant celebrations and cultural events that make Onam the most anticipated festival of Kerala.
-          </p>
+    <section id="events" className="section-padding bg-white">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 font-heading">
+            Upcoming Events
+          </h2>
         </div>
-        
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {eventsData.map((item, index) => (
-            <div key={index} className="card p-6 text-center relative overflow-hidden">
-              {/* Background Accent */}
-              <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${item.color}`}></div>
-              
-              <div className="text-5xl mb-4">{item.icon}</div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">{item.name}</h3>
-              <p className="text-gray-600 text-sm">{item.description}</p>
+
+        {/* Events List */}
+        <div className="space-y-12">
+          {upcomingEvents.map((event) => (
+            <div key={event.id} className="flex flex-col lg:flex-row items-start gap-8">
+              {/* Date Section - Enhanced design */}
+              <div className="flex-shrink-0">
+                <div className="bg-white rounded-lg p-4 w-20 h-20 flex flex-col items-center justify-center shadow-sm border border-gray-100">
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {event.month}
+                  </div>
+                  <div className="text-3xl font-bold text-gray-800">
+                    {event.day}
+                  </div>
+                </div>
+              </div>
+
+              {/* Image Section - Fixed alignment */}
+              <div className="flex-shrink-0">
+                <div className="w-96 h-64 rounded-lg overflow-hidden shadow-md">
+                  <img
+                    src={event.image}
+                    alt={event.title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      // Fallback to a placeholder if image fails to load
+                      e.target.src = '/logo.png'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Content Section - Fixed alignment and spacing */}
+              <div className="flex-1 min-w-0 pt-2 relative min-h-[256px]">
+                <h3 className="text-xl lg:text-2xl font-bold text-gray-800 mb-4 font-heading">
+                  {event.title}
+                </h3>
+                
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-center text-sm text-gray-600">
+                    <svg className="w-4 h-4 mr-3 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                    </svg>
+                    <span>{event.location}</span>
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <svg className="w-4 h-4 mr-3 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                    </svg>
+                    <span>{event.time}</span>
+                  </div>
+                </div>
+
+                <p className="text-gray-700 leading-relaxed mb-6 font-sans">
+                  {event.description}
+                </p>
+
+                <a
+                  href={event.googleFormUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center text-gray-800 font-medium hover:text-onam-green transition-colors duration-200 group absolute bottom-0 left-0"
+                >
+                  View Event Details
+                  <svg 
+                    className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform duration-200" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </a>
+              </div>
             </div>
           ))}
         </div>
+
+
       </div>
     </section>
   )
