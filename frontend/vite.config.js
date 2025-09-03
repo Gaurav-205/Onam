@@ -6,9 +6,17 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    host: true
+    host: true,
+    strictPort: true,
+    headers: {
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin'
+    }
   },
   resolve: {
     extensions: ['.js', '.jsx']
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom']
   }
 })
