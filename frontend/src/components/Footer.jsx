@@ -136,9 +136,9 @@ const Footer = ({ scrollToSection }) => {
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white drop-shadow-2xl leading-tight">
             <AnimatedHeading currentHeading={currentHeading} isFading={isFading} />
           </h1>
-          <p className="text-base md:text-lg lg:text-xl text-white/90 mt-4 font-normal drop-shadow-lg font-sans">
-            Celebration of Kerala's Tradition & Culture
-          </p>
+                  <p className="text-base md:text-lg lg:text-xl text-white/90 mt-4 font-normal drop-shadow-lg font-sans" aria-label="Website description celebrating Kerala's tradition and culture">
+          Celebration of Kerala's Tradition & Culture
+        </p>
         </div>
 
         {/* Horizontal Separator */}

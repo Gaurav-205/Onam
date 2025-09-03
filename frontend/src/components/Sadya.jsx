@@ -99,7 +99,8 @@ const VideoPlayer = memo(({ onVideoError }) => {
         onPause={handleVideoPause}
         onEnded={handleVideoEnded}
         onError={handleVideoError}
-        aria-label="Traditional Onam feast video"
+        aria-label="Traditional Onam feast video showing 26-course meal preparation and serving"
+        title="Traditional Onam Feast Video"
       >
         <source src="/sadya-video.mp4" type="video/mp4" />
         Your browser does not support the video tag.
@@ -151,7 +152,7 @@ const Sadya = () => {
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4 font-heading">Sadya</h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-700 max-w-2xl mx-auto">
             There is no way that a Malayali will like to miss an 'Onasadya' (Onam feast).
           </p>
         </div>

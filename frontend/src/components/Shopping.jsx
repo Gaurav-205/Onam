@@ -72,42 +72,46 @@ const ProductCard = memo(({ item, onBookNow }) => {
         
         {/* Top-left Badge */}
         <div className="absolute top-4 left-4">
-          <span className="bg-gray-200 text-gray-800 text-xs font-semibold px-3 py-1 rounded-full">
+          <span className="bg-gray-700 text-white text-xs font-semibold px-3 py-1 rounded-full" aria-label="Traditional Onam item">
             Traditional
           </span>
         </div>
         
-        {/* Top-right Brand Element */}
-        <div className="absolute top-4 right-4">
-          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md">
-            <span className="text-xs font-bold text-gray-800">ON</span>
-          </div>
-        </div>
+
       </div>
       
       {/* Bottom Section - Product Details */}
       <div className="bg-white p-6 flex flex-col h-full">
         {/* Product Name */}
-        <h3 className="text-xl font-bold text-gray-900 mb-2">{item.name}</h3>
+        <h3 className="text-xl font-bold text-gray-900 mb-2" id={`product-name-${item.name.toLowerCase().replace(/\s+/g, '-')}`}>
+          {item.name}
+        </h3>
         
         {/* Tagline */}
-        <p className="text-gray-600 text-sm mb-3 font-medium">{item.description}</p>
+        <p className="text-gray-700 text-sm mb-3 font-medium" id={`product-description-${item.name.toLowerCase().replace(/\s+/g, '-')}`}>
+          {item.description}
+        </p>
         
         {/* Product Description */}
-        <p className="text-gray-500 text-sm mb-6 leading-relaxed flex-grow">{item.details}</p>
+        <p className="text-gray-700 text-sm mb-6 leading-relaxed flex-grow" id={`product-details-${item.name.toLowerCase().replace(/\s+/g, '-')}`}>
+          {item.details}
+        </p>
         
         {/* Bottom Row - Price and Action */}
         <div className="flex items-center justify-between mt-auto">
           {/* Price */}
-          <div className="bg-gray-100 rounded-full px-4 py-2 flex items-center">
-            <span className="text-lg font-bold text-gray-900">{item.price}</span>
+          <div className="bg-gray-100 rounded-full px-4 py-2 flex items-center border border-gray-200">
+            <span className="text-lg font-bold text-gray-900" aria-label={`Price: ${item.price}`}>
+              {item.price}
+            </span>
           </div>
           
           {/* Action Button */}
           <button 
             onClick={handleBookNowClick}
             className="bg-gray-900 text-white font-semibold py-2 px-6 rounded-full flex items-center justify-center space-x-2 hover:bg-gray-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2"
-            aria-label={`Book ${item.name} now`}
+            aria-label={`Book ${item.name} now for ${item.price}`}
+            aria-describedby={`product-name-${item.name.toLowerCase().replace(/\s+/g, '-')} product-description-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
           >
             <span>Book Now</span>
             <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

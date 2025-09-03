@@ -113,30 +113,31 @@ const VideoSection = () => {
       <div className="max-w-7xl mx-auto">
         {/* Video Container */}
         <div className="relative w-full max-w-6xl mx-auto">
-          {/* Video Background/Thumbnail */}
-          <div className="relative w-full h-96 md:h-[500px] lg:h-[600px] rounded-2xl overflow-hidden shadow-2xl">
-            
-            {/* Video Player */}
-            <div className="w-full h-full">
-              {!videoError ? (
-                <video
-                  ref={videoRef}
-                  className="w-full h-full rounded-2xl object-cover transition-opacity duration-300"
-                  style={{ opacity: isVideoLoaded ? 1 : 0 }}
-                  controls
-                  preload="metadata"
-                  muted
-                  playsInline
-                  loop
-                  autoPlay
-                  onLoadStart={() => setIsVideoLoaded(false)}
-                  onLoadedData={handleVideoLoad}
-                  onPlay={handleVideoPlay}
-                  onPause={handleVideoPause}
-                  onEnded={handleVideoEnded}
-                  onError={handleVideoError}
-                  aria-label="Onam celebration video"
-                >
+                      {/* Video Background/Thumbnail */}
+            <div className="relative w-full h-96 md:h-[500px] lg:h-[600px] rounded-2xl overflow-hidden shadow-2xl">
+              
+              {/* Video Player */}
+              <div className="w-full h-full">
+                {!videoError ? (
+                  <video
+                    ref={videoRef}
+                    className="w-full h-full rounded-2xl object-cover transition-opacity duration-300"
+                    style={{ opacity: isVideoLoaded ? 1 : 0 }}
+                    controls
+                    preload="metadata"
+                    muted
+                    playsInline
+                    loop
+                    autoPlay
+                    onLoadStart={() => setIsVideoLoaded(false)}
+                    onLoadedData={handleVideoLoad}
+                    onPlay={handleVideoPlay}
+                    onPause={handleVideoPause}
+                    onEnded={handleVideoEnded}
+                    onError={handleVideoError}
+                    aria-label="Onam celebration video showing traditional Kerala festival activities"
+                    title="Onam Celebration Video"
+                  >
                   {videoSources.map((source, index) => (
                     <source key={index} src={source.src} type={source.type} />
                   ))}

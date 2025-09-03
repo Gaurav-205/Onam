@@ -9,11 +9,14 @@ export default {
       colors: {
         'onam-green': '#059669',
         'onam-gold': '#D97706',
+        'onam-gold-dark': '#B45309', // Better contrast version
         'onam-red': '#DC2626',
         'onam-orange': '#EA580C',
         'onam-yellow': '#EAB308',
         'onam-purple': '#7C3AED',
         'onam-pink': '#EC4899',
+        'text-high-contrast': '#1F2937', // Better contrast for text
+        'text-medium-contrast': '#374151', // Medium contrast for secondary text
       },
       fontFamily: {
         'sans': ['Montserrat', 'system-ui', 'sans-serif'],

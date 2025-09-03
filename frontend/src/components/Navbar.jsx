@@ -18,11 +18,11 @@ const NavItem = memo(({ item, currentSection, isScrolled, scrollToSection }) => 
   const isActive = currentSection === item.id
   const textColor = isActive
     ? isScrolled 
-      ? 'text-onam-green font-semibold' 
-      : 'text-white font-semibold'
+      ? 'text-onam-gold font-semibold hover:text-onam-green' 
+      : 'text-onam-gold font-semibold hover:text-onam-green'
     : isScrolled 
-      ? 'text-gray-600 hover:text-onam-green hover:bg-gray-100' 
-      : 'text-white/90 hover:text-white hover:bg-white/10'
+      ? 'text-gray-600 hover:text-onam-gold hover:bg-gray-100' 
+      : 'text-white/90 hover:text-onam-gold hover:bg-white/10'
 
   return (
     <button
@@ -32,8 +32,6 @@ const NavItem = memo(({ item, currentSection, isScrolled, scrollToSection }) => 
       aria-current={isActive ? 'page' : undefined}
     >
       {item.label}
-      {/* Hover underline effect */}
-      <div className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-onam-green via-onam-gold to-onam-red transform scale-x-0 transition-transform duration-300 group-hover:scale-x-100`}></div>
     </button>
   )
 })
@@ -173,8 +171,8 @@ const Navbar = ({ currentSection, scrollToSection }) => {
                   }}
                   className={`px-4 py-2 text-left transition-colors duration-200 ${
                     currentSection === item.id
-                      ? 'text-onam-green font-semibold bg-onam-green/10'
-                      : 'text-gray-600 hover:text-onam-green hover:bg-gray-50'
+                      ? 'text-onam-gold font-semibold hover:text-onam-green'
+                      : 'text-gray-600 hover:text-onam-gold hover:bg-gray-50'
                   }`}
                   aria-label={`Navigate to ${item.label} section`}
                   aria-current={currentSection === item.id ? 'page' : undefined}

@@ -78,6 +78,15 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-red-50">
+      {/* Skip to main content link for accessibility */}
+      <a 
+        href="#home" 
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-onam-green focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:outline-none focus:ring-2 focus:ring-onam-green focus:ring-offset-2"
+        aria-label="Skip to main content"
+      >
+        Skip to main content
+      </a>
+      
       <Navbar currentSection={currentSection} scrollToSection={scrollToSection} />
       {mainContent}
       <Footer scrollToSection={scrollToSection} />

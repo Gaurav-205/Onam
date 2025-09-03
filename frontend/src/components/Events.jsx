@@ -123,13 +123,13 @@ const EventContent = memo(({ event }) => {
         </div>
       </div>
 
-      <p className="text-gray-700 leading-relaxed mb-6 font-sans">
+      <p className="text-gray-700 leading-relaxed mb-6 font-sans" aria-describedby={`event-${event.id}-description`}>
         {event.description}
       </p>
 
       <button
         onClick={handleViewDetails}
-        className="inline-flex items-center text-gray-800 font-medium hover:text-onam-green transition-colors duration-200 group absolute bottom-0 left-0 focus:outline-none focus:ring-2 focus:ring-onam-green focus:ring-offset-2 rounded"
+        className="inline-flex items-center text-gray-800 font-medium hover:text-onam-gold transition-colors duration-200 group absolute bottom-0 left-0 focus:outline-none rounded"
         aria-label={`View details for ${event.title}`}
       >
         View Event Details
@@ -172,7 +172,7 @@ const Events = () => {
           <h2 className="text-3xl md:text-4xl font-bold text-gray-800 font-heading">
             Upcoming Events
           </h2>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto mt-4 font-sans">
+          <p className="text-lg text-gray-700 max-w-3xl mx-auto mt-4 font-sans">
             Discover and participate in exciting Onam celebrations, competitions, and cultural activities throughout the year.
           </p>
         </div>

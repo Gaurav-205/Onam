@@ -296,7 +296,7 @@ const Hero = () => {
         {/* Main Content - Clean and minimal like Kerala website */}
         <div className="relative z-10 text-center max-w-5xl mx-auto px-4 mt-20 md:mt-32">
           <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-4 text-white drop-shadow-2xl leading-tight">
-            <span className={headingClasses}>
+            <span className={headingClasses} aria-label={`Onam heading in ${currentHeadingData.lang === 'en' ? 'English' : 'Malayalam'}`}>
               {currentHeadingData.text}
             </span>
           </h1>
@@ -320,11 +320,11 @@ const Hero = () => {
           <div className="text-center mb-20">
             <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8">
               <EventBadge>
-                🎉 Open for All - Everyone Welcome! 🎉
+                <span aria-label="Event is open for all - Everyone is welcome">🎉 Open for All - Everyone Welcome! 🎉</span>
               </EventBadge>
               
               <EventBadge>
-                📍 MIT ADT University
+                <span aria-label="Event location at MIT ADT University">📍 MIT ADT University</span>
               </EventBadge>
             </div>
             

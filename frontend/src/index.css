@@ -22,14 +22,14 @@
     will-change: scroll-position;
   }
 
-  /* Custom text selection colors - Onam themed */
+  /* Custom text selection colors - Onam themed with better contrast */
   ::selection {
-    background-color: #D97706; /* onam-gold */
+    background-color: #B45309; /* darker gold for better contrast */
     color: #ffffff; /* white text */
   }
   
   ::-moz-selection {
-    background-color: #D97706; /* onam-gold for Firefox */
+    background-color: #B45309; /* darker gold for Firefox */
     color: #ffffff; /* white text */
   }
 
