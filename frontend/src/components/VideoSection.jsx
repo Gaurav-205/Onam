@@ -107,37 +107,37 @@ const VideoSection = () => {
   return (
     <section 
       ref={sectionRef} 
-      className="bg-white py-16 px-4 sm:px-6 lg:px-8"
+      className="bg-white py-12 sm:py-16 px-4 sm:px-6 lg:px-8"
       aria-label="Onam Celebration Video"
     >
       <div className="max-w-7xl mx-auto">
         {/* Video Container */}
         <div className="relative w-full max-w-6xl mx-auto">
-                      {/* Video Background/Thumbnail */}
-            <div className="relative w-full h-96 md:h-[500px] lg:h-[600px] rounded-2xl overflow-hidden shadow-2xl">
-              
-              {/* Video Player */}
-              <div className="w-full h-full">
-                {!videoError ? (
-                  <video
-                    ref={videoRef}
-                    className="w-full h-full rounded-2xl object-cover transition-opacity duration-300"
-                    style={{ opacity: isVideoLoaded ? 1 : 0 }}
-                    controls
-                    preload="metadata"
-                    muted
-                    playsInline
-                    loop
-                    autoPlay
-                    onLoadStart={() => setIsVideoLoaded(false)}
-                    onLoadedData={handleVideoLoad}
-                    onPlay={handleVideoPlay}
-                    onPause={handleVideoPause}
-                    onEnded={handleVideoEnded}
-                    onError={handleVideoError}
-                    aria-label="Onam celebration video showing traditional Kerala festival activities"
-                    title="Onam Celebration Video"
-                  >
+          {/* Video Background/Thumbnail */}
+          <div className="relative w-full h-64 sm:h-80 md:h-[500px] lg:h-[600px] rounded-xl sm:rounded-2xl overflow-hidden shadow-xl sm:shadow-2xl">
+            
+            {/* Video Player */}
+            <div className="w-full h-full">
+              {!videoError ? (
+                <video
+                  ref={videoRef}
+                  className="w-full h-full rounded-xl sm:rounded-2xl object-cover transition-opacity duration-300"
+                  style={{ opacity: isVideoLoaded ? 1 : 0 }}
+                  controls
+                  preload="metadata"
+                  muted
+                  playsInline
+                  loop
+                  autoPlay
+                  onLoadStart={() => setIsVideoLoaded(false)}
+                  onLoadedData={handleVideoLoad}
+                  onPlay={handleVideoPlay}
+                  onPause={handleVideoPause}
+                  onEnded={handleVideoEnded}
+                  onError={handleVideoError}
+                  aria-label="Onam celebration video showing traditional Kerala festival activities"
+                  title="Onam Celebration Video"
+                >
                   {videoSources.map((source, index) => (
                     <source key={index} src={source.src} type={source.type} />
                   ))}
@@ -157,16 +157,16 @@ const VideoSection = () => {
                 <div className="w-full h-full bg-gradient-to-br from-onam-green/20 via-onam-gold/20 to-onam-red/20 flex items-center justify-center relative overflow-hidden">
                   {/* Background Pattern */}
                   <div className="absolute inset-0 opacity-30">
-                    <div className="absolute top-1/4 left-1/4 w-24 h-24 bg-onam-green/30 rounded-full blur-sm"></div>
-                    <div className="absolute top-1/3 right-1/4 w-20 h-20 bg-onam-gold/30 rounded-full blur-sm"></div>
-                    <div className="absolute bottom-1/4 left-1/3 w-16 h-16 bg-onam-red/30 rounded-full blur-sm"></div>
+                    <div className="absolute top-1/4 left-1/4 w-16 sm:w-24 h-16 sm:h-24 bg-onam-green/30 rounded-full blur-sm"></div>
+                    <div className="absolute top-1/3 right-1/4 w-12 sm:w-20 h-12 sm:h-20 bg-onam-gold/30 rounded-full blur-sm"></div>
+                    <div className="absolute bottom-1/4 left-1/3 w-10 sm:w-16 h-10 sm:h-16 bg-onam-red/30 rounded-full blur-sm"></div>
                   </div>
                   
                   {/* Fallback Content */}
-                  <div className="text-center relative z-10">
-                    <div className="text-6xl mb-4 drop-shadow-lg">🎥</div>
-                    <h3 className="text-2xl font-bold text-gray-800 mb-2 font-heading">Onam Celebration Video</h3>
-                    <p className="text-base text-gray-600 mb-3">Experience the joy of Onam</p>
+                  <div className="text-center relative z-10 px-4">
+                    <div className="text-4xl sm:text-6xl mb-3 sm:mb-4 drop-shadow-lg">🎥</div>
+                    <h3 className="text-lg sm:text-2xl font-bold text-gray-800 mb-2 font-heading">Onam Celebration Video</h3>
+                    <p className="text-sm sm:text-base text-gray-600 mb-3">Experience the joy of Onam</p>
                     
                     {/* Retry Button */}
                     <button 
@@ -177,7 +177,7 @@ const VideoSection = () => {
                           videoRef.current.load()
                         }
                       }}
-                      className="bg-onam-green text-white px-4 py-2 rounded-lg hover:bg-onam-green/80 transition-colors duration-200 font-medium"
+                      className="bg-onam-green text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-onam-green/80 transition-colors duration-200 font-medium text-sm sm:text-base"
                     >
                       Retry Video
                     </button>
@@ -189,23 +189,23 @@ const VideoSection = () => {
               {!isVideoLoaded && !videoError && (
                 <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
                   <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-onam-green mx-auto mb-4"></div>
-                    <p className="text-gray-600 font-medium">Loading video...</p>
+                    <div className="animate-spin rounded-full h-8 sm:h-12 w-8 sm:w-12 border-b-2 border-onam-green mx-auto mb-2 sm:mb-4"></div>
+                    <p className="text-gray-600 font-medium text-sm sm:text-base">Loading video...</p>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Overlay Heading on Video - Bottom Position */}
-            <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/60 via-black/20 to-transparent p-6 text-white z-10 pointer-events-none">
-              <h2 className="text-3xl md:text-4xl font-bold font-heading drop-shadow-2xl text-left ml-6">
+            <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/60 via-black/20 to-transparent p-3 sm:p-6 text-white z-10 pointer-events-none">
+              <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold font-heading drop-shadow-2xl text-left ml-3 sm:ml-6">
                 Onam Celebration
               </h2>
               {/* Video Status Indicator */}
               {isVideoPlaying && (
-                <div className="flex items-center space-x-2 mt-2 ml-6">
+                <div className="flex items-center space-x-2 mt-1 sm:mt-2 ml-3 sm:ml-6">
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span className="text-sm text-green-400 font-medium">Playing</span>
+                  <span className="text-xs sm:text-sm text-green-400 font-medium">Playing</span>
                 </div>
               )}
             </div>

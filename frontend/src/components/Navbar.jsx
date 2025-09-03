@@ -78,6 +78,7 @@ MobileMenuButton.displayName = 'MobileMenuButton'
 const Navbar = ({ currentSection, scrollToSection }) => {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
 
   // Optimized scroll handler with useCallback
   const handleScroll = useCallback(() => {
@@ -99,12 +100,35 @@ const Navbar = ({ currentSection, scrollToSection }) => {
     }
   }, [handleScroll])
 
+  // Responsive navigation handler
+  const handleResize = useCallback(() => {
+    const navbar = document.querySelector('nav')
+    if (navbar) {
+      const navWidth = navbar.offsetWidth
+      const logoWidth = navbar.querySelector('.logo-container')?.offsetWidth || 0
+      const availableWidth = navWidth - logoWidth - 80 // 80px for padding and mobile button
+      
+      // Calculate if we have enough space for all nav items
+      const navItemWidth = 120 // Approximate width per nav item
+      const totalNavWidth = navItems.length * navItemWidth
+      
+      setShowMobileMenu(availableWidth < totalNavWidth)
+    }
+  }, [])
+
   // Scroll event listener
   useEffect(() => {
     const scrollHandler = throttledScroll()
     window.addEventListener('scroll', scrollHandler, { passive: true })
     return () => window.removeEventListener('scroll', scrollHandler)
   }, [throttledScroll])
+
+  // Resize event listener for responsive navigation
+  useEffect(() => {
+    handleResize() // Initial check
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [handleResize])
 
   // Close mobile menu when section changes
   useEffect(() => {
@@ -133,34 +157,40 @@ const Navbar = ({ currentSection, scrollToSection }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Logo />
-
-          {/* Centered Navigation Links - Desktop */}
-          <div className="hidden md:flex items-center justify-center flex-1">
-            <div className="flex space-x-8">
-              {memoizedNavItems.map((item) => (
-                <NavItem 
-                  key={item.id}
-                  item={item}
-                  currentSection={currentSection}
-                  isScrolled={isScrolled}
-                  scrollToSection={scrollToSection}
-                />
-              ))}
-            </div>
+          <div className="logo-container">
+            <Logo />
           </div>
 
-          {/* Mobile Menu Button */}
-          <MobileMenuButton 
-            isScrolled={isScrolled}
-            onClick={toggleMobileMenu}
-            isMenuOpen={isMenuOpen}
-          />
+          {/* Centered Navigation Links - Show when there's space */}
+          {!showMobileMenu && (
+            <div className="flex items-center justify-center flex-1">
+              <div className="flex space-x-6 lg:space-x-8">
+                {memoizedNavItems.map((item) => (
+                  <NavItem 
+                    key={item.id}
+                    item={item}
+                    currentSection={currentSection}
+                    isScrolled={isScrolled}
+                    scrollToSection={scrollToSection}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Mobile Menu Button - Only show when needed */}
+          {showMobileMenu && (
+            <MobileMenuButton 
+              isScrolled={isScrolled}
+              onClick={toggleMobileMenu}
+              isMenuOpen={isMenuOpen}
+            />
+          )}
         </div>
 
         {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden bg-white/95 backdrop-blur-md shadow-lg rounded-lg mt-2 py-2">
+        {isMenuOpen && showMobileMenu && (
+          <div className="bg-white/95 backdrop-blur-md shadow-lg rounded-lg mt-2 py-2">
             <div className="flex flex-col space-y-1">
               {memoizedNavItems.map((item) => (
                 <button

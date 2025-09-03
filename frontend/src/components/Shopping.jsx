@@ -144,18 +144,18 @@ const Shopping = () => {
   return (
     <section id="shopping" className="section-padding bg-white relative overflow-hidden" aria-label="Traditional Onam Shopping">
       {/* Shopping Bag Pattern */}
-      <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-onam-gold/5 to-transparent rounded-full translate-x-40 -translate-y-40" aria-hidden="true"></div>
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-onam-red/5 to-transparent rounded-full -translate-x-32 translate-y-32" aria-hidden="true"></div>
+      <div className="absolute top-0 right-0 w-40 sm:w-80 h-40 sm:h-80 bg-gradient-to-bl from-onam-gold/5 to-transparent rounded-full translate-x-20 sm:translate-x-40 -translate-y-20 sm:-translate-y-40" aria-hidden="true"></div>
+      <div className="absolute bottom-0 left-0 w-32 sm:w-64 h-32 sm:h-64 bg-gradient-to-tr from-onam-red/5 to-transparent rounded-full -translate-x-16 sm:-translate-x-32 translate-y-16 sm:translate-y-32" aria-hidden="true"></div>
       
       <div className="max-w-7xl mx-auto relative z-10">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6 font-heading">Traditional Onam Shopping</h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+        <div className="text-center mb-12 sm:mb-16">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 mb-4 sm:mb-6 font-heading">Traditional Onam Shopping</h2>
+          <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto px-4">
             Discover the essential traditional items that make Onam celebrations complete - from traditional attire to the grand feast.
           </p>
         </div>
         
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {memoizedShoppingItems.map((item, index) => (
             <ProductCard 
               key={`${item.name}-${index}`}

@@ -146,20 +146,20 @@ const Sadya = () => {
   return (
     <section id="sadya" className="section-padding bg-gradient-to-br from-orange-50 to-yellow-50 relative overflow-hidden" aria-label="Traditional Onam Feast">
       {/* Food Pattern Background */}
-      <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-orange-100/30 to-transparent" aria-hidden="true"></div>
-      <div className="absolute bottom-0 right-0 w-full h-32 bg-gradient-to-t from-yellow-100/30 to-transparent" aria-hidden="true"></div>
+      <div className="absolute top-0 left-0 w-full h-16 sm:h-32 bg-gradient-to-b from-orange-100/30 to-transparent" aria-hidden="true"></div>
+      <div className="absolute bottom-0 right-0 w-full h-16 sm:h-32 bg-gradient-to-t from-yellow-100/30 to-transparent" aria-hidden="true"></div>
       
       <div className="max-w-7xl mx-auto relative z-10">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4 font-heading">Sadya</h2>
-          <p className="text-lg text-gray-700 max-w-2xl mx-auto">
+        <div className="text-center mb-8 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-3 sm:mb-4 font-heading">Sadya</h2>
+          <p className="text-base sm:text-lg text-gray-700 max-w-2xl mx-auto px-4">
             There is no way that a Malayali will like to miss an 'Onasadya' (Onam feast).
           </p>
         </div>
         
-        <div className="grid md:grid-cols-2 gap-8 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-start">
           <div className="order-2 md:order-1">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-2 gap-2 sm:gap-3">
               {memoizedSadyaDishes.map((item, index) => (
                 <DishItem key={`${item.name}-${index}`} item={item} />
               ))}
@@ -171,23 +171,23 @@ const Sadya = () => {
               <VideoPlayer onVideoError={handleVideoError} />
             ) : (
               // Fallback Content - Shown when video fails to load
-              <div className="w-full h-[320px] md:h-[455px] bg-gradient-to-br from-orange-100 via-yellow-100 to-orange-200 flex items-center justify-center relative overflow-hidden rounded-2xl shadow-xl">
+              <div className="w-full h-64 sm:h-80 md:h-[320px] lg:h-[455px] bg-gradient-to-br from-orange-100 via-yellow-100 to-orange-200 flex items-center justify-center relative overflow-hidden rounded-xl sm:rounded-2xl shadow-xl">
                 {/* Background Pattern */}
                 <div className="absolute inset-0 opacity-30">
-                  <div className="absolute top-1/4 left-1/4 w-24 h-24 bg-green-300 rounded-full blur-sm"></div>
-                  <div className="absolute top-1/3 right-1/4 w-20 h-20 bg-green-400 rounded-full blur-sm"></div>
-                  <div className="absolute bottom-1/4 left-1/3 w-16 h-16 bg-green-300 rounded-full blur-sm"></div>
+                  <div className="absolute top-1/4 left-1/4 w-16 sm:w-24 h-16 sm:h-24 bg-green-300 rounded-full blur-sm"></div>
+                  <div className="absolute top-1/3 right-1/4 w-12 sm:w-20 h-12 sm:h-20 bg-green-400 rounded-full blur-sm"></div>
+                  <div className="absolute bottom-1/4 left-1/3 w-10 sm:w-16 h-10 sm:h-16 bg-green-300 rounded-full blur-sm"></div>
                 </div>
                 
                 {/* Fallback Content */}
-                <div className="text-center relative z-10">
-                  <div className="text-6xl mb-4 drop-shadow-lg">🍽️</div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-2 font-heading">Traditional Onam Feast</h3>
-                  <p className="text-base text-gray-600 mb-3">Served on Banana Leaf</p>
+                <div className="text-center relative z-10 px-4">
+                  <div className="text-4xl sm:text-6xl mb-3 sm:mb-4 drop-shadow-lg">🍽️</div>
+                  <h3 className="text-lg sm:text-2xl font-bold text-gray-800 mb-2 font-heading">Traditional Onam Feast</h3>
+                  <p className="text-sm sm:text-base text-gray-600 mb-3">Served on Banana Leaf</p>
                   
                   {/* Additional Info */}
                   <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 max-w-xs mx-auto">
-                    <p className="text-xs text-gray-700 font-medium">
+                    <p className="text-xs sm:text-sm text-gray-700 font-medium">
                       Experience the authentic taste of Kerala with our traditional 26-course feast
                     </p>
                   </div>
@@ -195,7 +195,7 @@ const Sadya = () => {
                   {/* Retry Button */}
                   <button 
                     onClick={() => setVideoError(false)}
-                    className="mt-4 bg-onam-green text-white px-4 py-2 rounded-lg hover:bg-onam-green/80 transition-colors duration-200 font-medium"
+                    className="mt-3 sm:mt-4 bg-onam-green text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-onam-green/80 transition-colors duration-200 font-medium text-sm sm:text-base"
                   >
                     Retry Video
                   </button>

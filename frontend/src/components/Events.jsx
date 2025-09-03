@@ -151,7 +151,7 @@ EventContent.displayName = 'EventContent'
 
 // Memoized EventCard component
 const EventCard = memo(({ event }) => (
-  <div className="flex flex-col lg:flex-row items-start gap-8">
+  <div className="flex flex-col lg:flex-row items-start gap-4 sm:gap-6 lg:gap-8">
     <DateCard month={event.month} day={event.day} />
     <EventImage image={event.image} title={event.title} />
     <EventContent event={event} />
@@ -168,17 +168,17 @@ const Events = () => {
     <section id="events" className="section-padding bg-white" aria-label="Upcoming Onam Events">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 font-heading">
+        <div className="text-center mb-8 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 font-heading">
             Upcoming Events
           </h2>
-          <p className="text-lg text-gray-700 max-w-3xl mx-auto mt-4 font-sans">
+          <p className="text-base sm:text-lg text-gray-700 max-w-3xl mx-auto mt-3 sm:mt-4 font-sans px-4">
             Discover and participate in exciting Onam celebrations, competitions, and cultural activities throughout the year.
           </p>
         </div>
 
         {/* Events List */}
-        <div className="space-y-12">
+        <div className="space-y-8 sm:space-y-12">
           {memoizedEvents.map((event) => (
             <EventCard key={event.id} event={event} />
           ))}

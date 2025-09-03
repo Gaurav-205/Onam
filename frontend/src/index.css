@@ -82,24 +82,49 @@
       scroll-behavior: auto !important;
     }
   }
+
+  /* Mobile-first responsive base styles */
+  @media (max-width: 640px) {
+    html {
+      font-size: 14px; /* Slightly smaller base font for mobile */
+    }
+    
+    body {
+      line-height: 1.5; /* Tighter line height for mobile */
+    }
+  }
+
+  /* Tablet responsive adjustments */
+  @media (min-width: 641px) and (max-width: 1024px) {
+    html {
+      font-size: 15px;
+    }
+  }
+
+  /* Desktop responsive adjustments */
+  @media (min-width: 1025px) {
+    html {
+      font-size: 16px;
+    }
+  }
 }
 
 @layer components {
-  /* Optimized button components */
+  /* Optimized button components with mobile-first approach */
   .btn-primary {
-    @apply bg-onam-green hover:bg-green-700 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl font-sans focus:outline-none focus:ring-2 focus:ring-onam-green focus:ring-offset-2;
+    @apply bg-onam-green hover:bg-green-700 text-white font-semibold py-2 sm:py-2.5 px-4 sm:px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl font-sans focus:outline-none focus:ring-2 focus:ring-onam-green focus:ring-offset-2 text-sm sm:text-base;
   }
   
   .btn-secondary {
-    @apply bg-onam-gold hover:bg-amber-600 text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl font-sans focus:outline-none focus:ring-2 focus:ring-onam-gold focus:ring-offset-2;
+    @apply bg-onam-gold hover:bg-amber-600 text-white font-semibold py-2 sm:py-2.5 px-4 sm:px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl font-sans focus:outline-none focus:ring-2 focus:ring-onam-gold focus:ring-offset-2 text-sm sm:text-base;
   }
   
-  /* Optimized section spacing */
+  /* Optimized section spacing with mobile-first approach */
   .section-padding {
-    @apply py-16 px-4 sm:px-6 lg:px-8;
+    @apply py-12 sm:py-16 px-4 sm:px-6 lg:px-8;
   }
   
-  /* Enhanced card component with better performance */
+  /* Enhanced card component with better performance and mobile responsiveness */
   .card {
     @apply bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 focus:outline-none focus:ring-2 focus:ring-onam-green focus:ring-offset-2;
     /* Optimize for performance */
@@ -118,43 +143,43 @@
     @apply bg-gradient-to-r from-onam-green via-onam-gold to-onam-red bg-clip-text text-transparent;
   }
   
-  /* Enhanced typography utilities */
+  /* Enhanced typography utilities with mobile-first approach */
   .elegant-heading {
-    @apply font-elegant font-semibold tracking-wide;
+    @apply font-elegant font-semibold tracking-wide text-2xl sm:text-3xl md:text-4xl;
   }
   
   .decorative-text {
-    @apply font-decorative font-medium;
+    @apply font-decorative font-medium text-base sm:text-lg;
   }
   
   .ornate-heading {
-    @apply font-ornate font-normal tracking-wide;
+    @apply font-ornate font-normal tracking-wide text-xl sm:text-2xl md:text-3xl;
   }
   
   .script-text {
-    @apply font-script font-medium;
+    @apply font-script font-medium text-base sm:text-lg;
   }
   
-  /* Optimized golden text with better performance */
+  /* Optimized golden text with better performance and mobile responsiveness */
   .golden-text {
-    @apply text-yellow-400 drop-shadow-lg;
+    @apply text-yellow-400 drop-shadow-lg text-sm sm:text-base;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
   
   .ornate-golden {
-    @apply font-ornate text-yellow-400 drop-shadow-lg;
+    @apply font-ornate text-yellow-400 drop-shadow-lg text-lg sm:text-xl md:text-2xl;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
   
   .malayalam-elegant {
-    @apply font-malayalam font-semibold tracking-wide;
+    @apply font-malayalam font-semibold tracking-wide text-base sm:text-lg;
   }
   
   .malayalam-modern {
-    @apply font-malayalam-sans font-medium;
+    @apply font-malayalam-sans font-medium text-sm sm:text-base;
   }
 
-  /* Performance-optimized loading states */
+  /* Performance-optimized loading states with mobile responsiveness */
   .loading-skeleton {
     @apply animate-pulse bg-gray-200 rounded;
     background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
@@ -167,10 +192,15 @@
     @apply focus:outline-none focus:ring-2 focus:ring-onam-green focus:ring-offset-2;
   }
 
-  /* Performance-optimized hover effects */
+  /* Performance-optimized hover effects with mobile considerations */
   .hover-lift {
     @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg;
     will-change: transform, box-shadow;
+    
+    /* Disable hover effects on touch devices for better performance */
+    @media (hover: none) {
+      @apply hover:transform-none hover:shadow-lg;
+    }
   }
 
   /* Optimized backdrop blur for better performance */
@@ -178,6 +208,61 @@
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     background-color: rgba(255, 255, 255, 0.8);
+  }
+
+  /* Mobile-first responsive grid utilities */
+  .responsive-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8;
+  }
+
+  .responsive-grid-2 {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8;
+  }
+
+  .responsive-grid-4 {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6;
+  }
+
+  /* Mobile-first responsive text utilities */
+  .responsive-text-sm {
+    @apply text-xs sm:text-sm md:text-base;
+  }
+
+  .responsive-text-base {
+    @apply text-sm sm:text-base md:text-lg;
+  }
+
+  .responsive-text-lg {
+    @apply text-base sm:text-lg md:text-xl;
+  }
+
+  .responsive-text-xl {
+    @apply text-lg sm:text-xl md:text-2xl;
+  }
+
+  .responsive-text-2xl {
+    @apply text-xl sm:text-2xl md:text-3xl;
+  }
+
+  .responsive-text-3xl {
+    @apply text-2xl sm:text-3xl md:text-4xl;
+  }
+
+  .responsive-text-4xl {
+    @apply text-3xl sm:text-4xl md:text-5xl;
+  }
+
+  /* Mobile-first responsive spacing utilities */
+  .responsive-padding {
+    @apply p-4 sm:p-6 lg:p-8;
+  }
+
+  .responsive-margin {
+    @apply m-4 sm:m-6 lg:m-8;
+  }
+
+  .responsive-gap {
+    @apply gap-4 sm:gap-6 lg:gap-8;
   }
 }
 
@@ -214,9 +299,14 @@
     @apply focus:outline-none focus:ring-2 focus:ring-onam-green focus:ring-offset-2;
   }
 
-  /* Animation utilities */
+  /* Animation utilities with mobile considerations */
   .animate-float {
     animation: float 3s ease-in-out infinite;
+    
+    /* Reduce animation on mobile for better performance */
+    @media (max-width: 768px) {
+      animation: float 4s ease-in-out infinite;
+    }
   }
 
   .animate-pulse-slow {
@@ -278,6 +368,37 @@
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background: #047857;
   }
+
+  /* Mobile-first responsive utilities */
+  .mobile-only {
+    @apply block sm:hidden;
+  }
+
+  .desktop-only {
+    @apply hidden sm:block;
+  }
+
+  .tablet-up {
+    @apply hidden md:block;
+  }
+
+  .mobile-tablet {
+    @apply block lg:hidden;
+  }
+
+  /* Touch-friendly button sizing */
+  .touch-friendly {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Mobile-optimized spacing */
+  .mobile-safe {
+    @apply px-4 sm:px-6;
+  }
+
+  .mobile-safe-y {
+    @apply py-4 sm:py-6;
+  }
 }
 
 /* Print styles for better accessibility */
@@ -296,5 +417,38 @@
   .card {
     box-shadow: none;
     border: 1px solid #ccc;
+  }
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 640px) {
+  /* Reduce shadows on mobile for better performance */
+  .shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+  
+  .shadow-xl {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+  
+  /* Optimize animations for mobile */
+  .animate-float {
+    animation-duration: 4s;
+  }
+  
+  /* Reduce backdrop blur on mobile for better performance */
+  .backdrop-blur-optimized {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+}
+
+/* High DPI display optimizations */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .font-heading,
+  .font-ornate,
+  .font-malayalam {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }

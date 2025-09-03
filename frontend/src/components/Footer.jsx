@@ -129,28 +129,28 @@ const Footer = ({ scrollToSection }) => {
   }, [scrollToSection])
 
   return (
-    <footer className="bg-gray-900 text-white text-center py-16" role="contentinfo">
-      <div className="max-w-4xl mx-auto px-4">
+    <footer className="bg-gray-900 text-white text-center py-12 sm:py-16" role="contentinfo">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6">
         {/* Onam Animation - Same as Hero */}
-        <div className="mb-12">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white drop-shadow-2xl leading-tight">
+        <div className="mb-8 sm:mb-12">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white drop-shadow-2xl leading-tight">
             <AnimatedHeading currentHeading={currentHeading} isFading={isFading} />
           </h1>
-                  <p className="text-base md:text-lg lg:text-xl text-white/90 mt-4 font-normal drop-shadow-lg font-sans" aria-label="Website description celebrating Kerala's tradition and culture">
-          Celebration of Kerala's Tradition & Culture
-        </p>
+          <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white/90 mt-3 sm:mt-4 font-normal drop-shadow-lg font-sans px-4" aria-label="Website description celebrating Kerala's tradition and culture">
+            Celebration of Kerala's Tradition & Culture
+          </p>
         </div>
 
         {/* Horizontal Separator */}
-        <div className="w-full max-w-2xl mx-auto h-px bg-gray-600 mb-8" aria-hidden="true"></div>
+        <div className="w-full max-w-2xl mx-auto h-px bg-gray-600 mb-6 sm:mb-8" aria-hidden="true"></div>
 
         {/* Secondary Navigation Links */}
-        <nav className="flex justify-center space-x-6 md:space-x-8 mb-8 flex-wrap" role="navigation" aria-label="Footer navigation">
+        <nav className="flex justify-center space-x-4 sm:space-x-6 md:space-x-8 mb-6 sm:mb-8 flex-wrap gap-y-2" role="navigation" aria-label="Footer navigation">
           {memoizedSecondaryLinks.map((link, index) => (
             <button
               key={index}
               onClick={() => handleScrollToSection(link.id)}
-              className="text-gray-300 hover:text-yellow-400 transition-colors duration-200 font-medium tracking-wide text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-gray-900 rounded"
+              className="text-gray-300 hover:text-yellow-400 transition-colors duration-200 font-medium tracking-wide text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-gray-900 rounded"
               aria-label={`Navigate to ${link.label} section`}
             >
               {link.label}
@@ -159,14 +159,14 @@ const Footer = ({ scrollToSection }) => {
         </nav>
 
         {/* Social Media Icons */}
-        <div className="flex justify-center space-x-6 mb-8">
+        <div className="flex justify-center space-x-4 sm:space-x-6 mb-6 sm:mb-8">
           {memoizedSocialLinks.map((link, index) => (
             <SocialLink key={`${link.name}-${index}`} link={link} />
           ))}
         </div>
 
         {/* Contact Information */}
-        <div className="flex justify-center space-x-8 mb-8 text-gray-300 flex-wrap">
+        <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6 md:space-x-8 mb-6 sm:mb-8 text-gray-300">
           <ContactLink 
             href="mailto:gauravkhadelwal205@gmail.com"
             icon={
@@ -175,7 +175,7 @@ const Footer = ({ scrollToSection }) => {
               </svg>
             }
           >
-            gauravkhadelwal205@gmail.com
+            <span className="text-sm sm:text-base">gauravkhadelwal205@gmail.com</span>
           </ContactLink>
           <ContactLink 
             href="tel:+91-8955142954"
@@ -185,12 +185,12 @@ const Footer = ({ scrollToSection }) => {
               </svg>
             }
           >
-            +91 895 514 2954
+            <span className="text-sm sm:text-base">+91 895 514 2954</span>
           </ContactLink>
         </div>
 
         {/* Bottom Section - Copyright */}
-        <div className="text-gray-400 text-sm">
+        <div className="text-gray-400 text-xs sm:text-sm px-4">
           <p>Copyright © 2025 Onam Festival, Ltd. All rights reserved. Celebrating Kerala's rich cultural heritage.</p>
         </div>
       </div>

@@ -42,8 +42,8 @@ const CountdownCard = memo(({ value, label, maxValue }) => {
   return (
     <div className="text-center">
       {/* Circular Progress Arc */}
-      <div className="relative flex items-center justify-center mb-3">
-        <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 80 80" aria-hidden="true">
+      <div className="relative flex items-center justify-center mb-2 sm:mb-3">
+        <svg className="w-16 h-16 sm:w-20 sm:h-20 transform -rotate-90" viewBox="0 0 80 80" aria-hidden="true">
           {/* Background circle */}
           <circle
             cx="40"
@@ -70,14 +70,14 @@ const CountdownCard = memo(({ value, label, maxValue }) => {
         
         {/* Number overlay */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-2xl md:text-3xl font-bold text-white font-heading">
+          <div className="text-xl sm:text-2xl md:text-3xl font-bold text-white font-heading">
             {value.toString().padStart(2, '0')}
           </div>
         </div>
       </div>
       
       {/* Label */}
-      <div className="text-xs md:text-sm text-white/90 font-sans uppercase tracking-wider font-medium text-center">
+      <div className="text-xs sm:text-sm text-white/90 font-sans uppercase tracking-wider font-medium text-center">
         {label}
       </div>
     </div>
@@ -294,18 +294,18 @@ const Hero = () => {
         </div>
         
         {/* Main Content - Clean and minimal like Kerala website */}
-        <div className="relative z-10 text-center max-w-5xl mx-auto px-4 mt-20 md:mt-32">
-          <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-4 text-white drop-shadow-2xl leading-tight">
+        <div className="relative z-10 text-center max-w-5xl mx-auto px-4 sm:px-6 mt-16 sm:mt-20 md:mt-32">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-4 sm:mb-6 text-white drop-shadow-2xl leading-tight">
             <span className={headingClasses} aria-label={`Onam heading in ${currentHeadingData.lang === 'en' ? 'English' : 'Malayalam'}`}>
               {currentHeadingData.text}
             </span>
           </h1>
-          <p className="text-lg md:text-xl lg:text-2xl text-white/90 mb-12 font-normal drop-shadow-lg font-sans max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 mb-8 sm:mb-12 font-normal drop-shadow-lg font-sans max-w-3xl mx-auto px-2">
             Celebration of Kerala's Tradition & Culture
           </p>
           
           {/* Clean Countdown Timer with Circular Progress */}
-          <div className="flex justify-center items-center space-x-3 md:space-x-6 mb-12">
+          <div className="flex justify-center items-center space-x-2 sm:space-x-3 md:space-x-6 mb-8 sm:mb-12 flex-wrap gap-y-4">
             {countdownData.map((item) => (
               <CountdownCard 
                 key={item.label}
@@ -317,24 +317,24 @@ const Hero = () => {
           </div>
 
           {/* Event Details */}
-          <div className="text-center mb-20">
-            <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8">
-              <div className="bg-white/20 backdrop-blur-sm rounded-full px-6 py-3 border border-white/30">
-                <p className="text-white font-medium text-sm md:text-base drop-shadow-md">
+          <div className="text-center mb-16 sm:mb-20">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 md:gap-8 px-4">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full px-4 sm:px-6 py-2 sm:py-3 border border-white/30 w-full sm:w-auto">
+                <p className="text-white font-medium text-sm sm:text-base drop-shadow-md">
                   Open for All - Everyone Welcome!
                 </p>
               </div>
               
-              <div className="bg-white/20 backdrop-blur-sm rounded-full px-6 py-3 border border-white/30">
-                <p className="text-white font-medium text-sm md:text-base drop-shadow-md">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full px-4 sm:px-6 py-2 sm:py-3 border border-white/30 w-full sm:w-auto">
+                <p className="text-white font-medium text-sm sm:text-base drop-shadow-md">
                   MIT ADT University
                 </p>
               </div>
             </div>
             
             {/* Description */}
-            <div className="mt-8">
-              <p className="text-white/90 font-medium text-sm md:text-base drop-shadow-sm">
+            <div className="mt-6 sm:mt-8 px-4">
+              <p className="text-white/90 font-medium text-sm sm:text-base drop-shadow-sm">
                 Join us in celebrating Kerala's rich traditions and culture
               </p>
             </div>
@@ -349,12 +349,12 @@ const Hero = () => {
       </section>
       
       {/* About Onam Section */}
-      <section className="bg-white py-16 px-4 sm:px-6 lg:px-8">
+      <section className="bg-white py-12 sm:py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6 font-heading">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-4 sm:mb-6 font-heading">
             The National Festival of Kerala
           </h2>
-          <p className="text-base md:text-lg text-gray-700 leading-relaxed max-w-3xl mx-auto font-sans">
+          <p className="text-sm sm:text-base md:text-lg text-gray-700 leading-relaxed max-w-3xl mx-auto font-sans px-2">
             Onam is a nostalgia that brings back memories from childhood and the simple ways of life that prevailed in the villages back in the day. It is the celebration of the myth of Mahabali – the demon king who once ruled the land and is believed to visit his old subjects every year around this time. Onam is also an agricultural festival that celebrates the rich harvest of the land, thus symbolising joy and prosperity.
           </p>
         </div>
