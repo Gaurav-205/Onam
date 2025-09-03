@@ -319,13 +319,17 @@ const Hero = () => {
           {/* Event Details */}
           <div className="text-center mb-20">
             <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8">
-              <EventBadge>
-                <span aria-label="Event is open for all - Everyone is welcome">🎉 Open for All - Everyone Welcome! 🎉</span>
-              </EventBadge>
+              <div className="bg-white/20 backdrop-blur-sm rounded-full px-6 py-3 border border-white/30">
+                <p className="text-white font-medium text-sm md:text-base drop-shadow-md">
+                  Open for All - Everyone Welcome!
+                </p>
+              </div>
               
-              <EventBadge>
-                <span aria-label="Event location at MIT ADT University">📍 MIT ADT University</span>
-              </EventBadge>
+              <div className="bg-white/20 backdrop-blur-sm rounded-full px-6 py-3 border border-white/30">
+                <p className="text-white font-medium text-sm md:text-base drop-shadow-md">
+                  MIT ADT University
+                </p>
+              </div>
             </div>
             
             {/* Description */}
