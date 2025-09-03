@@ -6,22 +6,9 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    host: true,
-    strictPort: true,
-    headers: {
-      'Content-Type': 'application/javascript'
-    }
+    host: true
   },
-  optimizeDeps: {
-    include: ['react', 'react-dom']
-  },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom']
-        }
-      }
-    }
+  resolve: {
+    extensions: ['.js', '.jsx']
   }
 })
