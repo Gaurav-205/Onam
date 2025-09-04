@@ -148,7 +148,7 @@ const VideoPlayer = memo(({ onVideoError }) => {
         controls
         muted
         loop
-        preload="metadata"
+        preload="auto"
         poster="/sadya-image.jpeg"
         playsInline
         controlsList="nodownload"

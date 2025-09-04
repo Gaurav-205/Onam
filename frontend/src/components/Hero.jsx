@@ -312,7 +312,7 @@ const Hero = () => {
               loop
               muted
               playsInline
-              preload="metadata"
+              preload="auto"
               className="w-full h-full object-cover"
               style={{ objectPosition: 'center center' }}
               onError={handleVideoError}
@@ -335,18 +335,18 @@ const Hero = () => {
         </div>
         
         {/* Main Content - Centered in full viewport */}
-        <div className="relative z-10 text-center max-w-5xl mx-auto px-4 sm:px-6">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-4 sm:mb-6 text-white drop-shadow-2xl leading-tight">
+        <div className="relative z-10 text-center max-w-4xl mx-auto px-4 sm:px-6 mt-16 sm:mt-20 md:mt-24 lg:mt-32">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-3 sm:mb-4 text-white drop-shadow-2xl leading-tight">
             <span className={headingClasses} aria-label={`Onam heading in ${currentHeadingData.lang === 'en' ? 'English' : 'Malayalam'}`}>
               {currentHeadingData.text}
             </span>
           </h1>
-          <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 mb-8 sm:mb-12 font-normal drop-shadow-lg font-sans max-w-3xl mx-auto px-2">
+          <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white/90 mb-6 sm:mb-8 font-normal drop-shadow-lg font-sans max-w-2xl mx-auto px-2">
             Celebration of Kerala's Tradition & Culture
           </p>
           
           {/* Clean Countdown Timer with Circular Progress */}
-          <div className="flex justify-center items-center space-x-2 sm:space-x-3 md:space-x-6 mb-8 sm:mb-12 flex-wrap gap-y-4">
+          <div className="flex justify-center items-center space-x-2 sm:space-x-3 md:space-x-4 mb-6 sm:mb-8 flex-wrap gap-y-3">
             {countdownData.map((item) => (
               <CountdownCard 
                 key={item.label}
@@ -358,24 +358,27 @@ const Hero = () => {
           </div>
 
           {/* Event Details */}
-          <div className="text-center mb-8 sm:mb-12">
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 md:gap-8 px-4">
-              <div className="bg-white/20 backdrop-blur-sm rounded-full px-4 sm:px-6 py-2 sm:py-3 border border-white/30 w-full sm:w-auto">
-                <p className="text-white font-medium text-sm sm:text-base drop-shadow-md">
+          <div className="text-center mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-6 px-4">
+              <div className="w-full sm:w-auto">
+                <p className="text-white font-semibold text-xs sm:text-sm md:text-base drop-shadow-lg">
                   Open for All - Everyone Welcome!
                 </p>
               </div>
               
-              <div className="bg-white/20 backdrop-blur-sm rounded-full px-4 sm:px-6 py-2 sm:py-3 border border-white/30 w-full sm:w-auto">
-                <p className="text-white font-medium text-sm sm:text-base drop-shadow-md">
+              {/* Visual Separator Wall */}
+              <div className="hidden sm:block w-0.5 h-8 bg-white/70 mx-2"></div>
+              
+              <div className="w-full sm:w-auto">
+                <p className="text-white font-semibold text-xs sm:text-sm md:text-base drop-shadow-lg">
                   MIT ADT University
                 </p>
               </div>
             </div>
             
             {/* Description */}
-            <div className="mt-6 sm:mt-8 px-4">
-              <p className="text-white/90 font-medium text-sm sm:text-base drop-shadow-sm">
+            <div className="mt-4 sm:mt-6 px-4">
+              <p className="text-white/90 font-medium text-xs sm:text-sm drop-shadow-sm">
                 Join us in celebrating Kerala's rich traditions and culture
               </p>
             </div>
