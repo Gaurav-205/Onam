@@ -24,6 +24,25 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Loading optimization script -->
+    <script>
+      // Preload critical resources
+      const preloadVideo = document.createElement('link')
+      preloadVideo.rel = 'preload'
+      preloadVideo.as = 'video'
+      preloadVideo.href = '/onam-background.mp4'
+      document.head.appendChild(preloadVideo)
+      
+      // Performance monitoring
+      window.addEventListener('load', () => {
+        console.log('Onam website loaded successfully!')
+        if ('performance' in window) {
+          const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart
+          console.log(`Page load time: ${loadTime}ms`)
+        }
+      })
+    </script>
+    
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

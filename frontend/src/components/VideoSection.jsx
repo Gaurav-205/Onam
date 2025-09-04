@@ -1,6 +1,6 @@
 
 
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 
 const VideoSection = () => {
   const videoRef = useRef(null)
@@ -10,11 +10,7 @@ const VideoSection = () => {
   const [videoError, setVideoError] = useState(false)
   const [isIntersecting, setIsIntersecting] = useState(false)
 
-  // Memoized video sources for better performance
-  const videoSources = useMemo(() => [
-    { src: "/onam-celebration-video.mp4", type: "video/mp4" },
-    { src: "/onam-celebration-video.webm", type: "video/webm" }
-  ], [])
+
 
   // Optimized intersection observer callback
   const handleIntersection = useCallback((entries) => {
@@ -22,17 +18,17 @@ const VideoSection = () => {
       const isVisible = entry.isIntersecting
       setIsIntersecting(isVisible)
       
-      if (isVisible && videoRef.current && !videoError) {
+      if (isVisible && videoRef.current && !videoError && isVideoLoaded) {
         // Small delay to ensure smooth transition
         const playTimer = setTimeout(() => {
-          if (videoRef.current && isVisible) {
+          if (videoRef.current && isVisible && isVideoLoaded) {
             videoRef.current.play().catch(error => {
               console.log('VideoSection auto-play prevented:', error)
-              setVideoError(true)
+              // Don't set error for autoplay issues
             })
             setIsVideoPlaying(true)
           }
-        }, 150)
+        }, 300)
         
         return () => clearTimeout(playTimer)
       } else if (videoRef.current) {
@@ -40,7 +36,7 @@ const VideoSection = () => {
         setIsVideoPlaying(false)
       }
     })
-  }, [videoError])
+  }, [videoError, isVideoLoaded])
 
   // Video event handlers
   const handleVideoLoad = useCallback(() => {
@@ -128,19 +124,22 @@ const VideoSection = () => {
                   muted
                   playsInline
                   loop
-                  autoPlay
-                  onLoadStart={() => setIsVideoLoaded(false)}
-                  onLoadedData={handleVideoLoad}
+                  onLoadStart={() => {
+                    setIsVideoLoaded(false)
+                  }}
+                  onLoadedData={() => {
+                    handleVideoLoad()
+                  }}
                   onPlay={handleVideoPlay}
                   onPause={handleVideoPause}
                   onEnded={handleVideoEnded}
-                  onError={handleVideoError}
+                  onError={() => {
+                    handleVideoError()
+                  }}
                   aria-label="Onam celebration video showing traditional Kerala festival activities"
                   title="Onam Celebration Video"
                 >
-                  {videoSources.map((source, index) => (
-                    <source key={index} src={source.src} type={source.type} />
-                  ))}
+                  <source src="/onam-celebration-video.mp4" type="video/mp4" />
                   <p className="text-white bg-black/50 p-4 rounded">
                     Your browser does not support the video tag. 
                     <a 

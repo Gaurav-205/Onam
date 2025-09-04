@@ -1,15 +1,15 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
-import VideoSection from './components/VideoSection'
-import Shopping from './components/Shopping'
-import Sadya from './components/Sadya'
-import Events from './components/Events'
-// import Festivals from './components/Festivals'
-// import Rituals from './components/Rituals'
-// import Memories from './components/Memories'
-import UnderDevelopment from './components/UnderDevelopment'
-import Footer from './components/Footer'
+import LoadingSpinner from './components/LoadingSpinner'
+
+// Lazy load heavy components for better performance
+const VideoSection = lazy(() => import('./components/VideoSection'))
+const Shopping = lazy(() => import('./components/Shopping'))
+const Sadya = lazy(() => import('./components/Sadya'))
+const Events = lazy(() => import('./components/Events'))
+const UnderDevelopment = lazy(() => import('./components/UnderDevelopment'))
+const Footer = lazy(() => import('./components/Footer'))
 
 function App() {
   const [currentSection, setCurrentSection] = useState('home')
@@ -65,14 +65,13 @@ function App() {
   const mainContent = useMemo(() => (
     <>
       <Hero />
-      <VideoSection />
-      <Shopping />
-      <Sadya />
-      <Events />
-      {/* <Festivals />
-      <Rituals />
-      <Memories /> */}
-      <UnderDevelopment />
+      <Suspense fallback={<LoadingSpinner message="Loading Onam Experience..." />}>
+        <VideoSection />
+        <Shopping />
+        <Sadya />
+        <Events />
+        <UnderDevelopment />
+      </Suspense>
     </>
   ), [])
 
@@ -89,7 +88,14 @@ function App() {
       
       <Navbar currentSection={currentSection} scrollToSection={scrollToSection} />
       {mainContent}
-      <Footer scrollToSection={scrollToSection} />
+      <Suspense fallback={
+        <div className="bg-gray-800 text-white py-8 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-onam-green mx-auto mb-2"></div>
+          <p>Loading Footer...</p>
+        </div>
+      }>
+        <Footer scrollToSection={scrollToSection} />
+      </Suspense>
     </div>
   )
 }

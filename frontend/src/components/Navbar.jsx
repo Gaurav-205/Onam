@@ -39,18 +39,22 @@ const NavItem = memo(({ item, currentSection, isScrolled, scrollToSection }) => 
 NavItem.displayName = 'NavItem'
 
 // Memoized Logo component
-const Logo = memo(() => (
-  <div className="flex items-center space-x-2">
+const Logo = memo(({ scrollToSection }) => (
+  <button 
+    onClick={() => scrollToSection('home')}
+    className="flex items-center space-x-2 transition-transform duration-200 focus:outline-none rounded-lg p-1 hover:scale-105 sm:hover:scale-105"
+    aria-label="Navigate to home section"
+  >
     <img 
       src="/logo.png" 
       alt="ONAM Logo" 
-      className="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 object-contain"
+      className="w-8 h-8 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 xl:w-14 xl:h-14 object-contain"
       loading="eager"
     />
-    <span className="text-lg md:text-xl lg:text-2xl xl:text-3xl font-ornate font-normal text-onam-gold">
+    <span className="text-xl sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-ornate font-normal text-onam-gold">
       Onam
     </span>
-  </div>
+  </button>
 ))
 
 Logo.displayName = 'Logo'
@@ -158,7 +162,7 @@ const Navbar = ({ currentSection, scrollToSection }) => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="logo-container">
-            <Logo />
+            <Logo scrollToSection={scrollToSection} />
           </div>
 
           {/* Centered Navigation Links - Show when there's space */}

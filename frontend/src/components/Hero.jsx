@@ -210,12 +210,10 @@ const Hero = () => {
       video.preload = 'metadata'
       
       video.oncanplay = () => {
-        console.log('Hero video can play - file exists and is valid')
         setVideoError(false)
       }
       
-      video.onerror = (e) => {
-        console.log('Hero video error:', e)
+      video.onerror = () => {
         setVideoError(true)
       }
       
@@ -223,8 +221,8 @@ const Hero = () => {
       video.src = '/onam-background.mp4'
     }
     
-    // Check video after a short delay
-    const timer = setTimeout(checkVideo, 200)
+    // Check video after a longer delay to prevent loading conflicts
+    const timer = setTimeout(checkVideo, 500)
     
     return () => {
       clearTimeout(timer)
@@ -295,7 +293,7 @@ const Hero = () => {
 
   // Font loading effect with error handling
   useEffect(() => {
-    loadFonts().then((success) => {
+    loadFonts().then(() => {
       setFontsLoaded(true)
     }).catch(() => {
       // Fallback: show content even if fonts fail to load
@@ -305,7 +303,7 @@ const Hero = () => {
 
   return (
     <>
-      <section id="home" className="min-h-screen flex items-center justify-center relative overflow-hidden">
+      <section id="home" className="h-screen flex items-center justify-center relative overflow-hidden">
         {/* Video Background - Primary */}
         <div className="absolute inset-0 w-full h-full">
           {!videoError && (
@@ -336,8 +334,8 @@ const Hero = () => {
           <div className="absolute inset-0 bg-black/30"></div>
         </div>
         
-        {/* Main Content - Clean and minimal like Kerala website */}
-        <div className="relative z-10 text-center max-w-5xl mx-auto px-4 sm:px-6 mt-16 sm:mt-20 md:mt-32">
+        {/* Main Content - Centered in full viewport */}
+        <div className="relative z-10 text-center max-w-5xl mx-auto px-4 sm:px-6">
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-4 sm:mb-6 text-white drop-shadow-2xl leading-tight">
             <span className={headingClasses} aria-label={`Onam heading in ${currentHeadingData.lang === 'en' ? 'English' : 'Malayalam'}`}>
               {currentHeadingData.text}
@@ -360,7 +358,7 @@ const Hero = () => {
           </div>
 
           {/* Event Details */}
-          <div className="text-center mb-16 sm:mb-20">
+          <div className="text-center mb-8 sm:mb-12">
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 md:gap-8 px-4">
               <div className="bg-white/20 backdrop-blur-sm rounded-full px-4 sm:px-6 py-2 sm:py-3 border border-white/30 w-full sm:w-auto">
                 <p className="text-white font-medium text-sm sm:text-base drop-shadow-md">

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, memo, useState, useEffect } from 'react'
+import { useCallback, useMemo, memo, useState, useEffect, useRef } from 'react'
 
 // Memoized sadya dishes data
 const sadyaDishes = [
@@ -56,10 +56,63 @@ const DishItem = memo(({ item }) => {
 
 DishItem.displayName = 'DishItem'
 
-// Memoized VideoPlayer component
+// Memoized VideoPlayer component with auto-play functionality
 const VideoPlayer = memo(({ onVideoError }) => {
+  const videoRef = useRef(null)
+  const sectionRef = useRef(null)
   const [isVideoLoaded, setIsVideoLoaded] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isIntersecting, setIsIntersecting] = useState(false)
+
+  // Intersection observer callback for auto-play/auto-pause
+  const handleIntersection = useCallback((entries) => {
+    entries.forEach((entry) => {
+      const isVisible = entry.isIntersecting
+      setIsIntersecting(isVisible)
+      
+      if (isVisible && videoRef.current && isVideoLoaded) {
+        // Auto-play when video comes into view
+        const playTimer = setTimeout(() => {
+          if (videoRef.current && isVisible && isVideoLoaded) {
+            videoRef.current.play().catch(error => {
+              console.log('Sadya video auto-play prevented:', error)
+              // Don't set error for autoplay issues
+            })
+            setIsPlaying(true)
+          }
+        }, 300)
+        
+        return () => clearTimeout(playTimer)
+      } else if (videoRef.current) {
+        // Auto-pause when video goes out of view
+        videoRef.current.pause()
+        setIsPlaying(false)
+      }
+    })
+  }, [isVideoLoaded])
+
+  // Set up intersection observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(handleIntersection, {
+      threshold: 0.3,
+      rootMargin: '0px 0px -100px 0px'
+    })
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current)
+    }
+
+    return () => {
+      if (sectionRef.current) {
+        observer.unobserve(sectionRef.current)
+      }
+      // Ensure video is paused when component unmounts
+      if (videoRef.current) {
+        videoRef.current.pause()
+        setIsPlaying(false)
+      }
+    }
+  }, [handleIntersection])
 
   const handleVideoLoad = useCallback(() => {
     setIsVideoLoaded(true)
@@ -79,12 +132,18 @@ const VideoPlayer = memo(({ onVideoError }) => {
 
   const handleVideoEnded = useCallback(() => {
     setIsPlaying(false)
-  }, [])
+    // Auto-restart video if still in view
+    if (isIntersecting && videoRef.current) {
+      videoRef.current.currentTime = 0
+      videoRef.current.play().catch(() => {})
+    }
+  }, [isIntersecting])
 
   return (
-    <div className="w-full h-[320px] md:h-[455px] bg-black rounded-2xl overflow-hidden shadow-xl relative">
+    <div ref={sectionRef} className="w-full h-[320px] md:h-[455px] bg-black rounded-2xl overflow-hidden shadow-xl relative">
       {/* Video Player with Zoomed Poster */}
       <video
+        ref={videoRef}
         className="w-full h-full object-cover transition-all duration-300"
         controls
         muted
@@ -93,12 +152,18 @@ const VideoPlayer = memo(({ onVideoError }) => {
         poster="/sadya-image.jpeg"
         playsInline
         controlsList="nodownload"
-        onLoadStart={() => setIsVideoLoaded(false)}
-        onLoadedData={handleVideoLoad}
+        onLoadStart={() => {
+          setIsVideoLoaded(false)
+        }}
+        onLoadedData={() => {
+          handleVideoLoad()
+        }}
         onPlay={handleVideoPlay}
         onPause={handleVideoPause}
         onEnded={handleVideoEnded}
-        onError={handleVideoError}
+        onError={() => {
+          handleVideoError()
+        }}
         aria-label="Traditional Onam feast video showing 26-course meal preparation and serving"
         title="Traditional Onam Feast Video"
       >
@@ -135,24 +200,6 @@ VideoPlayer.displayName = 'VideoPlayer'
 
 const Sadya = () => {
   const [videoError, setVideoError] = useState(false)
-
-  // Test video file accessibility
-  useEffect(() => {
-    const testVideoAccess = async () => {
-      try {
-        const response = await fetch('/sadya-video.mp4', { method: 'HEAD' })
-        if (response.ok) {
-          console.log('Sadya video file is accessible, status:', response.status)
-        } else {
-          console.error('Sadya video file not accessible, status:', response.status)
-        }
-      } catch (error) {
-        console.error('Sadya video file access error:', error)
-      }
-    }
-    
-    testVideoAccess()
-  }, [])
 
   // Memoized dishes data to prevent unnecessary re-renders
   const memoizedSadyaDishes = useMemo(() => sadyaDishes, [])
