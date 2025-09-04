@@ -1,4 +1,4 @@
-import { useCallback, useMemo, memo, useState } from 'react'
+import { useCallback, useMemo, memo, useState, useEffect } from 'react'
 
 // Memoized sadya dishes data
 const sadyaDishes = [
@@ -135,6 +135,24 @@ VideoPlayer.displayName = 'VideoPlayer'
 
 const Sadya = () => {
   const [videoError, setVideoError] = useState(false)
+
+  // Test video file accessibility
+  useEffect(() => {
+    const testVideoAccess = async () => {
+      try {
+        const response = await fetch('/sadya-video.mp4', { method: 'HEAD' })
+        if (response.ok) {
+          console.log('Sadya video file is accessible, status:', response.status)
+        } else {
+          console.error('Sadya video file not accessible, status:', response.status)
+        }
+      } catch (error) {
+        console.error('Sadya video file access error:', error)
+      }
+    }
+    
+    testVideoAccess()
+  }, [])
 
   // Memoized dishes data to prevent unnecessary re-renders
   const memoizedSadyaDishes = useMemo(() => sadyaDishes, [])

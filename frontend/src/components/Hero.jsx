@@ -202,35 +202,53 @@ const Hero = () => {
 
   // Video file check with enhanced mobile support
   useEffect(() => {
-    const video = document.createElement('video')
-    video.src = '/onam-background.mp4'
-    video.muted = true
-    video.playsInline = true
-    
-    // Enhanced mobile video loading
-    const loadVideo = async () => {
-      try {
-        // Try to load video with user interaction simulation
-        await video.load()
-        console.log('Video loaded successfully')
-      } catch (error) {
-        console.log('Video load error:', error)
-        handleVideoError()
+    // Check if video file exists and can be loaded
+    const checkVideo = () => {
+      const video = document.createElement('video')
+      video.muted = true
+      video.playsInline = true
+      video.preload = 'metadata'
+      
+      video.oncanplay = () => {
+        console.log('Hero video can play - file exists and is valid')
+        setVideoError(false)
       }
+      
+      video.onerror = (e) => {
+        console.log('Hero video error:', e)
+        setVideoError(true)
+      }
+      
+      // Try to load the video
+      video.src = '/onam-background.mp4'
     }
     
-    video.onerror = handleVideoError
-    video.oncanplay = () => console.log('Video can play')
-    
-    // Load video after a short delay to allow page to settle
-    const timer = setTimeout(loadVideo, 100)
+    // Check video after a short delay
+    const timer = setTimeout(checkVideo, 200)
     
     return () => {
       clearTimeout(timer)
-      video.onerror = null
-      video.oncanplay = null
     }
-  }, [handleVideoError])
+  }, [])
+
+  // Additional video accessibility test
+  useEffect(() => {
+    // Test if video files are accessible via fetch
+    const testVideoAccess = async () => {
+      try {
+        const response = await fetch('/onam-background.mp4', { method: 'HEAD' })
+        if (response.ok) {
+          console.log('Hero video file is accessible, status:', response.status)
+        } else {
+          console.error('Hero video file not accessible, status:', response.status)
+        }
+      } catch (error) {
+        console.error('Hero video file access error:', error)
+      }
+    }
+    
+    testVideoAccess()
+  }, [])
 
   // Scroll indicator timer
   useEffect(() => {
@@ -296,23 +314,22 @@ const Hero = () => {
               loop
               muted
               playsInline
-              preload="auto"
+              preload="metadata"
               className="w-full h-full object-cover"
               style={{ objectPosition: 'center center' }}
               onError={handleVideoError}
-              onLoadStart={() => console.log('Video loading started')}
-              onCanPlay={() => console.log('Video can play')}
-              onPlay={() => console.log('Video playing')}
+              onLoadStart={() => console.log('Hero video loading started')}
+              onCanPlay={() => console.log('Hero video can play')}
+              onPlay={() => console.log('Hero video playing')}
               aria-hidden="true"
             >
               <source src="/onam-background.mp4" type="video/mp4" />
-              <source src="/onam-background.mp4" type="video/mp4; codecs='avc1.42E01E, mp4a.40.2'" />
             </video>
           )}
           
           {/* Fallback Background - Clean gradient if no video */}
           {videoError && (
-            <div className="w-full h-full bg-gradient-to-br from-onam-green via-onam-gold to-red-500 animate-pulse"></div>
+            <div className="w-full h-full bg-gradient-to-br from-onam-green via-onam-gold to-onam-red"></div>
           )}
           
           {/* Minimal overlay for text readability */}
