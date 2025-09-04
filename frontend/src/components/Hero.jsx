@@ -200,14 +200,35 @@ const Hero = () => {
     return () => window.removeEventListener('scroll', scrollHandler)
   }, [throttledScroll])
 
-  // Video file check with error handling
+  // Video file check with enhanced mobile support
   useEffect(() => {
     const video = document.createElement('video')
     video.src = '/onam-background.mp4'
+    video.muted = true
+    video.playsInline = true
+    
+    // Enhanced mobile video loading
+    const loadVideo = async () => {
+      try {
+        // Try to load video with user interaction simulation
+        await video.load()
+        console.log('Video loaded successfully')
+      } catch (error) {
+        console.log('Video load error:', error)
+        handleVideoError()
+      }
+    }
+    
     video.onerror = handleVideoError
+    video.oncanplay = () => console.log('Video can play')
+    
+    // Load video after a short delay to allow page to settle
+    const timer = setTimeout(loadVideo, 100)
     
     return () => {
+      clearTimeout(timer)
       video.onerror = null
+      video.oncanplay = null
     }
   }, [handleVideoError])
 
@@ -275,18 +296,23 @@ const Hero = () => {
               loop
               muted
               playsInline
+              preload="auto"
               className="w-full h-full object-cover"
               style={{ objectPosition: 'center center' }}
               onError={handleVideoError}
+              onLoadStart={() => console.log('Video loading started')}
+              onCanPlay={() => console.log('Video can play')}
+              onPlay={() => console.log('Video playing')}
               aria-hidden="true"
             >
               <source src="/onam-background.mp4" type="video/mp4" />
+              <source src="/onam-background.mp4" type="video/mp4; codecs='avc1.42E01E, mp4a.40.2'" />
             </video>
           )}
           
           {/* Fallback Background - Clean gradient if no video */}
           {videoError && (
-            <div className="w-full h-full bg-gradient-to-br from-onam-green via-onam-gold to-onam-red"></div>
+            <div className="w-full h-full bg-gradient-to-br from-onam-green via-onam-gold to-red-500 animate-pulse"></div>
           )}
           
           {/* Minimal overlay for text readability */}
