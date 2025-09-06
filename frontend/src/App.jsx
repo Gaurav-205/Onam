@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
 import LoadingSpinner from './components/LoadingSpinner'
+import FastLoadingSpinner from './components/FastLoadingSpinner'
 import PerformanceMonitor from './components/PerformanceMonitor'
 
 // Lazy load heavy components for better performance with error boundaries
@@ -11,6 +12,19 @@ const Sadya = lazy(() => import('./components/Sadya').catch(() => ({ default: ()
 const Events = lazy(() => import('./components/Events').catch(() => ({ default: () => <div className="section-padding bg-white text-center"><p>Events section temporarily unavailable</p></div> })))
 const UnderDevelopment = lazy(() => import('./components/UnderDevelopment').catch(() => ({ default: () => <div className="section-padding bg-white text-center"><p>Coming soon section temporarily unavailable</p></div> })))
 const Footer = lazy(() => import('./components/Footer').catch(() => ({ default: () => <div className="bg-gray-900 text-white py-8 text-center"><p>Footer temporarily unavailable</p></div> })))
+
+// Preload critical components after initial render
+const preloadComponents = () => {
+  setTimeout(() => {
+    import('./components/VideoSection')
+    import('./components/Shopping')
+  }, 1000)
+  
+  setTimeout(() => {
+    import('./components/Sadya')
+    import('./components/Events')
+  }, 2000)
+}
 
 function App() {
   const [currentSection, setCurrentSection] = useState('home')
@@ -89,18 +103,16 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyPress)
   }, [])
 
+  // Preload components after initial render
+  useEffect(() => {
+    preloadComponents()
+  }, [])
+
   // Memoized main content to prevent unnecessary re-renders
   const mainContent = useMemo(() => (
     <>
       <Hero />
-      <Suspense fallback={
-        <div className="section-padding bg-white">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-onam-green mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading Onam Experience...</p>
-          </div>
-        </div>
-      }>
+      <Suspense fallback={<FastLoadingSpinner message="Loading Onam Experience..." />}>
         <VideoSection />
         <Shopping />
         <Sadya />
@@ -123,12 +135,7 @@ function App() {
       
       <Navbar currentSection={currentSection} scrollToSection={scrollToSection} />
       {mainContent}
-      <Suspense fallback={
-        <div className="bg-gray-800 text-white py-8 text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-onam-green mx-auto mb-2"></div>
-          <p>Loading Footer...</p>
-        </div>
-      }>
+      <Suspense fallback={<FastLoadingSpinner message="Loading Footer..." />}>
         <Footer scrollToSection={scrollToSection} />
       </Suspense>
       

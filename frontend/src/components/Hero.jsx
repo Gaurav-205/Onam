@@ -1,6 +1,24 @@
 import { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react'
 import { isLowEndDevice, preloadCriticalResources, getVideoPreloadStrategy, performanceMonitor } from '../utils/performance'
 
+// Critical CSS for immediate rendering
+const criticalStyles = `
+  .hero-critical {
+    background: linear-gradient(135deg, #059669 0%, #D97706 50%, #DC2626 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .hero-text-critical {
+    color: white;
+    text-align: center;
+    font-size: 3rem;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  }
+`
+
 // Constants moved outside component to prevent recreation
 const HEADINGS = [
   { text: "Onam", lang: "en" },
@@ -113,11 +131,13 @@ const Hero = () => {
   const [isLowEnd, setIsLowEnd] = useState(false)
   const [videoLoaded, setVideoLoaded] = useState(false)
   const [showVideo, setShowVideo] = useState(false)
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
   
   // Refs for performance
   const videoRef = useRef(null)
   const countdownIntervalRef = useRef(null)
   const headingIntervalRef = useRef(null)
+  const criticalStyleRef = useRef(null)
 
   // Memoized heading text and classes
   const currentHeadingData = useMemo(() => HEADINGS[currentHeading], [currentHeading])
@@ -196,6 +216,30 @@ const Hero = () => {
     }
   }, [handleVideoScroll, handleScrollState])
 
+  // Critical CSS injection for immediate rendering
+  useEffect(() => {
+    if (!criticalStyleRef.current) {
+      const style = document.createElement('style')
+      style.textContent = criticalStyles
+      style.id = 'hero-critical-styles'
+      document.head.appendChild(style)
+      criticalStyleRef.current = style
+    }
+    
+    // Mark initial load as complete after a short delay
+    const timer = setTimeout(() => {
+      setIsInitialLoad(false)
+    }, 100)
+    
+    return () => {
+      clearTimeout(timer)
+      if (criticalStyleRef.current) {
+        document.head.removeChild(criticalStyleRef.current)
+        criticalStyleRef.current = null
+      }
+    }
+  }, [])
+
   // Device detection
   useEffect(() => {
     setIsLowEnd(isLowEndDevice())
@@ -246,8 +290,11 @@ const Hero = () => {
           seconds: Math.floor((distance % (1000 * 60)) / 1000)
         }
         
-        // Only update if values actually changed
-        if (JSON.stringify(prevTime) === JSON.stringify(newTime)) {
+        // Only update if values actually changed (more efficient comparison)
+        if (prevTime.days === newTime.days && 
+            prevTime.hours === newTime.hours && 
+            prevTime.minutes === newTime.minutes && 
+            prevTime.seconds === newTime.seconds) {
           return prevTime
         }
         
@@ -258,9 +305,13 @@ const Hero = () => {
     }
   }, [])
 
-  // Countdown timer effect with cleanup
+  // Countdown timer effect with cleanup - update every 5 seconds for better performance
   useEffect(() => {
-    countdownIntervalRef.current = setInterval(updateCountdown, 1000)
+    // Initial update
+    updateCountdown()
+    
+    // Update every 5 seconds instead of every second for better performance
+    countdownIntervalRef.current = setInterval(updateCountdown, 5000)
     return () => {
       if (countdownIntervalRef.current) {
         clearInterval(countdownIntervalRef.current)
@@ -268,17 +319,27 @@ const Hero = () => {
     }
   }, [updateCountdown])
 
-  // Font loading effect with error handling
+  // Non-blocking font loading
   useEffect(() => {
-    performanceMonitor.start('font-loading')
-    preloadCriticalResources().then(() => {
-      setFontsLoaded(true)
-      performanceMonitor.end('font-loading')
-    }).catch(() => {
-      // Fallback: show content even if fonts fail to load
-      setFontsLoaded(true)
-      performanceMonitor.end('font-loading')
-    })
+    // Show content immediately, load fonts in background
+    setFontsLoaded(true)
+    
+    // Load fonts asynchronously without blocking
+    const loadFontsAsync = () => {
+      performanceMonitor.start('font-loading')
+      preloadCriticalResources().then(() => {
+        performanceMonitor.end('font-loading')
+      }).catch(() => {
+        performanceMonitor.end('font-loading')
+      })
+    }
+    
+    // Use requestIdleCallback if available, otherwise setTimeout
+    if (window.requestIdleCallback) {
+      requestIdleCallback(loadFontsAsync, { timeout: 2000 })
+    } else {
+      setTimeout(loadFontsAsync, 100)
+    }
   }, [])
 
   // Cleanup on unmount
