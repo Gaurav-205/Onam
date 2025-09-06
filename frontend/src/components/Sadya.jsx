@@ -1,5 +1,4 @@
 import { useCallback, useMemo, memo, useState, useEffect, useRef } from 'react'
-import OptimizedImage from './OptimizedImage'
 
 // Memoized sadya dishes data
 const sadyaDishes = [
@@ -19,22 +18,31 @@ const sadyaDishes = [
 
 // Memoized DishItem component
 const DishItem = memo(({ item }) => {
+  const handleImageError = useCallback((e) => {
+    // Fallback to icon if image fails to load
+    e.target.style.display = 'none'
+    const fallbackIcon = e.target.nextSibling
+    if (fallbackIcon) {
+      fallbackIcon.style.display = 'flex'
+    }
+  }, [])
+
   return (
     <div className="bg-white/95 backdrop-blur-sm rounded-lg p-3 shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-200">
       <div className="flex items-center space-x-3">
         {/* Ingredient Image on the left */}
         <div className="w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 flex-shrink-0 shadow-sm">
-          <OptimizedImage
-            src={item.image}
+          <img 
+            src={item.image} 
             alt={item.name}
-            className="w-full h-full"
-            fallbackIcon={
-              <div className={`w-full h-full bg-gradient-to-br ${item.color} flex items-center justify-center text-lg shadow-md`}>
-                {item.icon}
-              </div>
-            }
+            className="w-full h-full object-cover"
+            onError={handleImageError}
             loading="lazy"
           />
+          {/* Fallback Icon */}
+          <div className={`w-full h-full bg-gradient-to-br ${item.color} flex items-center justify-center text-lg shadow-md`} style={{display: 'none'}}>
+            {item.icon}
+          </div>
         </div>
         
         {/* Ingredient Name - No underline */}

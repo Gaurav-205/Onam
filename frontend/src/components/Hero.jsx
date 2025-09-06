@@ -1,23 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react'
-import { isLowEndDevice, preloadCriticalResources, getVideoPreloadStrategy, performanceMonitor } from '../utils/performance'
-
-// Critical CSS for immediate rendering
-const criticalStyles = `
-  .hero-critical {
-    background: linear-gradient(135deg, #059669 0%, #D97706 50%, #DC2626 100%);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .hero-text-critical {
-    color: white;
-    text-align: center;
-    font-size: 3rem;
-    font-weight: bold;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-  }
-`
+import { useState, useEffect, useCallback, useMemo, memo } from 'react'
 
 // Constants moved outside component to prevent recreation
 const HEADINGS = [
@@ -29,6 +10,22 @@ const ONAM_DATE = new Date('2025-09-12T00:00:00').getTime()
 const HEADING_INTERVAL = 3000
 const FADE_DURATION = 300
 const SCROLL_THRESHOLD = 50
+
+// Font loading utility with error handling
+const loadFonts = async () => {
+  try {
+    await Promise.all([
+      document.fonts.load('1em Great Vibes'),
+      document.fonts.load('1em Noto Serif Malayalam'),
+      document.fonts.load('1em Prata'),
+      document.fonts.load('1em Montserrat')
+    ])
+    return true
+  } catch (error) {
+    console.warn('Some fonts failed to load:', error)
+    return false
+  }
+}
 
 // Memoized CountdownCard component with performance optimizations
 const CountdownCard = memo(({ value, label, maxValue }) => {
@@ -128,16 +125,6 @@ const Hero = () => {
   const [currentHeading, setCurrentHeading] = useState(0)
   const [isFading, setIsFading] = useState(false)
   const [fontsLoaded, setFontsLoaded] = useState(false)
-  const [isLowEnd, setIsLowEnd] = useState(false)
-  const [videoLoaded, setVideoLoaded] = useState(false)
-  const [showVideo, setShowVideo] = useState(false)
-  const [isInitialLoad, setIsInitialLoad] = useState(true)
-  
-  // Refs for performance
-  const videoRef = useRef(null)
-  const countdownIntervalRef = useRef(null)
-  const headingIntervalRef = useRef(null)
-  const criticalStyleRef = useRef(null)
 
   // Memoized heading text and classes
   const currentHeadingData = useMemo(() => HEADINGS[currentHeading], [currentHeading])
@@ -166,35 +153,25 @@ const Hero = () => {
   ], [timeLeft])
 
   // Optimized video error handling
-  const handleVideoError = useCallback(() => {
-    console.warn('Hero video failed to load, falling back to gradient')
-    setVideoError(true)
-    setVideoLoaded(false)
-  }, [])
-
-  const handleVideoLoad = useCallback(() => {
-    setVideoLoaded(true)
-    setVideoError(false)
-    // Delay showing video to prevent flash
-    setTimeout(() => setShowVideo(true), 100)
-  }, [])
+  const handleVideoError = useCallback(() => setVideoError(true), [])
 
   // Optimized scroll handlers with useCallback
   const handleVideoScroll = useCallback(() => {
-    if (!videoRef.current || isLowEnd) return
-    
     const heroSection = document.getElementById('home')
     if (!heroSection) return
 
     const rect = heroSection.getBoundingClientRect()
     const isVisible = rect.top < window.innerHeight && rect.bottom > 0
     
-    if (isVisible && videoLoaded) {
-      videoRef.current.play().catch(() => {}) // Silent error handling
-    } else if (videoRef.current) {
-      videoRef.current.pause()
+    const backgroundVideo = document.querySelector('#home video')
+    if (backgroundVideo) {
+      if (isVisible) {
+        backgroundVideo.play().catch(() => {}) // Silent error handling
+      } else {
+        backgroundVideo.pause()
+      }
     }
-  }, [videoLoaded, isLowEnd])
+  }, [])
 
   const handleScrollState = useCallback(() => {
     const scrolled = window.scrollY > SCROLL_THRESHOLD
@@ -216,41 +193,14 @@ const Hero = () => {
     }
   }, [handleVideoScroll, handleScrollState])
 
-  // Critical CSS injection for immediate rendering
-  useEffect(() => {
-    if (!criticalStyleRef.current) {
-      const style = document.createElement('style')
-      style.textContent = criticalStyles
-      style.id = 'hero-critical-styles'
-      document.head.appendChild(style)
-      criticalStyleRef.current = style
-    }
-    
-    // Mark initial load as complete after a short delay
-    const timer = setTimeout(() => {
-      setIsInitialLoad(false)
-    }, 100)
-    
-    return () => {
-      clearTimeout(timer)
-      if (criticalStyleRef.current) {
-        document.head.removeChild(criticalStyleRef.current)
-        criticalStyleRef.current = null
-      }
-    }
-  }, [])
-
-  // Device detection
-  useEffect(() => {
-    setIsLowEnd(isLowEndDevice())
-  }, [])
-
   // Consolidated useEffect for scroll handling
   useEffect(() => {
     const scrollHandler = throttledScroll()
     window.addEventListener('scroll', scrollHandler, { passive: true })
     return () => window.removeEventListener('scroll', scrollHandler)
   }, [throttledScroll])
+
+  // Removed heavy video checks to improve performance
 
   // Scroll indicator timer
   useEffect(() => {
@@ -260,7 +210,7 @@ const Hero = () => {
 
   // Heading rotation with fade transition
   useEffect(() => {
-    headingIntervalRef.current = setInterval(() => {
+    const headingTimer = setInterval(() => {
       setIsFading(true)
       
       setTimeout(() => {
@@ -269,11 +219,7 @@ const Hero = () => {
       }, FADE_DURATION)
     }, HEADING_INTERVAL)
 
-    return () => {
-      if (headingIntervalRef.current) {
-        clearInterval(headingIntervalRef.current)
-      }
-    }
+    return () => clearInterval(headingTimer)
   }, [])
 
   // Optimized countdown timer with useCallback and reduced updates
@@ -290,11 +236,8 @@ const Hero = () => {
           seconds: Math.floor((distance % (1000 * 60)) / 1000)
         }
         
-        // Only update if values actually changed (more efficient comparison)
-        if (prevTime.days === newTime.days && 
-            prevTime.hours === newTime.hours && 
-            prevTime.minutes === newTime.minutes && 
-            prevTime.seconds === newTime.seconds) {
+        // Only update if values actually changed
+        if (JSON.stringify(prevTime) === JSON.stringify(newTime)) {
           return prevTime
         }
         
@@ -305,54 +248,20 @@ const Hero = () => {
     }
   }, [])
 
-  // Countdown timer effect with cleanup - update every 5 seconds for better performance
+  // Countdown timer effect with cleanup
   useEffect(() => {
-    // Initial update
-    updateCountdown()
-    
-    // Update every 5 seconds instead of every second for better performance
-    countdownIntervalRef.current = setInterval(updateCountdown, 5000)
-    return () => {
-      if (countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current)
-      }
-    }
+    const timer = setInterval(updateCountdown, 1000)
+    return () => clearInterval(timer)
   }, [updateCountdown])
 
-  // Non-blocking font loading
+  // Font loading effect with error handling
   useEffect(() => {
-    // Show content immediately, load fonts in background
-    setFontsLoaded(true)
-    
-    // Load fonts asynchronously without blocking
-    const loadFontsAsync = () => {
-      performanceMonitor.start('font-loading')
-      preloadCriticalResources().then(() => {
-        performanceMonitor.end('font-loading')
-      }).catch(() => {
-        performanceMonitor.end('font-loading')
-      })
-    }
-    
-    // Use requestIdleCallback if available, otherwise setTimeout
-    if (window.requestIdleCallback) {
-      requestIdleCallback(loadFontsAsync, { timeout: 2000 })
-    } else {
-      setTimeout(loadFontsAsync, 100)
-    }
-  }, [])
-
-  // Cleanup on unmount
-  useEffect(() => {
-    const videoElement = videoRef.current
-    return () => {
-      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current)
-      if (headingIntervalRef.current) clearInterval(headingIntervalRef.current)
-      if (videoElement) {
-        videoElement.pause()
-        videoElement.src = ''
-      }
-    }
+    loadFonts().then(() => {
+      setFontsLoaded(true)
+    }).catch(() => {
+      // Fallback: show content even if fonts fail to load
+      setFontsLoaded(true)
+    })
   }, [])
 
   return (
@@ -360,22 +269,18 @@ const Hero = () => {
       <section id="home" className="h-screen flex items-center justify-center relative overflow-hidden">
         {/* Video Background - Primary */}
         <div className="absolute inset-0 w-full h-full">
-          {!videoError && !isLowEnd && (
+          {!videoError && (
             <video
-              ref={videoRef}
               autoPlay
               loop
               muted
               playsInline
-              preload={getVideoPreloadStrategy()}
-              className={`w-full h-full object-cover transition-opacity duration-500 ${
-                showVideo ? 'opacity-100' : 'opacity-0'
-              }`}
+              preload="auto"
+              className="w-full h-full object-cover"
               style={{ objectPosition: 'center center' }}
               onError={handleVideoError}
-              onLoadedData={handleVideoLoad}
-              onCanPlay={handleVideoLoad}
               onLoadStart={() => console.log('Hero video loading started')}
+              onCanPlay={() => console.log('Hero video can play')}
               onPlay={() => console.log('Hero video playing')}
               aria-hidden="true"
             >
@@ -383,14 +288,9 @@ const Hero = () => {
             </video>
           )}
           
-          {/* Fallback Background - Clean gradient if no video or low-end device */}
-          {(videoError || isLowEnd) && (
-            <div className="w-full h-full bg-gradient-to-br from-onam-green via-onam-gold to-onam-red animate-gradient-shift"></div>
-          )}
-          
-          {/* Loading state for video */}
-          {!videoError && !isLowEnd && !videoLoaded && (
-            <div className="absolute inset-0 bg-gradient-to-br from-onam-green via-onam-gold to-onam-red animate-pulse"></div>
+          {/* Fallback Background - Clean gradient if no video */}
+          {videoError && (
+            <div className="w-full h-full bg-gradient-to-br from-onam-green via-onam-gold to-onam-red"></div>
           )}
           
           {/* Minimal overlay for text readability */}

@@ -2,33 +2,17 @@ import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
 import LoadingSpinner from './components/LoadingSpinner'
-import FastLoadingSpinner from './components/FastLoadingSpinner'
-import PerformanceMonitor from './components/PerformanceMonitor'
 
-// Lazy load heavy components for better performance with error boundaries
-const VideoSection = lazy(() => import('./components/VideoSection').catch(() => ({ default: () => <div className="section-padding bg-white text-center"><p>Video section temporarily unavailable</p></div> })))
-const Shopping = lazy(() => import('./components/Shopping').catch(() => ({ default: () => <div className="section-padding bg-white text-center"><p>Shopping section temporarily unavailable</p></div> })))
-const Sadya = lazy(() => import('./components/Sadya').catch(() => ({ default: () => <div className="section-padding bg-white text-center"><p>Sadya section temporarily unavailable</p></div> })))
-const Events = lazy(() => import('./components/Events').catch(() => ({ default: () => <div className="section-padding bg-white text-center"><p>Events section temporarily unavailable</p></div> })))
-const UnderDevelopment = lazy(() => import('./components/UnderDevelopment').catch(() => ({ default: () => <div className="section-padding bg-white text-center"><p>Coming soon section temporarily unavailable</p></div> })))
-const Footer = lazy(() => import('./components/Footer').catch(() => ({ default: () => <div className="bg-gray-900 text-white py-8 text-center"><p>Footer temporarily unavailable</p></div> })))
-
-// Preload critical components after initial render
-const preloadComponents = () => {
-  setTimeout(() => {
-    import('./components/VideoSection')
-    import('./components/Shopping')
-  }, 1000)
-  
-  setTimeout(() => {
-    import('./components/Sadya')
-    import('./components/Events')
-  }, 2000)
-}
+// Lazy load heavy components for better performance
+const VideoSection = lazy(() => import('./components/VideoSection'))
+const Shopping = lazy(() => import('./components/Shopping'))
+const Sadya = lazy(() => import('./components/Sadya'))
+const Events = lazy(() => import('./components/Events'))
+const UnderDevelopment = lazy(() => import('./components/UnderDevelopment'))
+const Footer = lazy(() => import('./components/Footer'))
 
 function App() {
   const [currentSection, setCurrentSection] = useState('home')
-  const [showPerformanceMonitor, setShowPerformanceMonitor] = useState(false)
 
   // Memoized sections array to prevent recreation
   const sections = useMemo(() => ['home', 'shopping', 'sadya', 'events', 'under-development'], [])
@@ -90,29 +74,11 @@ function App() {
     return () => window.removeEventListener('scroll', scrollHandler)
   }, [throttledScroll])
 
-  // Performance monitor toggle (Ctrl+Shift+P)
-  useEffect(() => {
-    const handleKeyPress = (e) => {
-      if (e.ctrlKey && e.shiftKey && e.key === 'P') {
-        e.preventDefault()
-        setShowPerformanceMonitor(prev => !prev)
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyPress)
-    return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [])
-
-  // Preload components after initial render
-  useEffect(() => {
-    preloadComponents()
-  }, [])
-
   // Memoized main content to prevent unnecessary re-renders
   const mainContent = useMemo(() => (
     <>
       <Hero />
-      <Suspense fallback={<FastLoadingSpinner message="Loading Onam Experience..." />}>
+      <Suspense fallback={<LoadingSpinner message="Loading Onam Experience..." />}>
         <VideoSection />
         <Shopping />
         <Sadya />
@@ -135,12 +101,14 @@ function App() {
       
       <Navbar currentSection={currentSection} scrollToSection={scrollToSection} />
       {mainContent}
-      <Suspense fallback={<FastLoadingSpinner message="Loading Footer..." />}>
+      <Suspense fallback={
+        <div className="bg-gray-800 text-white py-8 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-onam-green mx-auto mb-2"></div>
+          <p>Loading Footer...</p>
+        </div>
+      }>
         <Footer scrollToSection={scrollToSection} />
       </Suspense>
-      
-      {/* Performance Monitor */}
-      <PerformanceMonitor show={showPerformanceMonitor} />
     </div>
   )
 }

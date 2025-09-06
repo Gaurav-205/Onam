@@ -1,6 +1,5 @@
 import { useCallback, useMemo, memo } from 'react'
 import { useState } from 'react'
-import OptimizedImage from './OptimizedImage'
 
 // Memoized shopping items data
 const shoppingItems = [
@@ -38,6 +37,18 @@ const shoppingItems = [
 
 // Memoized ProductCard component for better performance
 const ProductCard = memo(({ item, onBookNow }) => {
+  const [imageLoaded, setImageLoaded] = useState(false)
+  const [imageError, setImageError] = useState(false)
+
+  const handleImageLoad = useCallback(() => {
+    setImageLoaded(true)
+    setImageError(false)
+  }, [])
+
+  const handleImageError = useCallback(() => {
+    setImageError(true)
+    setImageLoaded(false)
+  }, [])
 
   const handleBookNowClick = useCallback((e) => {
     e.stopPropagation()
@@ -48,17 +59,38 @@ const ProductCard = memo(({ item, onBookNow }) => {
     <div className="bg-white overflow-hidden rounded-2xl shadow-lg flex flex-col h-full hover:shadow-xl transition-shadow duration-300">
       {/* Top Section - Image Area */}
       <div className="relative h-64 bg-gradient-to-br from-gray-100 to-gray-200">
-        <OptimizedImage
-          src={item.image}
-          alt={`${item.name} - ${item.description}`}
-          className="w-full h-full"
-          fallbackIcon={
+        {/* Loading State */}
+        {!imageLoaded && !imageError && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-onam-green mx-auto mb-2"></div>
+              <p className="text-gray-600 text-sm">Loading image...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Product Image */}
+        {!imageError && (
+          <img 
+            src={item.image} 
+            alt={`${item.name} - ${item.description}`}
+            className={`w-full h-full object-cover transition-opacity duration-300 ${
+              imageLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+            loading="lazy"
+          />
+        )}
+        
+        {/* Fallback Icon (shown if image fails) */}
+        {imageError && (
+          <div className="absolute inset-0 flex items-center justify-center">
             <div className={`w-24 h-24 bg-gradient-to-br ${item.color} rounded-full flex items-center justify-center text-5xl text-white shadow-xl`}>
               {item.icon}
             </div>
-          }
-          loading="lazy"
-        />
+          </div>
+        )}
         
         {/* Top-left Badge */}
         <div className="absolute top-4 left-4">

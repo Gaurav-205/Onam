@@ -1,5 +1,4 @@
 import { useCallback, useMemo, memo } from 'react'
-import OptimizedImage from './OptimizedImage'
 
 // Memoized upcoming events data
 const upcomingEvents = [
@@ -71,14 +70,19 @@ DateCard.displayName = 'DateCard'
 
 // Memoized EventImage component
 const EventImage = memo(({ image, title }) => {
+  const handleImageError = useCallback((e) => {
+    // Fallback to logo if image fails to load
+    e.target.src = '/logo.png'
+  }, [])
+
   return (
     <div className="flex-shrink-0">
       <div className="w-96 h-64 rounded-lg overflow-hidden shadow-md">
-        <OptimizedImage
+        <img
           src={image}
           alt={title}
-          className="w-full h-full"
-          fallbackIcon="📅"
+          className="w-full h-full object-cover"
+          onError={handleImageError}
           loading="lazy"
         />
       </div>

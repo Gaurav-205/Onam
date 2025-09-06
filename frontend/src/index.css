@@ -336,11 +336,6 @@
     }
   }
 
-  .animate-gradient-shift {
-    background-size: 200% 200%;
-    animation: gradient-shift 8s ease infinite;
-  }
-
   @keyframes loading-shimmer {
     0% { 
       background-position: -200% 0; 

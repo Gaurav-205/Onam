@@ -24,19 +24,49 @@
   </head>
   <body>
     <div id="root"></div>
-    <!-- Critical resource preloading -->
-    <link rel="preload" href="/logo.png" as="image">
-    <link rel="preload" href="/onam-video-thumbnail.jpg" as="image">
-    
-    <!-- Performance monitoring -->
+    <!-- Loading optimization script -->
     <script>
-      // Lightweight performance monitoring
+      // Preload critical video resources
+      const preloadHeroVideo = document.createElement('link')
+      preloadHeroVideo.rel = 'preload'
+      preloadHeroVideo.as = 'video'
+      preloadHeroVideo.href = '/onam-background.mp4'
+      preloadHeroVideo.type = 'video/mp4'
+      document.head.appendChild(preloadHeroVideo)
+      
+      // Preload other videos
+      const preloadSadyaVideo = document.createElement('link')
+      preloadSadyaVideo.rel = 'preload'
+      preloadSadyaVideo.as = 'video'
+      preloadSadyaVideo.href = '/sadya-video.mp4'
+      preloadSadyaVideo.type = 'video/mp4'
+      document.head.appendChild(preloadSadyaVideo)
+      
+      const preloadCelebrationVideo = document.createElement('link')
+      preloadCelebrationVideo.rel = 'preload'
+      preloadCelebrationVideo.as = 'video'
+      preloadCelebrationVideo.href = '/onam-celebration-video.mp4'
+      preloadCelebrationVideo.type = 'video/mp4'
+      document.head.appendChild(preloadCelebrationVideo)
+      
+      // Performance monitoring
       window.addEventListener('load', () => {
         console.log('Onam website loaded successfully!')
-        if ('performance' in window && performance.timing) {
+        if ('performance' in window) {
           const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart
           console.log(`Page load time: ${loadTime}ms`)
         }
+      })
+      
+      // Video loading optimization
+      document.addEventListener('DOMContentLoaded', () => {
+        // Start loading videos early
+        const videos = document.querySelectorAll('video')
+        videos.forEach(video => {
+          if (video.preload === 'auto') {
+            video.load()
+          }
+        })
       })
     </script>
     
