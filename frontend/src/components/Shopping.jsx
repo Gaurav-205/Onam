@@ -1,4 +1,6 @@
 import { useCallback, useMemo, memo } from 'react'
+import { useState } from 'react'
+import OptimizedImage from './OptimizedImage'
 
 // Memoized shopping items data
 const shoppingItems = [
@@ -36,14 +38,6 @@ const shoppingItems = [
 
 // Memoized ProductCard component for better performance
 const ProductCard = memo(({ item, onBookNow }) => {
-  const handleImageError = useCallback((e) => {
-    // Fallback to icon if image fails to load
-    e.target.style.display = 'none'
-    const fallbackIcon = e.target.nextSibling
-    if (fallbackIcon) {
-      fallbackIcon.style.display = 'flex'
-    }
-  }, [])
 
   const handleBookNowClick = useCallback((e) => {
     e.stopPropagation()
@@ -54,21 +48,17 @@ const ProductCard = memo(({ item, onBookNow }) => {
     <div className="bg-white overflow-hidden rounded-2xl shadow-lg flex flex-col h-full hover:shadow-xl transition-shadow duration-300">
       {/* Top Section - Image Area */}
       <div className="relative h-64 bg-gradient-to-br from-gray-100 to-gray-200">
-        {/* Product Image */}
-        <img 
-          src={item.image} 
+        <OptimizedImage
+          src={item.image}
           alt={`${item.name} - ${item.description}`}
-          className="w-full h-full object-cover"
-          onError={handleImageError}
+          className="w-full h-full"
+          fallbackIcon={
+            <div className={`w-24 h-24 bg-gradient-to-br ${item.color} rounded-full flex items-center justify-center text-5xl text-white shadow-xl`}>
+              {item.icon}
+            </div>
+          }
           loading="lazy"
         />
-        
-        {/* Fallback Icon (hidden by default, shown if image fails) */}
-        <div className={`absolute inset-0 flex items-center justify-center ${item.image ? 'hidden' : 'flex'}`}>
-          <div className={`w-24 h-24 bg-gradient-to-br ${item.color} rounded-full flex items-center justify-center text-5xl text-white shadow-xl`}>
-            {item.icon}
-          </div>
-        </div>
         
         {/* Top-left Badge */}
         <div className="absolute top-4 left-4">
@@ -76,8 +66,6 @@ const ProductCard = memo(({ item, onBookNow }) => {
             Traditional
           </span>
         </div>
-        
-
       </div>
       
       {/* Bottom Section - Product Details */}

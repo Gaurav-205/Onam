@@ -1,16 +1,24 @@
 
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, memo } from 'react'
+import { isLowEndDevice, getVideoPreloadStrategy } from '../utils/performance'
 
-const VideoSection = () => {
+const VideoSection = memo(() => {
   const videoRef = useRef(null)
   const sectionRef = useRef(null)
   const [isVideoLoaded, setIsVideoLoaded] = useState(false)
   const [isVideoPlaying, setIsVideoPlaying] = useState(false)
   const [videoError, setVideoError] = useState(false)
   const [isIntersecting, setIsIntersecting] = useState(false)
+  const [isLowEnd, setIsLowEnd] = useState(false)
+  const [showVideo, setShowVideo] = useState(false)
 
 
+
+  // Device detection
+  useEffect(() => {
+    setIsLowEnd(isLowEndDevice())
+  }, [])
 
   // Optimized intersection observer callback
   const handleIntersection = useCallback((entries) => {
@@ -18,7 +26,7 @@ const VideoSection = () => {
       const isVisible = entry.isIntersecting
       setIsIntersecting(isVisible)
       
-      if (isVisible && videoRef.current && !videoError && isVideoLoaded) {
+      if (isVisible && videoRef.current && !videoError && isVideoLoaded && !isLowEnd) {
         // Small delay to ensure smooth transition
         const playTimer = setTimeout(() => {
           if (videoRef.current && isVisible && isVideoLoaded) {
@@ -36,17 +44,20 @@ const VideoSection = () => {
         setIsVideoPlaying(false)
       }
     })
-  }, [videoError, isVideoLoaded])
+  }, [videoError, isVideoLoaded, isLowEnd])
 
   // Video event handlers
   const handleVideoLoad = useCallback(() => {
     setIsVideoLoaded(true)
     setVideoError(false)
+    // Delay showing video to prevent flash
+    setTimeout(() => setShowVideo(true), 100)
   }, [])
 
   const handleVideoError = useCallback(() => {
     setVideoError(true)
     setIsVideoLoaded(false)
+    setShowVideo(false)
     console.error('Video failed to load in VideoSection')
   }, [])
 
@@ -114,18 +125,20 @@ const VideoSection = () => {
             
             {/* Video Player */}
             <div className="w-full h-full">
-              {!videoError ? (
+              {!videoError && !isLowEnd ? (
                 <video
                   ref={videoRef}
-                  className="w-full h-full rounded-xl sm:rounded-2xl object-cover transition-opacity duration-300"
-                  style={{ opacity: isVideoLoaded ? 1 : 0 }}
+                  className={`w-full h-full rounded-xl sm:rounded-2xl object-cover transition-opacity duration-500 ${
+                    showVideo ? 'opacity-100' : 'opacity-0'
+                  }`}
                   controls
-                  preload="auto"
+                  preload={getVideoPreloadStrategy()}
                   muted
                   playsInline
                   loop
                   onLoadStart={() => {
                     setIsVideoLoaded(false)
+                    setShowVideo(false)
                   }}
                   onLoadedData={() => {
                     handleVideoLoad()
@@ -213,6 +226,8 @@ const VideoSection = () => {
       </div>
     </section>
   )
-}
+})
+
+VideoSection.displayName = 'VideoSection'
 
 export default VideoSection

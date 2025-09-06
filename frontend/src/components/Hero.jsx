@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useMemo, memo } from 'react'
+import { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react'
+import { isLowEndDevice, preloadCriticalResources, getVideoPreloadStrategy, performanceMonitor } from '../utils/performance'
 
 // Constants moved outside component to prevent recreation
 const HEADINGS = [
@@ -10,22 +11,6 @@ const ONAM_DATE = new Date('2025-09-12T00:00:00').getTime()
 const HEADING_INTERVAL = 3000
 const FADE_DURATION = 300
 const SCROLL_THRESHOLD = 50
-
-// Font loading utility with error handling
-const loadFonts = async () => {
-  try {
-    await Promise.all([
-      document.fonts.load('1em Great Vibes'),
-      document.fonts.load('1em Noto Serif Malayalam'),
-      document.fonts.load('1em Prata'),
-      document.fonts.load('1em Montserrat')
-    ])
-    return true
-  } catch (error) {
-    console.warn('Some fonts failed to load:', error)
-    return false
-  }
-}
 
 // Memoized CountdownCard component with performance optimizations
 const CountdownCard = memo(({ value, label, maxValue }) => {
@@ -125,6 +110,14 @@ const Hero = () => {
   const [currentHeading, setCurrentHeading] = useState(0)
   const [isFading, setIsFading] = useState(false)
   const [fontsLoaded, setFontsLoaded] = useState(false)
+  const [isLowEnd, setIsLowEnd] = useState(false)
+  const [videoLoaded, setVideoLoaded] = useState(false)
+  const [showVideo, setShowVideo] = useState(false)
+  
+  // Refs for performance
+  const videoRef = useRef(null)
+  const countdownIntervalRef = useRef(null)
+  const headingIntervalRef = useRef(null)
 
   // Memoized heading text and classes
   const currentHeadingData = useMemo(() => HEADINGS[currentHeading], [currentHeading])
@@ -153,25 +146,35 @@ const Hero = () => {
   ], [timeLeft])
 
   // Optimized video error handling
-  const handleVideoError = useCallback(() => setVideoError(true), [])
+  const handleVideoError = useCallback(() => {
+    console.warn('Hero video failed to load, falling back to gradient')
+    setVideoError(true)
+    setVideoLoaded(false)
+  }, [])
+
+  const handleVideoLoad = useCallback(() => {
+    setVideoLoaded(true)
+    setVideoError(false)
+    // Delay showing video to prevent flash
+    setTimeout(() => setShowVideo(true), 100)
+  }, [])
 
   // Optimized scroll handlers with useCallback
   const handleVideoScroll = useCallback(() => {
+    if (!videoRef.current || isLowEnd) return
+    
     const heroSection = document.getElementById('home')
     if (!heroSection) return
 
     const rect = heroSection.getBoundingClientRect()
     const isVisible = rect.top < window.innerHeight && rect.bottom > 0
     
-    const backgroundVideo = document.querySelector('#home video')
-    if (backgroundVideo) {
-      if (isVisible) {
-        backgroundVideo.play().catch(() => {}) // Silent error handling
-      } else {
-        backgroundVideo.pause()
-      }
+    if (isVisible && videoLoaded) {
+      videoRef.current.play().catch(() => {}) // Silent error handling
+    } else if (videoRef.current) {
+      videoRef.current.pause()
     }
-  }, [])
+  }, [videoLoaded, isLowEnd])
 
   const handleScrollState = useCallback(() => {
     const scrolled = window.scrollY > SCROLL_THRESHOLD
@@ -193,60 +196,17 @@ const Hero = () => {
     }
   }, [handleVideoScroll, handleScrollState])
 
+  // Device detection
+  useEffect(() => {
+    setIsLowEnd(isLowEndDevice())
+  }, [])
+
   // Consolidated useEffect for scroll handling
   useEffect(() => {
     const scrollHandler = throttledScroll()
     window.addEventListener('scroll', scrollHandler, { passive: true })
     return () => window.removeEventListener('scroll', scrollHandler)
   }, [throttledScroll])
-
-  // Video file check with enhanced mobile support
-  useEffect(() => {
-    // Check if video file exists and can be loaded
-    const checkVideo = () => {
-      const video = document.createElement('video')
-      video.muted = true
-      video.playsInline = true
-      video.preload = 'metadata'
-      
-      video.oncanplay = () => {
-        setVideoError(false)
-      }
-      
-      video.onerror = () => {
-        setVideoError(true)
-      }
-      
-      // Try to load the video
-      video.src = '/onam-background.mp4'
-    }
-    
-    // Check video after a longer delay to prevent loading conflicts
-    const timer = setTimeout(checkVideo, 500)
-    
-    return () => {
-      clearTimeout(timer)
-    }
-  }, [])
-
-  // Additional video accessibility test
-  useEffect(() => {
-    // Test if video files are accessible via fetch
-    const testVideoAccess = async () => {
-      try {
-        const response = await fetch('/onam-background.mp4', { method: 'HEAD' })
-        if (response.ok) {
-          console.log('Hero video file is accessible, status:', response.status)
-        } else {
-          console.error('Hero video file not accessible, status:', response.status)
-        }
-      } catch (error) {
-        console.error('Hero video file access error:', error)
-      }
-    }
-    
-    testVideoAccess()
-  }, [])
 
   // Scroll indicator timer
   useEffect(() => {
@@ -256,7 +216,7 @@ const Hero = () => {
 
   // Heading rotation with fade transition
   useEffect(() => {
-    const headingTimer = setInterval(() => {
+    headingIntervalRef.current = setInterval(() => {
       setIsFading(true)
       
       setTimeout(() => {
@@ -265,40 +225,73 @@ const Hero = () => {
       }, FADE_DURATION)
     }, HEADING_INTERVAL)
 
-    return () => clearInterval(headingTimer)
+    return () => {
+      if (headingIntervalRef.current) {
+        clearInterval(headingIntervalRef.current)
+      }
+    }
   }, [])
 
-  // Optimized countdown timer with useCallback
+  // Optimized countdown timer with useCallback and reduced updates
   const updateCountdown = useCallback(() => {
     const now = new Date().getTime()
     const distance = ONAM_DATE - now
     
     if (distance > 0) {
-      setTimeLeft({
-        days: Math.floor(distance / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-        minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
-        seconds: Math.floor((distance % (1000 * 60)) / 1000)
+      setTimeLeft(prevTime => {
+        const newTime = {
+          days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((distance % (1000 * 60)) / 1000)
+        }
+        
+        // Only update if values actually changed
+        if (JSON.stringify(prevTime) === JSON.stringify(newTime)) {
+          return prevTime
+        }
+        
+        return newTime
       })
     } else {
       setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 })
     }
   }, [])
 
-  // Countdown timer effect
+  // Countdown timer effect with cleanup
   useEffect(() => {
-    const timer = setInterval(updateCountdown, 1000)
-    return () => clearInterval(timer)
+    countdownIntervalRef.current = setInterval(updateCountdown, 1000)
+    return () => {
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current)
+      }
+    }
   }, [updateCountdown])
 
   // Font loading effect with error handling
   useEffect(() => {
-    loadFonts().then(() => {
+    performanceMonitor.start('font-loading')
+    preloadCriticalResources().then(() => {
       setFontsLoaded(true)
+      performanceMonitor.end('font-loading')
     }).catch(() => {
       // Fallback: show content even if fonts fail to load
       setFontsLoaded(true)
+      performanceMonitor.end('font-loading')
     })
+  }, [])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    const videoElement = videoRef.current
+    return () => {
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current)
+      if (headingIntervalRef.current) clearInterval(headingIntervalRef.current)
+      if (videoElement) {
+        videoElement.pause()
+        videoElement.src = ''
+      }
+    }
   }, [])
 
   return (
@@ -306,18 +299,22 @@ const Hero = () => {
       <section id="home" className="h-screen flex items-center justify-center relative overflow-hidden">
         {/* Video Background - Primary */}
         <div className="absolute inset-0 w-full h-full">
-          {!videoError && (
+          {!videoError && !isLowEnd && (
             <video
+              ref={videoRef}
               autoPlay
               loop
               muted
               playsInline
-              preload="auto"
-              className="w-full h-full object-cover"
+              preload={getVideoPreloadStrategy()}
+              className={`w-full h-full object-cover transition-opacity duration-500 ${
+                showVideo ? 'opacity-100' : 'opacity-0'
+              }`}
               style={{ objectPosition: 'center center' }}
               onError={handleVideoError}
+              onLoadedData={handleVideoLoad}
+              onCanPlay={handleVideoLoad}
               onLoadStart={() => console.log('Hero video loading started')}
-              onCanPlay={() => console.log('Hero video can play')}
               onPlay={() => console.log('Hero video playing')}
               aria-hidden="true"
             >
@@ -325,9 +322,14 @@ const Hero = () => {
             </video>
           )}
           
-          {/* Fallback Background - Clean gradient if no video */}
-          {videoError && (
-            <div className="w-full h-full bg-gradient-to-br from-onam-green via-onam-gold to-onam-red"></div>
+          {/* Fallback Background - Clean gradient if no video or low-end device */}
+          {(videoError || isLowEnd) && (
+            <div className="w-full h-full bg-gradient-to-br from-onam-green via-onam-gold to-onam-red animate-gradient-shift"></div>
+          )}
+          
+          {/* Loading state for video */}
+          {!videoError && !isLowEnd && !videoLoaded && (
+            <div className="absolute inset-0 bg-gradient-to-br from-onam-green via-onam-gold to-onam-red animate-pulse"></div>
           )}
           
           {/* Minimal overlay for text readability */}
