@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Test - Onam Project</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .video-test { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
+        video { width: 100%; max-width: 500px; height: auto; }
+        .status { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Onam Video Test Page</h1>
+    <p>This page tests if your Google Drive videos are accessible.</p>
+
+    <div class="video-test">
+        <h3>1. Onam Background Video</h3>
+        <video controls>
+            <source src="https://drive.google.com/uc?export=view&id=12aInBqIz2pl-M7KlH1Rs7oofFvimE8ff" type="video/mp4">
+            <p>Video not supported or not accessible</p>
+        </video>
+        <div class="status" id="status1">Testing...</div>
+    </div>
+
+    <div class="video-test">
+        <h3>2. Onam Celebration Video</h3>
+        <video controls>
+            <source src="https://drive.google.com/uc?export=view&id=164KEGi_Zxcr7ijwAj_U-KuH1yNC_o_gg" type="video/mp4">
+            <p>Video not supported or not accessible</p>
+        </video>
+        <div class="status" id="status2">Testing...</div>
+    </div>
+
+    <div class="video-test">
+        <h3>3. Sadya Video</h3>
+        <video controls>
+            <source src="https://drive.google.com/uc?export=view&id=1yoD57JaOpnWN2N0GBx9CzGwAV3_Yrwbr" type="video/mp4">
+            <p>Video not supported or not accessible</p>
+        </video>
+        <div class="status" id="status3">Testing...</div>
+    </div>
+
+    <script>
+        // Test video loading
+        const videos = document.querySelectorAll('video');
+        videos.forEach((video, index) => {
+            video.addEventListener('loadstart', () => {
+                document.getElementById(`status${index + 1}`).innerHTML = 'Loading...';
+            });
+            
+            video.addEventListener('canplay', () => {
+                document.getElementById(`status${index + 1}`).innerHTML = '✅ Video loaded successfully!';
+                document.getElementById(`status${index + 1}`).className = 'status success';
+            });
+            
+            video.addEventListener('error', (e) => {
+                document.getElementById(`status${index + 1}`).innerHTML = '❌ Video failed to load. Check sharing permissions.';
+                document.getElementById(`status${index + 1}`).className = 'status error';
+                console.error('Video error:', e);
+            });
+        });
+    </script>
+</body>
+</html>
