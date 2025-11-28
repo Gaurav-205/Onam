@@ -18,9 +18,9 @@ export const APP_CONFIG = {
   
   // Payment Configuration
   PAYMENT: {
-    // Note: UPI ID should ideally come from backend API
-    // This is kept here temporarily but should be fetched from backend
-    UPI_ID: import.meta.env.VITE_UPI_ID || '8955142954-2@ybl',
+    // UPI ID should be fetched from backend API endpoint
+    // Fallback to env var only for development
+    UPI_ID: import.meta.env.VITE_UPI_ID || null,
     METHODS: {
       CASH: 'cash',
       UPI: 'upi',

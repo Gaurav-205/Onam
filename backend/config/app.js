@@ -18,7 +18,7 @@ export const APP_CONFIG = {
   
   // Payment Configuration
   PAYMENT: {
-    UPI_ID: process.env.UPI_ID || '8955142954-2@ybl', // UPI ID for payments
+    UPI_ID: process.env.UPI_ID, // UPI ID for payments (required from environment)
     METHODS: ['cash', 'upi'],
   },
   

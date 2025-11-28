@@ -71,12 +71,39 @@ cd frontend
 npm install
 ```
 
-3. Start the development server:
+3. Create `.env` file (copy from `.env.example`):
+```env
+VITE_API_BASE_URL=http://localhost:3000/api
+VITE_UPI_ID=your-upi-id@ybl
+```
+
+4. Start the development server:
 ```bash
 npm run dev
 ```
 
-4. Open your browser and navigate to `http://localhost:5173`
+5. Open your browser and navigate to `http://localhost:5173`
+
+## 🌐 Production Deployment
+
+### Netlify Deployment
+
+The frontend is configured for Netlify deployment:
+
+1. **Build Settings:**
+   - Build command: `npm run build`
+   - Publish directory: `dist`
+
+2. **Environment Variables (in Netlify Dashboard):**
+   ```env
+   VITE_API_BASE_URL=https://onam-vaot.onrender.com/api
+   ```
+
+3. **Deployed URLs:**
+   - Frontend: https://onammitadt.netlify.app
+   - Backend API: https://onam-vaot.onrender.com
+
+**Note:** The UPI ID is fetched from the backend API, so no need to set `VITE_UPI_ID` in production.
 
 ### Build for Production
 

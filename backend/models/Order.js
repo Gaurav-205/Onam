@@ -138,64 +138,45 @@ const orderSchema = new mongoose.Schema({
   timestamps: true
 })
 
+// Counter schema for atomic order number generation
+const counterSchema = new mongoose.Schema({
+  _id: { type: String, required: true },
+  sequence: { type: Number, default: 0 }
+}, { _id: false })
+
+const Counter = mongoose.models.Counter || mongoose.model('Counter', counterSchema)
+
 // Generate unique order number before saving
-// Uses atomic operation to prevent race conditions
+// Uses atomic counter to prevent race conditions
 orderSchema.pre('save', async function(next) {
   if (!this.orderNumber) {
-    const date = new Date()
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    const datePrefix = `${year}${month}${day}`
-    const orderPrefix = `${APP_CONFIG.ORDER.PREFIX}-${datePrefix}-`
-    
-    // Use findOneAndUpdate with upsert for atomic counter
-    // This prevents race conditions in concurrent order creation
-    let attempts = 0
-    const maxAttempts = 10
-    
-    while (attempts < maxAttempts) {
-      try {
-        // Find the highest order number for today
-        const todayOrders = await mongoose.model('Order')
-          .find({ orderNumber: { $regex: `^${orderPrefix}` } })
-          .sort({ orderNumber: -1 })
-          .limit(1)
-          .select('orderNumber')
-          .lean()
-        
-        let nextNumber = 1
-        if (todayOrders.length > 0 && todayOrders[0].orderNumber) {
-          const lastNumber = parseInt(todayOrders[0].orderNumber.split('-').pop(), 10)
-          nextNumber = isNaN(lastNumber) ? 1 : lastNumber + 1
-        }
-        
-        // Generate candidate order number
-        const candidateOrderNumber = `${orderPrefix}${String(nextNumber).padStart(APP_CONFIG.ORDER.NUMBER_PADDING, '0')}`
-        
-        // Try to set it atomically (will fail if duplicate exists)
-        this.orderNumber = candidateOrderNumber
-        
-        // Check if this order number already exists
-        const exists = await mongoose.model('Order').findOne({ orderNumber: candidateOrderNumber })
-        if (!exists) {
-          // Order number is unique, proceed
-          break
-        }
-        
-        // If exists, increment and try again
-        attempts++
-        if (attempts >= maxAttempts) {
-          // Fallback: use timestamp-based unique number
-          const timestamp = Date.now().toString().slice(-6)
-          this.orderNumber = `${orderPrefix}${timestamp}`
-        }
-      } catch (error) {
-        // On error, use timestamp fallback
-        const timestamp = Date.now().toString().slice(-6)
-        this.orderNumber = `${orderPrefix}${timestamp}`
-        break
-      }
+    try {
+      const date = new Date()
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const datePrefix = `${year}${month}${day}`
+      const counterId = `order_${datePrefix}`
+      
+      // Atomic increment using findOneAndUpdate
+      const counter = await Counter.findByIdAndUpdate(
+        counterId,
+        { $inc: { sequence: 1 } },
+        { new: true, upsert: true }
+      )
+      
+      const sequenceNumber = counter.sequence
+      const paddedSequence = String(sequenceNumber).padStart(APP_CONFIG.ORDER.NUMBER_PADDING, '0')
+      this.orderNumber = `${APP_CONFIG.ORDER.PREFIX}-${datePrefix}-${paddedSequence}`
+    } catch (error) {
+      // Fallback: use timestamp-based unique number if counter fails
+      const date = new Date()
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const datePrefix = `${year}${month}${day}`
+      const timestamp = Date.now().toString().slice(-8)
+      this.orderNumber = `${APP_CONFIG.ORDER.PREFIX}-${datePrefix}-${timestamp}`
     }
   }
   next()

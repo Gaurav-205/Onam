@@ -6,16 +6,19 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 
 export const API_ENDPOINTS = {
+  // Config endpoint
+  GET_CONFIG: `${API_BASE_URL.replace('/api', '')}/api/config`,
+  
   // Order endpoints
   CREATE_ORDER: `${API_BASE_URL}/orders`,
   GET_ORDER: (orderId) => `${API_BASE_URL}/orders/${orderId}`,
   GET_ORDERS: `${API_BASE_URL}/orders`,
   
-  // Payment endpoints
+  // Payment endpoints (not implemented yet)
   VERIFY_PAYMENT: `${API_BASE_URL}/payments/verify`,
   CREATE_PAYMENT: `${API_BASE_URL}/payments/create`,
   
-  // Student endpoints (if needed)
+  // Student endpoints (not implemented yet)
   VERIFY_STUDENT: `${API_BASE_URL}/students/verify`,
 }
 
@@ -65,7 +68,16 @@ export const createOrder = async (orderData) => {
 }
 
 /**
- * Verify payment API call
+ * Get app configuration from backend
+ */
+export const getConfig = async () => {
+  return apiRequest(API_ENDPOINTS.GET_CONFIG, {
+    method: 'GET',
+  })
+}
+
+/**
+ * Verify payment API call (not implemented yet)
  */
 export const verifyPayment = async (paymentData) => {
   return apiRequest(API_ENDPOINTS.VERIFY_PAYMENT, {

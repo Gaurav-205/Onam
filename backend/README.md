@@ -170,8 +170,28 @@ Body:
 |----------|-------------|---------|
 | `MONGODB_URI` | MongoDB connection string | `mongodb://localhost:27017/onam-festival` |
 | `PORT` | Server port | `3000` |
-| `FRONTEND_URL` | Frontend URL for CORS | `http://localhost:5173` |
+| `FRONTEND_URL` | Frontend URL(s) for CORS (comma-separated for multiple) | `http://localhost:5173,https://onammitadt.netlify.app` |
 | `NODE_ENV` | Environment (development/production) | `development` |
+| `UPI_ID` | UPI ID for payments (required in production) | None |
+| `LOG_LEVEL` | Logging level (error/warn/info/debug) | `info` |
+
+### Production Deployment (Render)
+
+For deployment on Render, set these environment variables:
+
+```env
+MONGODB_URI=your-mongodb-atlas-connection-string
+PORT=10000
+FRONTEND_URL=https://onammitadt.netlify.app
+NODE_ENV=production
+UPI_ID=your-upi-id@ybl
+LOG_LEVEL=info
+```
+
+**Important:** 
+- Render automatically sets `PORT`, but you can override it
+- Make sure `FRONTEND_URL` includes your Netlify domain
+- `UPI_ID` is required - orders will fail without it
 
 ## 🧪 Testing
 

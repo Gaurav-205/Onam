@@ -1,30 +1,136 @@
 import express from 'express'
 import { body, validationResult } from 'express-validator'
+import rateLimit from 'express-rate-limit'
 import Order from '../models/Order.js'
 import { logger } from '../utils/logger.js'
 
 const router = express.Router()
 
-// Validation middleware
+// Stricter rate limit for order creation
+const orderLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 order creations per 15 minutes
+  message: {
+    success: false,
+    message: 'Too many order requests. Please wait before creating another order.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+// Validation and sanitization middleware
 const validateOrder = [
-  body('studentInfo.name').trim().notEmpty().withMessage('Name is required'),
-  body('studentInfo.studentId').trim().notEmpty().withMessage('Student ID is required'),
-  body('studentInfo.email').isEmail().withMessage('Valid email is required'),
-  body('studentInfo.phone').matches(/^[0-9]{10}$/).withMessage('Valid 10-digit phone number is required'),
-  body('studentInfo.course').trim().notEmpty().withMessage('Course is required'),
-  body('studentInfo.department').trim().notEmpty().withMessage('Department is required'),
-  body('studentInfo.year').isIn(['1st Year', '2nd Year', '3rd Year', '4th Year', 'Post Graduate']).withMessage('Valid year is required'),
-  body('orderItems').isArray({ min: 1 }).withMessage('At least one item is required'),
-  body('orderItems.*.id').notEmpty().withMessage('Item ID is required'),
-  body('orderItems.*.name').notEmpty().withMessage('Item name is required'),
-  body('orderItems.*.quantity').isInt({ min: 1 }).withMessage('Valid quantity is required'),
-  body('orderItems.*.price').isFloat({ min: 0 }).withMessage('Valid price is required'),
-  body('payment.method').isIn(['cash', 'upi']).withMessage('Valid payment method is required'),
-  body('totalAmount').isFloat({ min: 0 }).withMessage('Valid total amount is required'),
+  // Sanitize and validate student info
+  body('studentInfo.name')
+    .trim()
+    .escape()
+    .notEmpty()
+    .withMessage('Name is required')
+    .isLength({ max: 100 })
+    .withMessage('Name must be less than 100 characters'),
+  body('studentInfo.studentId')
+    .trim()
+    .escape()
+    .notEmpty()
+    .withMessage('Student ID is required')
+    .isLength({ max: 50 })
+    .withMessage('Student ID must be less than 50 characters'),
+  body('studentInfo.email')
+    .trim()
+    .normalizeEmail()
+    .isEmail()
+    .withMessage('Valid email is required')
+    .isLength({ max: 100 })
+    .withMessage('Email must be less than 100 characters'),
+  body('studentInfo.phone')
+    .trim()
+    .matches(/^[0-9]{10}$/)
+    .withMessage('Valid 10-digit phone number is required'),
+  body('studentInfo.course')
+    .trim()
+    .escape()
+    .notEmpty()
+    .withMessage('Course is required')
+    .isLength({ max: 50 })
+    .withMessage('Course must be less than 50 characters'),
+  body('studentInfo.department')
+    .trim()
+    .escape()
+    .notEmpty()
+    .withMessage('Department is required')
+    .isLength({ max: 50 })
+    .withMessage('Department must be less than 50 characters'),
+  body('studentInfo.year')
+    .trim()
+    .isIn(['1st Year', '2nd Year', '3rd Year', '4th Year', 'Post Graduate'])
+    .withMessage('Valid year is required'),
+  body('studentInfo.hostel')
+    .optional()
+    .trim()
+    .escape()
+    .isLength({ max: 50 })
+    .withMessage('Hostel must be less than 50 characters'),
+  
+  // Validate order items
+  body('orderItems')
+    .isArray({ min: 1 })
+    .withMessage('At least one item is required')
+    .isLength({ max: 50 })
+    .withMessage('Maximum 50 items allowed'),
+  body('orderItems.*.id')
+    .trim()
+    .escape()
+    .notEmpty()
+    .withMessage('Item ID is required')
+    .isLength({ max: 50 })
+    .withMessage('Item ID must be less than 50 characters'),
+  body('orderItems.*.name')
+    .trim()
+    .escape()
+    .notEmpty()
+    .withMessage('Item name is required')
+    .isLength({ max: 100 })
+    .withMessage('Item name must be less than 100 characters'),
+  body('orderItems.*.quantity')
+    .isInt({ min: 1, max: 99 })
+    .withMessage('Valid quantity is required (1-99)'),
+  body('orderItems.*.price')
+    .isFloat({ min: 0, max: 100000 })
+    .withMessage('Valid price is required (0-100000)'),
+  
+  // Validate payment
+  body('payment.method')
+    .isIn(['cash', 'upi'])
+    .withMessage('Valid payment method is required'),
+  body('payment.upiId')
+    .optional()
+    .trim()
+    .escape()
+    .isLength({ max: 50 })
+    .withMessage('UPI ID must be less than 50 characters'),
+  body('payment.transactionId')
+    .optional()
+    .trim()
+    .escape()
+    .isLength({ max: 100 })
+    .withMessage('Transaction ID must be less than 100 characters'),
+  
+  // Validate total amount
+  body('totalAmount')
+    .isFloat({ min: 0, max: 1000000 })
+    .withMessage('Valid total amount is required (0-1000000)'),
+  
+  // Validate notes if provided
+  body('notes')
+    .optional()
+    .trim()
+    .escape()
+    .isLength({ max: 500 })
+    .withMessage('Notes must be less than 500 characters'),
 ]
 
-// Create new order
-router.post('/', validateOrder, async (req, res) => {
+// Create new order (with stricter rate limiting)
+router.post('/', orderLimiter, validateOrder, async (req, res) => {
   try {
     // Check validation errors
     const errors = validationResult(req)

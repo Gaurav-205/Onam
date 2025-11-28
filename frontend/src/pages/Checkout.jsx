@@ -1,9 +1,9 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { isValidEmail, isValidPhone, isValidUPI, isRequired } from '../utils/validation'
 import { parsePrice, formatPrice } from '../utils/price'
-import { createOrder } from '../config/api'
+import { createOrder, getConfig } from '../config/api'
 import { APP_CONFIG } from '../config/app'
 
 const Checkout = () => {
@@ -11,6 +11,7 @@ const Checkout = () => {
   const navigate = useNavigate()
   const [isProcessing, setIsProcessing] = useState(false)
   const [orderPlaced, setOrderPlaced] = useState(false)
+  const [upiId, setUpiId] = useState(APP_CONFIG.PAYMENT.UPI_ID || null)
 
   // Form state - Student information for university event
   const [formData, setFormData] = useState({
@@ -28,6 +29,22 @@ const Checkout = () => {
   })
 
   const [errors, setErrors] = useState({})
+
+  // Fetch UPI ID from backend on component mount
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const config = await getConfig()
+        if (config?.success && config?.config?.payment?.upiId) {
+          setUpiId(config.config.payment.upiId)
+        }
+      } catch (error) {
+        // Fallback to env var if API fails
+        console.warn('Failed to fetch config from backend, using fallback:', error)
+      }
+    }
+    fetchConfig()
+  }, [])
 
   const handleInputChange = useCallback((e) => {
     const { name, value } = e.target
@@ -392,10 +409,10 @@ const Checkout = () => {
                     <div className="bg-white p-4 rounded-lg border border-blue-300">
                       <div className="flex items-center justify-between mb-3">
                         <span className="font-semibold text-gray-800">Pay to UPI ID:</span>
-                        <span className="text-lg font-bold text-onam-green">{APP_CONFIG.PAYMENT.UPI_ID}</span>
+                        <span className="text-lg font-bold text-onam-green">{upiId || 'Loading...'}</span>
                       </div>
                       <div className="text-sm text-gray-600 space-y-1">
-                        <p>• Scan QR code or use UPI ID: <span className="font-mono font-semibold">{APP_CONFIG.PAYMENT.UPI_ID}</span></p>
+                        <p>• Scan QR code or use UPI ID: <span className="font-mono font-semibold">{upiId || 'Loading...'}</span></p>
                         <p>• Amount: <span className="font-bold text-onam-green">{formatPrice(totalPrice)}</span></p>
                         <p>• After payment, enter your UPI ID and Transaction ID below</p>
                       </div>
