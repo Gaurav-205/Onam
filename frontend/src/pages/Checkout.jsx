@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { isValidEmail, isValidPhone, isValidUPI, isRequired } from '../utils/validation'
 import { parsePrice, formatPrice } from '../utils/price'
+import { createOrder } from '../config/api'
 
 const Checkout = () => {
   const { cartItems, totalPrice, clearCart } = useCart()
@@ -79,25 +80,60 @@ const Checkout = () => {
 
     setIsProcessing(true)
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    // In a real app, you would send this data to your backend
-    console.log('Order placed:', { formData, cartItems, totalPrice })
-    
-    setIsProcessing(false)
-    setOrderPlaced(true)
-    clearCart()
-    
-    // Redirect to home after 3 seconds
-    setTimeout(() => {
-      navigate('/')
-    }, 3000)
+    try {
+      // Prepare order data
+      const orderData = {
+        studentInfo: {
+          name: formData.name,
+          studentId: formData.studentId,
+          email: formData.email,
+          phone: formData.phone,
+          course: formData.course,
+          department: formData.department,
+          year: formData.year,
+          hostel: formData.hostel || null,
+        },
+        orderItems: cartItems.map(item => ({
+          id: item.id,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.priceValue || parsePrice(item.price, 0),
+          total: (item.priceValue || parsePrice(item.price, 0)) * item.quantity,
+        })),
+        payment: {
+          method: formData.paymentMethod,
+          upiId: formData.upiId || null,
+          transactionId: formData.transactionId || null,
+        },
+        totalAmount: totalPrice,
+        orderDate: new Date().toISOString(),
+      }
+
+      // Send order to backend
+      const response = await createOrder(orderData)
+      
+      console.log('Order created successfully:', response)
+      
+      setIsProcessing(false)
+      setOrderPlaced(true)
+      clearCart()
+      
+      // Redirect to home after 3 seconds
+      setTimeout(() => {
+        navigate('/')
+      }, 3000)
+    } catch (error) {
+      console.error('Order submission failed:', error)
+      setIsProcessing(false)
+      
+      // Show error message to user
+      alert(`Failed to submit order: ${error.message || 'Please try again later'}`)
+    }
   }, [formData, cartItems, totalPrice, validateForm, clearCart, navigate])
 
   if (orderPlaced) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-red-50 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50 flex items-center justify-center px-4">
         <div className="bg-white rounded-xl shadow-lg p-8 sm:p-12 text-center max-w-md">
           <div className="text-6xl mb-4">✅</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Registration Successful!</h2>
@@ -117,7 +153,7 @@ const Checkout = () => {
 
   if (cartItems.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-red-50 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50 flex items-center justify-center px-4">
         <div className="bg-white rounded-xl shadow-lg p-8 text-center max-w-md">
           <div className="text-6xl mb-4">🛒</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Your cart is empty</h2>
@@ -134,7 +170,7 @@ const Checkout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-red-50 py-12 sm:py-16 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50 py-12 sm:py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-2 font-heading">Event Registration</h1>

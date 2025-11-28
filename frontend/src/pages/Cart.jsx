@@ -138,7 +138,7 @@ const Cart = () => {
   const isEmpty = cartItems.length === 0
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-red-50 py-12 sm:py-16 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50 py-12 sm:py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">

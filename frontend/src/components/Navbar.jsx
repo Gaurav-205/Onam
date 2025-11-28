@@ -274,7 +274,10 @@ const Navbar = ({ currentSection, scrollToSection }) => {
 
           {/* Cart Icon and Mobile Menu Button */}
           <div className="flex items-center space-x-2">
-            <CartIcon />
+            <CartIcon 
+              isScrolled={isScrolled || !isHomePage}
+              isActive={location.pathname === '/cart'}
+            />
             {showMobileMenu && (
               <MobileMenuButton 
                 isScrolled={isScrolled || !isHomePage}

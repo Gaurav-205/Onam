@@ -15,13 +15,19 @@ const Layout = () => {
     })
   }, [])
 
-  // Scroll to top whenever route changes
+  // Scroll to top whenever route changes (except for home page sections)
   useEffect(() => {
-    // Use requestAnimationFrame for smoother transition
-    requestAnimationFrame(() => {
-      smoothScrollToTop()
-    })
-  }, [location.pathname, smoothScrollToTop])
+    // Only scroll to top for separate pages, not for home page sections
+    if (location.pathname !== '/') {
+      // Use setTimeout to ensure content is rendered before scrolling
+      setTimeout(() => {
+        window.scrollTo({ 
+          top: 0, 
+          behavior: 'smooth' 
+        })
+      }, 100)
+    }
+  }, [location.pathname])
 
   // Convert pathname to section ID for Navbar compatibility
   const currentSection = useMemo(() => {
@@ -32,11 +38,8 @@ const Layout = () => {
     return 'home'
   }, [location.pathname])
 
-  // Navigation handler for Navbar - always scrolls to top first smoothly
+  // Navigation handler for Navbar - smart scrolling based on context
   const scrollToSection = useCallback((sectionId) => {
-    // Always scroll to top first when clicking any navbar button (smooth)
-    smoothScrollToTop()
-    
     // Sections that are on the home page (scroll navigation)
     const homePageSections = ['home', 'sadya', 'events', 'under-development']
     
@@ -48,23 +51,21 @@ const Layout = () => {
     
     // If it's a home page section
     if (homePageSections.includes(sectionId)) {
-      // If we're on home page, wait for scroll to top, then scroll to section
+      // If we're already on home page, scroll directly to section
       if (location.pathname === '/') {
-        // Wait for smooth scroll to top to complete (typically 500-800ms)
-        setTimeout(() => {
-          const element = document.getElementById(sectionId === 'home' ? 'home' : sectionId)
-          if (element) {
-            element.scrollIntoView({ 
-              behavior: 'smooth',
-              block: 'start'
-            })
-          }
-        }, 600) // Wait for smooth scroll animation
+        const element = document.getElementById(sectionId === 'home' ? 'home' : sectionId)
+        if (element) {
+          // Scroll directly to the section without going to top first
+          element.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'
+          })
+        }
       } else {
         // Navigate to home first, then scroll to section after navigation
         navigate('/')
         setTimeout(() => {
-          // Wait for route change and scroll to top
+          // Wait for route change and DOM update
           requestAnimationFrame(() => {
             setTimeout(() => {
               const element = document.getElementById(sectionId === 'home' ? 'home' : sectionId)
@@ -83,14 +84,20 @@ const Layout = () => {
       const route = routeMap[sectionId]
       if (route !== location.pathname) {
         navigate(route)
+      } else {
+        // If already on the page, just scroll to top
+        smoothScrollToTop()
       }
     }
   }, [location.pathname, navigate, smoothScrollToTop])
 
+  // Determine if we're on home page (no top padding needed for hero section)
+  const isHomePage = location.pathname === '/'
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-red-50">
       <Navbar currentSection={currentSection} scrollToSection={scrollToSection} />
-      <main className="pt-16">
+      <main className={isHomePage ? '' : 'pt-16'}>
         <Outlet />
       </main>
       <Footer scrollToSection={scrollToSection} />

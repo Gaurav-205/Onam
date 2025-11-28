@@ -2,17 +2,35 @@ import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { memo } from 'react'
 
-const CartIcon = memo(() => {
+const CartIcon = memo(({ isScrolled = true, isActive = false }) => {
   const { totalItems } = useCart()
+
+  // Color logic matching Navbar items
+  const iconColor = isActive
+    ? 'text-onam-gold'
+    : isScrolled
+    ? 'text-gray-600 hover:text-onam-gold'
+    : 'text-white/90 hover:text-onam-gold'
+
+  const bgHover = isScrolled
+    ? 'hover:bg-gray-100'
+    : 'hover:bg-white/10'
 
   return (
     <Link
       to="/cart"
-      className="relative p-2 rounded-lg transition-colors duration-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-onam-gold focus:ring-offset-2"
+      className={`relative p-2 rounded-lg transition-all duration-300 ${iconColor} ${bgHover} focus:outline-none focus-visible:ring-2 focus-visible:ring-onam-gold focus-visible:ring-offset-2 no-underline`}
+      style={{ 
+        border: 'none !important', 
+        outline: 'none !important', 
+        boxShadow: 'none !important',
+        textDecoration: 'none'
+      }}
       aria-label={`Shopping cart with ${totalItems} items`}
+      aria-current={isActive ? 'page' : undefined}
     >
       <svg
-        className="w-6 h-6 text-gray-600"
+        className="w-6 h-6"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"

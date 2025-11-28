@@ -360,6 +360,21 @@
     animation: fade-in 0.4s ease-out forwards;
   }
 
+  /* Remove borders from cart icon */
+  a[aria-label*="cart"] {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+  
+  a[aria-label*="cart"]:focus,
+  a[aria-label*="cart"]:active,
+  a[aria-label*="cart"]:visited {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
   /* Optimized scrollbar styling */
   .scrollbar-thin {
     scrollbar-width: thin;
