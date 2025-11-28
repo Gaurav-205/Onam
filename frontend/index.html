@@ -20,20 +20,8 @@
   </head>
   <body>
     <div id="root"></div>
-    <!-- Loading optimization script -->
+    <!-- Video loading optimization -->
     <script>
-      // Performance monitoring (development only)
-      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        window.addEventListener('load', () => {
-          console.log('Onam website loaded successfully!')
-          if ('performance' in window && window.performance.timing) {
-            const loadTime = window.performance.timing.loadEventEnd - window.performance.timing.navigationStart
-            console.log(`Page load time: ${loadTime}ms`)
-          }
-        })
-      }
-      
-      // Video loading optimization
       document.addEventListener('DOMContentLoaded', () => {
         // Start loading videos early
         const videos = document.querySelectorAll('video')

@@ -17,20 +17,20 @@ const connectDB = async () => {
 
     const conn = await mongoose.connect(mongoUri, options)
 
-    logger.info(`✅ MongoDB Connected: ${conn.connection.host}`)
-    logger.info(`📦 Database: ${conn.connection.name}`)
+    logger.info(`MongoDB Connected: ${conn.connection.host}`)
+    logger.info(`Database: ${conn.connection.name}`)
 
     // Handle connection events
     mongoose.connection.on('error', (err) => {
-      logger.error('❌ MongoDB connection error:', err)
+      logger.error('MongoDB connection error:', err)
     })
 
     mongoose.connection.on('disconnected', () => {
-      logger.warn('⚠️ MongoDB disconnected')
+      logger.warn('MongoDB disconnected')
     })
 
     mongoose.connection.on('reconnected', () => {
-      logger.info('✅ MongoDB reconnected')
+      logger.info('MongoDB reconnected')
     })
 
     // Graceful shutdown
@@ -42,13 +42,10 @@ const connectDB = async () => {
 
     return true
   } catch (error) {
-    // Extract error message properly
     const errorMessage = error?.message || error?.toString() || 'Unknown error'
-    logger.error('❌ MongoDB connection failed:', errorMessage)
-    logger.warn('⚠️ Server will continue without database connection')
-    logger.warn('⚠️ Some features may not work until MongoDB is available')
-    
-    // Don't exit - allow server to start for health checks and graceful degradation
+    logger.error('MongoDB connection failed:', errorMessage)
+    logger.warn('Server will continue without database connection')
+    logger.warn('Some features may not work until MongoDB is available')
     return false
   }
 }

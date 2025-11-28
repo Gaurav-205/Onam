@@ -51,10 +51,6 @@ const Checkout = () => {
         }
       } catch (error) {
         // Fallback to env var if API fails - silent fail
-        // Only log in development to avoid console pollution
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('Failed to fetch config from backend, using fallback:', error.message)
-        }
       }
     }
     fetchConfig()
@@ -179,7 +175,7 @@ const Checkout = () => {
       const errorMessage = error.message || 'Failed to submit order. Please try again later.'
       showToast(errorMessage, 'error', 5000)
     }
-  }, [formData, cartItems, totalPrice, validateForm, clearCart, navigate, isProcessing, orderPlaced, showToast])
+  }, [formData, cartItems, totalPrice, validateForm, clearCart, navigate, isProcessing, orderPlaced, showToast, whatsappLink])
 
   if (orderPlaced) {
     return (

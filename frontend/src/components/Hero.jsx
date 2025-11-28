@@ -18,10 +18,6 @@ const loadFonts = async () => {
     ])
     return true
   } catch (error) {
-    // Only log in development
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('Some fonts failed to load:', error)
-    }
     return false
   }
 }
@@ -99,17 +95,6 @@ const ScrollIndicator = memo(({ showScrollIndicator, isScrolled }) => (
 ))
 
 ScrollIndicator.displayName = 'ScrollIndicator'
-
-// Memoized EventBadge component
-const EventBadge = memo(({ children, className = "" }) => (
-  <div className={`bg-white/10 backdrop-blur-sm rounded-xl px-6 py-3 ${className}`}>
-    <p className="text-white font-semibold text-sm md:text-base drop-shadow-md tracking-wide">
-      {children}
-    </p>
-  </div>
-))
-
-EventBadge.displayName = 'EventBadge'
 
 const Hero = () => {
   const [videoError, setVideoError] = useState(false)

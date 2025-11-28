@@ -14,12 +14,9 @@ const navItems = [
 // Memoized NavItem component - handles both scroll and route navigation
 const NavItem = memo(({ item, isActive, isScrolled, onScrollClick }) => {
   const location = useLocation()
-  const navigate = useNavigate()
   
   const textColor = isActive
-    ? isScrolled 
-      ? 'text-onam-gold font-semibold hover:text-onam-green' 
-      : 'text-onam-gold font-semibold hover:text-onam-green'
+    ? 'text-onam-gold font-semibold hover:text-onam-green'
     : isScrolled 
       ? 'text-gray-600 hover:text-onam-gold hover:bg-gray-100' 
       : 'text-white/90 hover:text-onam-gold hover:bg-white/10'

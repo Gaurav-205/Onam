@@ -17,28 +17,25 @@ const envPath = join(__dirname, '.env')
 const envResult = dotenv.config({ path: envPath })
 
 if (envResult.error) {
-  logger.warn(`⚠️ Failed to load .env file from ${envPath}:`, envResult.error.message)
+  logger.warn(`Failed to load .env file from ${envPath}:`, envResult.error.message)
 } else {
-  logger.info(`📄 Loaded .env file from ${envPath}`)
+  logger.info(`Loaded .env file from ${envPath}`)
 }
 
 const app = express()
 const PORT = process.env.PORT || 3000
 
 // Connect to MongoDB (non-blocking - server will start even if DB fails)
-let dbConnected = false
 connectDB()
   .then(connected => {
-    dbConnected = connected
     if (connected) {
-      logger.info('✅ Database connection established')
+      logger.info('Database connection established')
     } else {
-      logger.warn('⚠️ Server running without database - some features disabled')
+      logger.warn('Server running without database - some features disabled')
     }
   })
   .catch(err => {
     logger.error('Failed to initialize database connection:', err.message)
-    // Server continues to run for health checks and graceful degradation
   })
 
 // CORS Configuration with validation
@@ -98,18 +95,6 @@ const limiter = rateLimit({
   },
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-})
-
-// Stricter rate limit for order creation
-const orderLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Limit each IP to 10 order creations per 15 minutes
-  message: {
-    success: false,
-    message: 'Too many order requests. Please wait before creating another order.'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
 })
 
 // Apply rate limiting to all requests
@@ -212,30 +197,30 @@ app.use((err, req, res, next) => {
 
 // Start server with error handling
 const server = app.listen(PORT, () => {
-  logger.info(`🚀 Server running on http://localhost:${PORT}`)
-  logger.info(`📊 Health check: http://localhost:${PORT}/health`)
-  logger.info(`🔗 API base: http://localhost:${PORT}/api`)
-  logger.info(`📝 Log level: ${process.env.LOG_LEVEL || 'info'}`)
+  logger.info(`Server running on http://localhost:${PORT}`)
+  logger.info(`Health check: http://localhost:${PORT}/health`)
+  logger.info(`API base: http://localhost:${PORT}/api`)
+  logger.info(`Log level: ${process.env.LOG_LEVEL || 'info'}`)
   
   // Check email configuration on startup
   if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
-    logger.info(`📧 Email configured for: ${process.env.EMAIL_USER}`)
+    logger.info(`Email configured for: ${process.env.EMAIL_USER}`)
   } else {
-    logger.warn(`⚠️ Email not configured - EMAIL_USER: ${process.env.EMAIL_USER ? 'SET' : 'NOT SET'}, EMAIL_PASSWORD: ${process.env.EMAIL_PASSWORD ? 'SET' : 'NOT SET'}`)
+    logger.warn(`Email not configured - EMAIL_USER: ${process.env.EMAIL_USER ? 'SET' : 'NOT SET'}, EMAIL_PASSWORD: ${process.env.EMAIL_PASSWORD ? 'SET' : 'NOT SET'}`)
   }
 })
 
 // Handle server errors (e.g., port already in use)
 server.on('error', (error) => {
   if (error.code === 'EADDRINUSE') {
-    logger.error(`❌ Port ${PORT} is already in use`)
-    logger.error('💡 Try one of these solutions:')
-    logger.error(`   1. Stop the process using port ${PORT}`)
-    logger.error(`   2. Set a different PORT in .env file (e.g., PORT=3001)`)
-    logger.error(`   3. Kill the process: netstat -ano | findstr :${PORT}`)
+    logger.error(`Port ${PORT} is already in use`)
+    logger.error('Try one of these solutions:')
+    logger.error(`  1. Stop the process using port ${PORT}`)
+    logger.error(`  2. Set a different PORT in .env file (e.g., PORT=3001)`)
+    logger.error(`  3. Kill the process: netstat -ano | findstr :${PORT}`)
     process.exit(1)
   } else {
-    logger.error('❌ Server error:', error)
+    logger.error('Server error:', error)
     process.exit(1)
   }
 })

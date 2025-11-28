@@ -18,17 +18,14 @@ const VideoSection = () => {
       
       if (isVisible && videoRef.current && !videoError && isVideoLoaded) {
         // Small delay to ensure smooth transition
-        const playTimer = setTimeout(() => {
+        setTimeout(() => {
           if (videoRef.current && isVisible && isVideoLoaded) {
             videoRef.current.play().catch(() => {
               // Autoplay prevented - silent fail (browser policy)
-              // Don't set error for autoplay issues
             })
             setIsVideoPlaying(true)
           }
         }, 300)
-        
-        return () => clearTimeout(playTimer)
       } else if (videoRef.current) {
         videoRef.current.pause()
         setIsVideoPlaying(false)
@@ -45,10 +42,6 @@ const VideoSection = () => {
   const handleVideoError = useCallback(() => {
     setVideoError(true)
     setIsVideoLoaded(false)
-    // Only log in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Video failed to load in VideoSection')
-    }
   }, [])
 
   const handleVideoPlay = useCallback(() => {

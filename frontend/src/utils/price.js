@@ -37,16 +37,3 @@ export const formatPrice = (amount) => {
   return `₹${Math.round(amount)}`
 }
 
-/**
- * Calculate total price for cart items
- * @param {Array} items - Array of cart items
- * @returns {number} Total price
- */
-export const calculateTotalPrice = (items) => {
-  return items.reduce((total, item) => {
-    const price = item.priceValue || parsePrice(item.price, 0)
-    const quantity = item.quantity || 1
-    return total + (price * quantity)
-  }, 0)
-}
-

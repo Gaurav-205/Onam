@@ -18,14 +18,12 @@ const createTransporter = () => {
   const emailPassword = process.env.EMAIL_PASSWORD?.trim().replace(/\s+/g, '')
 
   if (!emailUser || !emailPassword) {
-    logger.warn('⚠️ Email credentials not configured. Email sending will be disabled.')
-    logger.warn(`   EMAIL_USER: ${emailUser ? 'SET (' + emailUser.substring(0, 20) + '...)' : 'NOT SET'}`)
-    logger.warn(`   EMAIL_PASSWORD: ${emailPassword ? 'SET (' + emailPassword.length + ' chars)' : 'NOT SET'}`)
-    logger.warn(`   Check if .env file exists and contains EMAIL_USER and EMAIL_PASSWORD`)
+    logger.warn('Email credentials not configured. Email sending will be disabled.')
+    logger.warn(`EMAIL_USER: ${emailUser ? 'SET' : 'NOT SET'}, EMAIL_PASSWORD: ${emailPassword ? 'SET' : 'NOT SET'}`)
     return null
   }
   
-  logger.info(`📧 Email service configured for: ${emailUser}`)
+  logger.info(`Email service configured for: ${emailUser}`)
 
   const config = {
     service: emailService,
@@ -217,18 +215,16 @@ This is an automated confirmation email. Please do not reply.
     }
 
     const info = await transporter.sendMail(mailOptions)
-    logger.info(`✅ Order confirmation email sent to ${studentInfo.email} (Message ID: ${info.messageId})`)
+    logger.info(`Order confirmation email sent to ${studentInfo.email} (Message ID: ${info.messageId})`)
     return { success: true, messageId: info.messageId }
   } catch (error) {
-    // Enhanced error logging with more context
     const errorMessage = error?.message || 'Unknown error'
     const errorCode = error?.code || 'UNKNOWN'
-    logger.error(`❌ Failed to send order confirmation email to ${studentInfo.email}:`, {
+    logger.error(`Failed to send order confirmation email to ${studentInfo.email}:`, {
       message: errorMessage,
       code: errorCode,
       orderNumber: order.orderNumber
     })
-    // Don't throw - email failure shouldn't break order creation
     return { success: false, error: errorMessage, code: errorCode }
   }
 }

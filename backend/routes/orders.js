@@ -10,8 +10,8 @@ const router = express.Router()
 
 // Stricter rate limit for order creation
 const orderLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Limit each IP to 10 order creations per 15 minutes
+  windowMs: 15 * 60 * 1000,
+  max: 10,
   message: {
     success: false,
     message: 'Too many order requests. Please wait before creating another order.'
@@ -205,24 +205,22 @@ router.post('/', orderLimiter, validateOrder, async (req, res) => {
     // Get WhatsApp link for response and email
     const whatsappLink = APP_CONFIG.COMMUNICATION.WHATSAPP_GROUP_LINK || null
 
-    // Send confirmation email (non-blocking) - wrapped in try-catch to prevent route errors
+    // Send confirmation email (non-blocking)
     try {
-      // Convert Mongoose document to plain object safely
-      const orderData = savedOrder.toObject ? savedOrder.toObject() : JSON.parse(JSON.stringify(savedOrder))
-      sendOrderConfirmationEmail(orderData, whatsappLink)
+      const orderPlainObject = savedOrder.toObject ? savedOrder.toObject() : JSON.parse(JSON.stringify(savedOrder))
+      sendOrderConfirmationEmail(orderPlainObject, whatsappLink)
         .then(result => {
           if (result.success) {
-            logger.info(`✅ Order confirmation email sent for order ${savedOrder.orderNumber}`)
+            logger.info(`Order confirmation email sent for order ${savedOrder.orderNumber}`)
           } else {
-            logger.warn(`⚠️ Failed to send email for order ${savedOrder.orderNumber}: ${result.message}`)
+            logger.warn(`Failed to send email for order ${savedOrder.orderNumber}: ${result.message}`)
           }
         })
         .catch(err => {
-          logger.error(`❌ Email sending error for order ${savedOrder.orderNumber}:`, err)
+          logger.error(`Email sending error for order ${savedOrder.orderNumber}:`, err)
         })
     } catch (emailError) {
-      // Log but don't fail the order creation
-      logger.error(`❌ Error initiating email for order ${savedOrder.orderNumber}:`, emailError)
+      logger.error(`Error initiating email for order ${savedOrder.orderNumber}:`, emailError)
     }
 
     res.status(201).json({
@@ -239,12 +237,11 @@ router.post('/', orderLimiter, validateOrder, async (req, res) => {
     })
 
   } catch (error) {
-    logger.error('Order creation error:', error)
-    logger.error('Error stack:', error.stack)
-    logger.error('Error details:', {
+    logger.error('Order creation error:', {
       message: error.message,
       code: error.code,
-      name: error.name
+      name: error.name,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     })
     
     if (error.code === 11000) {

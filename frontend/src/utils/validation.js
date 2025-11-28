@@ -35,16 +35,6 @@ export const isValidUPI = (upiId) => {
 }
 
 /**
- * Validate pincode (6 digits)
- * @param {string} pincode - Pincode to validate
- * @returns {boolean} True if valid pincode
- */
-export const isValidPincode = (pincode) => {
-  if (!pincode || typeof pincode !== 'string') return false
-  return /^[0-9]{6}$/.test(pincode.trim())
-}
-
-/**
  * Validate required field
  * @param {string} value - Value to validate
  * @returns {boolean} True if value is not empty

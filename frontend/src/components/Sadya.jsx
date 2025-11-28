@@ -57,17 +57,14 @@ const VideoPlayer = memo(({ onVideoError }) => {
       
       if (isVisible && videoRef.current && isVideoLoaded) {
         // Auto-play when video comes into view
-        const playTimer = setTimeout(() => {
+        setTimeout(() => {
           if (videoRef.current && isVisible && isVideoLoaded) {
-            videoRef.current.play().catch(error => {
-              console.log('Sadya video auto-play prevented:', error)
-              // Don't set error for autoplay issues
+            videoRef.current.play().catch(() => {
+              // Autoplay prevented - silent fail (browser policy)
             })
             setIsPlaying(true)
           }
         }, 300)
-        
-        return () => clearTimeout(playTimer)
       } else if (videoRef.current) {
         // Auto-pause when video goes out of view
         videoRef.current.pause()
