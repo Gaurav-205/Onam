@@ -50,10 +50,18 @@ export const apiRequest = async (url, options = {}) => {
       throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
     }
 
-    return await response.json()
+    const data = await response.json()
+    return data
   } catch (error) {
-    console.error('API request failed:', error)
-    throw error
+    // Only log in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('API request failed:', error)
+    }
+    // Re-throw with more context for better error handling
+    if (error instanceof Error) {
+      throw error
+    }
+    throw new Error(error.message || 'Network request failed')
   }
 }
 

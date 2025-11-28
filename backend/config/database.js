@@ -3,9 +3,19 @@ import { logger } from '../utils/logger.js'
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/onam-festival', {
-      // Remove deprecated options for newer mongoose versions
-    })
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/onam-festival'
+    
+    // Set connection options with improved settings
+    const options = {
+      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+      socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+      maxPoolSize: 10, // Maintain up to 10 socket connections
+      minPoolSize: 2, // Maintain at least 2 socket connections
+      maxIdleTimeMS: 30000, // Close connections after 30 seconds of inactivity
+      heartbeatFrequencyMS: 10000, // Send a ping every 10 seconds
+    }
+
+    const conn = await mongoose.connect(mongoUri, options)
 
     logger.info(`✅ MongoDB Connected: ${conn.connection.host}`)
     logger.info(`📦 Database: ${conn.connection.name}`)
@@ -19,6 +29,10 @@ const connectDB = async () => {
       logger.warn('⚠️ MongoDB disconnected')
     })
 
+    mongoose.connection.on('reconnected', () => {
+      logger.info('✅ MongoDB reconnected')
+    })
+
     // Graceful shutdown
     process.on('SIGINT', async () => {
       await mongoose.connection.close()
@@ -26,9 +40,16 @@ const connectDB = async () => {
       process.exit(0)
     })
 
+    return true
   } catch (error) {
-    logger.error('❌ MongoDB connection failed:', error)
-    process.exit(1)
+    // Extract error message properly
+    const errorMessage = error?.message || error?.toString() || 'Unknown error'
+    logger.error('❌ MongoDB connection failed:', errorMessage)
+    logger.warn('⚠️ Server will continue without database connection')
+    logger.warn('⚠️ Some features may not work until MongoDB is available')
+    
+    // Don't exit - allow server to start for health checks and graceful degradation
+    return false
   }
 }
 

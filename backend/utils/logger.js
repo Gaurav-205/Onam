@@ -41,11 +41,27 @@ class Logger {
 
   error(message, error = null) {
     if (this.shouldLog('ERROR')) {
-      const errorData = error ? {
-        message: error.message,
-        stack: this.isDevelopment ? error.stack : undefined,
-        ...error
-      } : null
+      let errorData = null
+      if (error) {
+        // Handle different error types
+        if (error instanceof Error) {
+          errorData = {
+            message: error.message,
+            stack: this.isDevelopment ? error.stack : undefined,
+            name: error.name
+          }
+        } else if (typeof error === 'string') {
+          errorData = { message: error }
+        } else if (typeof error === 'object') {
+          // Extract message if it exists, otherwise stringify carefully
+          errorData = {
+            message: error.message || error.toString() || JSON.stringify(error),
+            ...(this.isDevelopment && { details: error })
+          }
+        } else {
+          errorData = { message: String(error) }
+        }
+      }
       console.error(this.formatMessage('ERROR', message, errorData))
     }
   }

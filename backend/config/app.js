@@ -22,6 +22,12 @@ export const APP_CONFIG = {
     METHODS: ['cash', 'upi'],
   },
   
+  // Communication Configuration
+  COMMUNICATION: {
+    WHATSAPP_GROUP_LINK: process.env.WHATSAPP_GROUP_LINK || null, // WhatsApp group invite link
+    EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME || 'Onam Festival - MIT ADT University',
+  },
+  
   // Order Status
   ORDER_STATUS: {
     PENDING: 'pending',

@@ -21,7 +21,12 @@ export const CartProvider = ({ children }) => {
       try {
         setCartItems(JSON.parse(savedCart))
       } catch (error) {
-        console.error('Error loading cart from localStorage:', error)
+        // Only log in development
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error loading cart from localStorage:', error)
+        }
+        // Clear corrupted cart data
+        localStorage.removeItem('onam_cart')
       }
     }
   }, [])

@@ -3,6 +3,8 @@ import { body, validationResult } from 'express-validator'
 import rateLimit from 'express-rate-limit'
 import Order from '../models/Order.js'
 import { logger } from '../utils/logger.js'
+import { sendOrderConfirmationEmail } from '../utils/emailService.js'
+import { APP_CONFIG } from '../config/app.js'
 
 const router = express.Router()
 
@@ -131,7 +133,19 @@ const validateOrder = [
 
 // Create new order (with stricter rate limiting)
 router.post('/', orderLimiter, validateOrder, async (req, res) => {
+  const requestStartTime = Date.now()
+  
   try {
+    // Check if database is connected
+    const mongoose = await import('mongoose')
+    if (mongoose.default.connection.readyState !== 1) {
+      logger.warn('Order creation attempted but database is not connected')
+      return res.status(503).json({
+        success: false,
+        message: 'Database is not available. Please try again later.'
+      })
+    }
+
     // Check validation errors
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -142,7 +156,7 @@ router.post('/', orderLimiter, validateOrder, async (req, res) => {
       })
     }
 
-    const { studentInfo, orderItems, payment, totalAmount } = req.body
+    const { studentInfo, orderItems, payment, totalAmount, orderDate } = req.body
 
     // Additional validation for UPI payment
     if (payment.method === 'upi') {
@@ -155,24 +169,61 @@ router.post('/', orderLimiter, validateOrder, async (req, res) => {
     }
 
     // Calculate total from items to verify
-    const calculatedTotal = orderItems.reduce((sum, item) => sum + item.total, 0)
+    const calculatedTotal = orderItems.reduce((sum, item) => sum + (item.total || 0), 0)
     if (Math.abs(calculatedTotal - totalAmount) > 0.01) {
       return res.status(400).json({
         success: false,
-        message: 'Total amount mismatch'
+        message: 'Total amount mismatch',
+        details: {
+          calculated: calculatedTotal,
+          provided: totalAmount
+        }
       })
     }
 
-    // Create order
-    const order = new Order({
+    // Create order (orderDate is optional - schema will default to Date.now)
+    const orderData = {
       studentInfo,
       orderItems,
       payment,
       totalAmount,
       status: 'pending'
-    })
+    }
+    
+    // Only include orderDate if provided (schema has default)
+    if (orderDate) {
+      orderData.orderDate = new Date(orderDate)
+    }
+
+    const order = new Order(orderData)
 
     const savedOrder = await order.save()
+    
+    const requestDuration = Date.now() - requestStartTime
+    logger.info(`Order created successfully: ${savedOrder.orderNumber} (${requestDuration}ms)`)
+
+    // Get WhatsApp link for response and email
+    const whatsappLink = APP_CONFIG.COMMUNICATION.WHATSAPP_GROUP_LINK || null
+
+    // Send confirmation email (non-blocking) - wrapped in try-catch to prevent route errors
+    try {
+      // Convert Mongoose document to plain object safely
+      const orderData = savedOrder.toObject ? savedOrder.toObject() : JSON.parse(JSON.stringify(savedOrder))
+      sendOrderConfirmationEmail(orderData, whatsappLink)
+        .then(result => {
+          if (result.success) {
+            logger.info(`✅ Order confirmation email sent for order ${savedOrder.orderNumber}`)
+          } else {
+            logger.warn(`⚠️ Failed to send email for order ${savedOrder.orderNumber}: ${result.message}`)
+          }
+        })
+        .catch(err => {
+          logger.error(`❌ Email sending error for order ${savedOrder.orderNumber}:`, err)
+        })
+    } catch (emailError) {
+      // Log but don't fail the order creation
+      logger.error(`❌ Error initiating email for order ${savedOrder.orderNumber}:`, emailError)
+    }
 
     res.status(201).json({
       success: true,
@@ -183,11 +234,18 @@ router.post('/', orderLimiter, validateOrder, async (req, res) => {
         status: savedOrder.status,
         totalAmount: savedOrder.totalAmount,
         orderDate: savedOrder.orderDate
-      }
+      },
+      whatsappLink: whatsappLink
     })
 
   } catch (error) {
     logger.error('Order creation error:', error)
+    logger.error('Error stack:', error.stack)
+    logger.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      name: error.name
+    })
     
     if (error.code === 11000) {
       return res.status(400).json({
@@ -196,18 +254,44 @@ router.post('/', orderLimiter, validateOrder, async (req, res) => {
       })
     }
 
-    res.status(500).json({
+    // Send detailed error in development, generic in production
+    const errorResponse = {
       success: false,
-      message: 'Failed to create order',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    })
+      message: 'Failed to create order'
+    }
+    
+    if (process.env.NODE_ENV === 'development') {
+      errorResponse.error = error.message
+      errorResponse.stack = error.stack
+      errorResponse.details = {
+        code: error.code,
+        name: error.name,
+        type: error.constructor.name
+      }
+    }
+    
+    res.status(500).json(errorResponse)
   }
 })
 
 // Get order by ID
 router.get('/:orderId', async (req, res) => {
   try {
+    // Check if database is connected
+    const mongoose = await import('mongoose')
+    if (mongoose.default.connection.readyState !== 1) {
+      logger.warn(`Order fetch attempted but database is not connected: ${req.params.orderId}`)
+      return res.status(503).json({
+        success: false,
+        message: 'Database is not available. Please try again later.'
+      })
+    }
+
     const order = await Order.findById(req.params.orderId)
+    
+    if (order) {
+      logger.debug(`Order fetched: ${req.params.orderId}`)
+    }
     
     if (!order) {
       return res.status(404).json({
@@ -233,7 +317,18 @@ router.get('/:orderId', async (req, res) => {
 // Get orders by student ID or email
 router.get('/', async (req, res) => {
   try {
+    // Check if database is connected
+    const mongoose = await import('mongoose')
+    if (mongoose.default.connection.readyState !== 1) {
+      logger.warn('Orders query attempted but database is not connected')
+      return res.status(503).json({
+        success: false,
+        message: 'Database is not available. Please try again later.'
+      })
+    }
+
     const { studentId, email, status } = req.query
+    logger.debug(`Orders query: studentId=${studentId}, email=${email}, status=${status}`)
     const query = {}
 
     if (studentId) {
@@ -249,6 +344,8 @@ router.get('/', async (req, res) => {
     const orders = await Order.find(query)
       .sort({ orderDate: -1 })
       .limit(50)
+    
+    logger.debug(`Orders query returned ${orders.length} results`)
 
     res.json({
       success: true,
@@ -268,12 +365,23 @@ router.get('/', async (req, res) => {
 // Update order status
 router.patch('/:orderId/status', async (req, res) => {
   try {
+    // Check if database is connected
+    const mongoose = await import('mongoose')
+    if (mongoose.default.connection.readyState !== 1) {
+      logger.warn(`Order status update attempted but database is not connected: ${req.params.orderId}`)
+      return res.status(503).json({
+        success: false,
+        message: 'Database is not available. Please try again later.'
+      })
+    }
+
     const { status } = req.body
     
     if (!['pending', 'confirmed', 'cancelled', 'completed'].includes(status)) {
+      logger.warn(`Invalid status update attempt: ${status} for order ${req.params.orderId}`)
       return res.status(400).json({
         success: false,
-        message: 'Invalid status'
+        message: 'Invalid status. Must be one of: pending, confirmed, cancelled, completed'
       })
     }
 
@@ -284,11 +392,14 @@ router.patch('/:orderId/status', async (req, res) => {
     )
 
     if (!order) {
+      logger.warn(`Order status update failed - order not found: ${req.params.orderId}`)
       return res.status(404).json({
         success: false,
         message: 'Order not found'
       })
     }
+    
+    logger.info(`Order status updated: ${order.orderNumber} -> ${status}`)
 
     res.json({
       success: true,

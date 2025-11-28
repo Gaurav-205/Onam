@@ -95,8 +95,15 @@ const orderSchema = new mongoose.Schema({
   orderNumber: {
     type: String,
     unique: true,
-    required: true,
-    index: true
+    required: false, // Generated in pre-save hook
+    index: true,
+    validate: {
+      validator: function(v) {
+        // This validator will run after pre-save hook
+        return v != null && v.trim() !== ''
+      },
+      message: 'Order number must be generated'
+    }
   },
   studentInfo: {
     type: studentInfoSchema,
@@ -139,46 +146,90 @@ const orderSchema = new mongoose.Schema({
 })
 
 // Counter schema for atomic order number generation
+// Uses counterId field to identify counters (e.g., "order_20241128")
 const counterSchema = new mongoose.Schema({
-  _id: { type: String, required: true },
-  sequence: { type: Number, default: 0 }
-}, { _id: false })
+  counterId: {
+    type: String,
+    required: true,
+    unique: true,
+    index: true
+  },
+  sequence: { 
+    type: Number, 
+    default: 0 
+  }
+}, {
+  timestamps: false,
+  versionKey: false
+})
 
 const Counter = mongoose.models.Counter || mongoose.model('Counter', counterSchema)
 
 // Generate unique order number before saving
 // Uses atomic counter to prevent race conditions
 orderSchema.pre('save', async function(next) {
+  // Generate orderNumber immediately - don't wait for anything
   if (!this.orderNumber) {
+    const date = new Date()
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const datePrefix = `${year}${month}${day}`
+    const prefix = (APP_CONFIG && APP_CONFIG.ORDER && APP_CONFIG.ORDER.PREFIX) || 'ONAM'
+    
+    // First, set a fallback orderNumber immediately (guaranteed to work)
+    const timestamp = Date.now().toString().slice(-8)
+    const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
+    this.orderNumber = `${prefix}-${datePrefix}-${timestamp}${randomSuffix}`
+    
+    // Then try to use atomic counter (async, non-blocking)
     try {
-      const date = new Date()
-      const year = date.getFullYear()
-      const month = String(date.getMonth() + 1).padStart(2, '0')
-      const day = String(date.getDate()).padStart(2, '0')
-      const datePrefix = `${year}${month}${day}`
-      const counterId = `order_${datePrefix}`
-      
-      // Atomic increment using findOneAndUpdate
-      const counter = await Counter.findByIdAndUpdate(
-        counterId,
-        { $inc: { sequence: 1 } },
-        { new: true, upsert: true }
-      )
-      
-      const sequenceNumber = counter.sequence
-      const paddedSequence = String(sequenceNumber).padStart(APP_CONFIG.ORDER.NUMBER_PADDING, '0')
-      this.orderNumber = `${APP_CONFIG.ORDER.PREFIX}-${datePrefix}-${paddedSequence}`
-    } catch (error) {
-      // Fallback: use timestamp-based unique number if counter fails
-      const date = new Date()
-      const year = date.getFullYear()
-      const month = String(date.getMonth() + 1).padStart(2, '0')
-      const day = String(date.getDate()).padStart(2, '0')
-      const datePrefix = `${year}${month}${day}`
-      const timestamp = Date.now().toString().slice(-8)
-      this.orderNumber = `${APP_CONFIG.ORDER.PREFIX}-${datePrefix}-${timestamp}`
-    }
+      if (mongoose.connection && mongoose.connection.readyState === 1) {
+        const counterId = `order_${datePrefix}`
+        
+        // Atomic increment using findOneAndUpdate
+        const counter = await Counter.findOneAndUpdate(
+          { counterId: counterId },
+          { 
+            $setOnInsert: { counterId: counterId, sequence: 0 },
+            $inc: { sequence: 1 }
+          },
+          { 
+            new: true, 
+            upsert: true,
+            setDefaultsOnInsert: true
+          }
+        )
+        
+        // If counter worked, use it instead
+        if (counter && counter.sequence !== undefined && counter.sequence > 0) {
+          const sequenceNumber = counter.sequence
+          const padding = (APP_CONFIG && APP_CONFIG.ORDER && APP_CONFIG.ORDER.NUMBER_PADDING) || 4
+          const paddedSequence = String(sequenceNumber).padStart(padding, '0')
+          this.orderNumber = `${prefix}-${datePrefix}-${paddedSequence}`
+        }
+      }
+      } catch (error) {
+        // Counter failed - use the fallback that's already set
+        // Only log in development to avoid console pollution
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Counter lookup failed, using fallback order number:', error.message)
+        }
+      }
   }
+  
+  // Ensure orderNumber is always set
+  if (!this.orderNumber || this.orderNumber.trim() === '') {
+    const date = new Date()
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const datePrefix = `${year}${month}${day}`
+    const timestamp = Date.now().toString()
+    const randomSuffix = Math.floor(Math.random() * 100000).toString().padStart(5, '0')
+    this.orderNumber = `ONAM-${datePrefix}-${timestamp}${randomSuffix}`
+  }
+  
   next()
 })
 
@@ -191,4 +242,3 @@ orderSchema.index({ status: 1 })
 const Order = mongoose.model('Order', orderSchema)
 
 export default Order
-

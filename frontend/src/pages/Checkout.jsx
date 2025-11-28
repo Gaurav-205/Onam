@@ -1,17 +1,23 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { isValidEmail, isValidPhone, isValidUPI, isRequired } from '../utils/validation'
 import { parsePrice, formatPrice } from '../utils/price'
 import { createOrder, getConfig } from '../config/api'
 import { APP_CONFIG } from '../config/app'
+import { useToast } from '../hooks/useToast'
+import Toast from '../components/Toast'
 
 const Checkout = () => {
   const { cartItems, totalPrice, clearCart } = useCart()
   const navigate = useNavigate()
+  const { toast, showToast, hideToast } = useToast()
   const [isProcessing, setIsProcessing] = useState(false)
   const [orderPlaced, setOrderPlaced] = useState(false)
+  const [orderDetails, setOrderDetails] = useState(null)
   const [upiId, setUpiId] = useState(APP_CONFIG.PAYMENT.UPI_ID || null)
+  const [whatsappLink, setWhatsappLink] = useState(null)
+  const redirectTimeoutRef = useRef(null)
 
   // Form state - Student information for university event
   const [formData, setFormData] = useState({
@@ -30,20 +36,37 @@ const Checkout = () => {
 
   const [errors, setErrors] = useState({})
 
-  // Fetch UPI ID from backend on component mount
+  // Fetch config (UPI ID and WhatsApp link) from backend on component mount
   useEffect(() => {
     const fetchConfig = async () => {
       try {
         const config = await getConfig()
-        if (config?.success && config?.config?.payment?.upiId) {
-          setUpiId(config.config.payment.upiId)
+        if (config?.success) {
+          if (config?.config?.payment?.upiId) {
+            setUpiId(config.config.payment.upiId)
+          }
+          if (config?.config?.communication?.whatsappGroupLink) {
+            setWhatsappLink(config.config.communication.whatsappGroupLink)
+          }
         }
       } catch (error) {
-        // Fallback to env var if API fails
-        console.warn('Failed to fetch config from backend, using fallback:', error)
+        // Fallback to env var if API fails - silent fail
+        // Only log in development to avoid console pollution
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Failed to fetch config from backend, using fallback:', error.message)
+        }
       }
     }
     fetchConfig()
+  }, [])
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current)
+      }
+    }
   }, [])
 
   const handleInputChange = useCallback((e) => {
@@ -94,7 +117,13 @@ const Checkout = () => {
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault()
     
-    if (!validateForm()) return
+    // Prevent duplicate submissions
+    if (isProcessing || orderPlaced) return
+    
+    if (!validateForm()) {
+      showToast('Please fill in all required fields correctly', 'error')
+      return
+    }
 
     setIsProcessing(true)
     
@@ -130,27 +159,39 @@ const Checkout = () => {
       // Send order to backend
       const response = await createOrder(orderData)
       
-      console.log('Order created successfully:', response)
-      
       setIsProcessing(false)
       setOrderPlaced(true)
+      // Include WhatsApp link from response if available
+      setOrderDetails({
+        ...(response.order || response),
+        whatsappLink: response.whatsappLink || whatsappLink
+      })
       clearCart()
       
-      // Redirect to home after 3 seconds
-      setTimeout(() => {
+      // Redirect to home after 5 seconds (increased to show order details)
+      redirectTimeoutRef.current = setTimeout(() => {
         navigate('/')
-      }, 3000)
+      }, 5000)
     } catch (error) {
-      console.error('Order submission failed:', error)
       setIsProcessing(false)
       
-      // Show error message to user
-      alert(`Failed to submit order: ${error.message || 'Please try again later'}`)
+      // Show error message using Toast
+      const errorMessage = error.message || 'Failed to submit order. Please try again later.'
+      showToast(errorMessage, 'error', 5000)
     }
-  }, [formData, cartItems, totalPrice, validateForm, clearCart, navigate])
+  }, [formData, cartItems, totalPrice, validateForm, clearCart, navigate, isProcessing, orderPlaced, showToast])
 
   if (orderPlaced) {
     return (
+      <>
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            duration={toast.duration}
+            onClose={hideToast}
+          />
+        )}
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50 flex items-center justify-center px-4">
         <div className="bg-white rounded-xl shadow-lg p-8 sm:p-12 text-center max-w-md">
           <div className="text-6xl mb-4">✅</div>
@@ -158,14 +199,70 @@ const Checkout = () => {
           <p className="text-gray-600 mb-4">
             Thank you for registering for Onam celebrations at MIT ADT University!
           </p>
+            
+            {orderDetails && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4 text-left">
+                <p className="text-sm font-semibold text-gray-800 mb-2">Order Details:</p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-medium">Order Number:</span>{' '}
+                  <span className="font-mono text-onam-green">{orderDetails.orderNumber || 'N/A'}</span>
+                </p>
+                {orderDetails.totalAmount && (
+                  <p className="text-sm text-gray-700 mt-1">
+                    <span className="font-medium">Total Amount:</span>{' '}
+                    <span className="font-semibold text-onam-green">{formatPrice(orderDetails.totalAmount)}</span>
+                  </p>
+                )}
+                {orderDetails.status && (
+                  <p className="text-sm text-gray-700 mt-1">
+                    <span className="font-medium">Status:</span>{' '}
+                    <span className="capitalize text-onam-gold">{orderDetails.status}</span>
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* WhatsApp Group Link */}
+            {(orderDetails?.whatsappLink || whatsappLink) && (
+              <div className="bg-green-50 border-2 border-green-300 rounded-lg p-6 mb-4">
+                <div className="text-center">
+                  <div className="text-4xl mb-3">📱</div>
+                  <h3 className="text-lg font-bold text-gray-800 mb-2">Join Our WhatsApp Group!</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Stay updated with Onam festival updates, event schedules, and announcements
+                  </p>
+                  <a
+                    href={orderDetails?.whatsappLink || whatsappLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg hover:shadow-xl"
+                  >
+                    📱 Join WhatsApp Group
+                  </a>
+                </div>
+              </div>
+            )}
+            
           <p className="text-sm text-gray-500 mb-6">
-            We'll send you a confirmation email shortly. See you at the event!
+            A confirmation email has been sent to your registered email address with all the details. See you at the event!
           </p>
+            <button
+              onClick={() => {
+                if (redirectTimeoutRef.current) {
+                  clearTimeout(redirectTimeoutRef.current)
+                }
+                navigate('/')
+              }}
+              className="bg-onam-green text-white font-semibold py-2 px-6 rounded-full hover:bg-green-700 transition-colors mb-2"
+            >
+              Return to Home
+            </button>
           <p className="text-xs text-gray-400">
-            Redirecting to home page...
+              Redirecting automatically in a few seconds...
           </p>
         </div>
       </div>
+      </>
     )
   }
 
@@ -188,6 +285,15 @@ const Checkout = () => {
   }
 
   return (
+    <>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          duration={toast.duration}
+          onClose={hideToast}
+        />
+      )}
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50 py-12 sm:py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
@@ -480,7 +586,7 @@ const Checkout = () => {
 
               <button
                 type="submit"
-                disabled={isProcessing}
+                disabled={isProcessing || orderPlaced}
                 className="w-full bg-onam-gold text-white font-semibold py-3 px-6 rounded-full hover:bg-amber-600 transition-all duration-200 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isProcessing ? (
@@ -529,6 +635,7 @@ const Checkout = () => {
         </div>
       </div>
     </div>
+    </>
   )
 }
 

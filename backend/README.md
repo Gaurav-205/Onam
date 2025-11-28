@@ -174,6 +174,13 @@ Body:
 | `NODE_ENV` | Environment (development/production) | `development` |
 | `UPI_ID` | UPI ID for payments (required in production) | None |
 | `LOG_LEVEL` | Logging level (error/warn/info/debug) | `info` |
+| `WHATSAPP_GROUP_LINK` | WhatsApp group invite link | None |
+| `EMAIL_USER` | Email address for sending notifications | None |
+| `EMAIL_PASSWORD` | Email password or app password | None |
+| `EMAIL_SERVICE` | Email service (gmail, outlook, etc.) | `gmail` |
+| `EMAIL_HOST` | SMTP host (for custom SMTP) | None |
+| `EMAIL_PORT` | SMTP port (for custom SMTP) | `587` |
+| `EMAIL_SECURE` | Use secure connection (true/false) | `false` |
 
 ### Production Deployment (Render)
 
@@ -186,12 +193,27 @@ FRONTEND_URL=https://onammitadt.netlify.app
 NODE_ENV=production
 UPI_ID=your-upi-id@ybl
 LOG_LEVEL=info
+
+# WhatsApp Group Link
+WHATSAPP_GROUP_LINK=https://chat.whatsapp.com/your-group-invite-link
+
+# Email Configuration (for order confirmations)
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASSWORD=your-app-password
+EMAIL_SERVICE=gmail
+# OR for custom SMTP:
+# EMAIL_HOST=smtp.yourdomain.com
+# EMAIL_PORT=587
+# EMAIL_SECURE=false
 ```
 
 **Important:** 
 - Render automatically sets `PORT`, but you can override it
 - Make sure `FRONTEND_URL` includes your Netlify domain
 - `UPI_ID` is required - orders will fail without it
+- `EMAIL_USER` and `EMAIL_PASSWORD` are required for email notifications
+- For Gmail, use an [App Password](https://support.google.com/accounts/answer/185833) instead of your regular password
+- `WHATSAPP_GROUP_LINK` should be a WhatsApp group invite link
 
 ## 🧪 Testing
 
@@ -234,6 +256,59 @@ curl -X POST http://localhost:3000/api/orders \
 - All timestamps are stored in UTC
 - Database indexes are set up for fast queries
 - Validation ensures data integrity
+- **Email notifications are sent automatically** when orders are created
+- **WhatsApp group link** is included in order confirmation emails and success page
+
+## 📧 Email Configuration
+
+### Gmail Setup (Recommended)
+
+1. **Enable 2-Factor Authentication** on your Gmail account
+2. **Generate App Password:**
+   - Go to [Google Account Settings](https://myaccount.google.com/)
+   - Security → 2-Step Verification → App passwords
+   - Generate a new app password for "Mail"
+3. **Add to `.env`:**
+   ```env
+   EMAIL_USER=your-email@gmail.com
+   EMAIL_PASSWORD=your-16-digit-app-password
+   EMAIL_SERVICE=gmail
+   ```
+
+### Custom SMTP Setup
+
+For other email providers (Outlook, custom SMTP):
+```env
+EMAIL_USER=your-email@domain.com
+EMAIL_PASSWORD=your-password
+EMAIL_SERVICE=custom
+EMAIL_HOST=smtp.yourdomain.com
+EMAIL_PORT=587
+EMAIL_SECURE=false
+```
+
+### Test Email Configuration
+
+In development, test your email setup:
+```bash
+curl http://localhost:3000/api/test-email
+```
+
+## 📱 WhatsApp Group Link
+
+1. **Create a WhatsApp group** for Onam festival updates
+2. **Get the invite link:**
+   - Open WhatsApp group → Group info → Invite via link
+   - Copy the invite link
+3. **Add to `.env`:**
+   ```env
+   WHATSAPP_GROUP_LINK=https://chat.whatsapp.com/your-group-invite-link
+   ```
+
+The link will be:
+- Included in order confirmation emails
+- Displayed on the order success page
+- Available via `/api/config` endpoint
 
 ## 🤝 Frontend Integration
 

@@ -22,14 +22,16 @@
     <div id="root"></div>
     <!-- Loading optimization script -->
     <script>
-      // Performance monitoring
-      window.addEventListener('load', () => {
-        console.log('Onam website loaded successfully!')
-        if ('performance' in window) {
-          const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart
-          console.log(`Page load time: ${loadTime}ms`)
-        }
-      })
+      // Performance monitoring (development only)
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        window.addEventListener('load', () => {
+          console.log('Onam website loaded successfully!')
+          if ('performance' in window && window.performance.timing) {
+            const loadTime = window.performance.timing.loadEventEnd - window.performance.timing.navigationStart
+            console.log(`Page load time: ${loadTime}ms`)
+          }
+        })
+      }
       
       // Video loading optimization
       document.addEventListener('DOMContentLoaded', () => {

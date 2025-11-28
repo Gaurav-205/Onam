@@ -18,7 +18,10 @@ const loadFonts = async () => {
     ])
     return true
   } catch (error) {
-    console.warn('Some fonts failed to load:', error)
+    // Only log in development
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Some fonts failed to load:', error)
+    }
     return false
   }
 }
@@ -280,9 +283,6 @@ const Hero = () => {
               className="w-full h-full object-cover"
               style={{ objectPosition: 'center center' }}
               onError={handleVideoError}
-              onLoadStart={() => console.log('Hero video loading started')}
-              onCanPlay={() => console.log('Hero video can play')}
-              onPlay={() => console.log('Hero video playing')}
               aria-hidden="true"
             >
               <source src="/onam-background.mp4" type="video/mp4" />
