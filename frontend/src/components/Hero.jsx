@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useMemo, memo } from 'react'
 import { HEADINGS } from '../constants/headings'
+import { APP_CONFIG } from '../config/app'
 
-const ONAM_DATE = new Date('2025-09-12T00:00:00').getTime()
-const HEADING_INTERVAL = 3000
-const FADE_DURATION = 300
-const SCROLL_THRESHOLD = 50
+const ONAM_DATE = new Date(APP_CONFIG.DATES.ONAM_DATE).getTime()
+const HEADING_INTERVAL = APP_CONFIG.UI.HEADING_INTERVAL
+const FADE_DURATION = APP_CONFIG.UI.FADE_DURATION
+const SCROLL_THRESHOLD = APP_CONFIG.UI.SCROLL_THRESHOLD
 
 // Font loading utility with error handling
 const loadFonts = async () => {

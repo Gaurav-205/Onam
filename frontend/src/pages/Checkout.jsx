@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext'
 import { isValidEmail, isValidPhone, isValidUPI, isRequired } from '../utils/validation'
 import { parsePrice, formatPrice } from '../utils/price'
 import { createOrder } from '../config/api'
+import { APP_CONFIG } from '../config/app'
 
 const Checkout = () => {
   const { cartItems, totalPrice, clearCart } = useCart()
@@ -391,10 +392,10 @@ const Checkout = () => {
                     <div className="bg-white p-4 rounded-lg border border-blue-300">
                       <div className="flex items-center justify-between mb-3">
                         <span className="font-semibold text-gray-800">Pay to UPI ID:</span>
-                        <span className="text-lg font-bold text-onam-green">8955142954-2@ybl</span>
+                        <span className="text-lg font-bold text-onam-green">{APP_CONFIG.PAYMENT.UPI_ID}</span>
                       </div>
                       <div className="text-sm text-gray-600 space-y-1">
-                        <p>• Scan QR code or use UPI ID: <span className="font-mono font-semibold">8955142954-2@ybl</span></p>
+                        <p>• Scan QR code or use UPI ID: <span className="font-mono font-semibold">{APP_CONFIG.PAYMENT.UPI_ID}</span></p>
                         <p>• Amount: <span className="font-bold text-onam-green">{formatPrice(totalPrice)}</span></p>
                         <p>• After payment, enter your UPI ID and Transaction ID below</p>
                       </div>
