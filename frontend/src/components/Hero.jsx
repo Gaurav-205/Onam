@@ -1,10 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, memo } from 'react'
-
-// Constants moved outside component to prevent recreation
-const HEADINGS = [
-  { text: "Onam", lang: "en" },
-  { text: "ഓണം", lang: "ml" }
-]
+import { HEADINGS } from '../constants/headings'
 
 const ONAM_DATE = new Date('2025-09-12T00:00:00').getTime()
 const HEADING_INTERVAL = 3000
@@ -157,13 +152,13 @@ const Hero = () => {
 
   // Optimized scroll handlers with useCallback
   const handleVideoScroll = useCallback(() => {
-    const heroSection = document.getElementById('home')
+    const heroSection = document.querySelector('section')
     if (!heroSection) return
 
     const rect = heroSection.getBoundingClientRect()
     const isVisible = rect.top < window.innerHeight && rect.bottom > 0
     
-    const backgroundVideo = document.querySelector('#home video')
+    const backgroundVideo = document.querySelector('section video')
     if (backgroundVideo) {
       if (isVisible) {
         backgroundVideo.play().catch(() => {}) // Silent error handling
@@ -195,12 +190,17 @@ const Hero = () => {
 
   // Consolidated useEffect for scroll handling
   useEffect(() => {
-    const scrollHandler = throttledScroll()
-    window.addEventListener('scroll', scrollHandler, { passive: true })
-    return () => window.removeEventListener('scroll', scrollHandler)
+    let scrollHandler = null
+    if (throttledScroll) {
+      scrollHandler = throttledScroll()
+      window.addEventListener('scroll', scrollHandler, { passive: true })
+    }
+    return () => {
+      if (scrollHandler) {
+        window.removeEventListener('scroll', scrollHandler)
+      }
+    }
   }, [throttledScroll])
-
-  // Removed heavy video checks to improve performance
 
   // Scroll indicator timer
   useEffect(() => {

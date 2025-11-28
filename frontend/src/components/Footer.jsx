@@ -1,17 +1,13 @@
 import { useState, useEffect, useCallback, useMemo, memo } from 'react'
-
-// Memoized footer data
-const HEADINGS = [
-  { text: "Onam", lang: "en" },
-  { text: "ഓണം", lang: "ml" }
-]
+import { Link } from 'react-router-dom'
+import { HEADINGS } from '../constants/headings'
 
 const secondaryLinks = [
-  { id: 'home', label: 'HOME' },
-  { id: 'shopping', label: 'SHOPPING' },
-  { id: 'sadya', label: 'SADYA' },
-  { id: 'events', label: 'EVENTS' },
-  { id: 'under-development', label: 'COMING SOON' }
+  { id: 'home', label: 'HOME', path: '/', type: 'scroll' },
+  { id: 'shopping', label: 'SHOPPING', path: '/shopping', type: 'route' },
+  { id: 'sadya', label: 'SADYA', path: '/sadya', type: 'scroll' },
+  { id: 'events', label: 'EVENTS', path: '/events', type: 'scroll' },
+  { id: 'under-development', label: 'COMING SOON', path: '/coming-soon', type: 'route' }
 ]
 
 const socialLinks = [
@@ -123,11 +119,6 @@ const Footer = ({ scrollToSection }) => {
   const memoizedSecondaryLinks = useMemo(() => secondaryLinks, [])
   const memoizedSocialLinks = useMemo(() => socialLinks, [])
 
-  // Memoized scroll handler
-  const handleScrollToSection = useCallback((sectionId) => {
-    scrollToSection(sectionId)
-  }, [scrollToSection])
-
   return (
     <footer className="bg-gray-900 text-white text-center py-12 sm:py-16" role="contentinfo">
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
@@ -146,16 +137,38 @@ const Footer = ({ scrollToSection }) => {
 
         {/* Secondary Navigation Links */}
         <nav className="flex justify-center space-x-4 sm:space-x-6 md:space-x-8 mb-6 sm:mb-8 flex-wrap gap-y-2" role="navigation" aria-label="Footer navigation">
-          {memoizedSecondaryLinks.map((link, index) => (
-            <button
-              key={index}
-              onClick={() => handleScrollToSection(link.id)}
-              className="text-gray-300 hover:text-yellow-400 transition-colors duration-200 font-medium tracking-wide text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-gray-900 rounded"
-              aria-label={`Navigate to ${link.label} section`}
-            >
-              {link.label}
-            </button>
-          ))}
+          {memoizedSecondaryLinks.map((link, index) => {
+            if (link.type === 'scroll') {
+              return (
+                <button
+                  key={index}
+                  onClick={() => scrollToSection(link.id)}
+                  className="text-gray-300 hover:text-yellow-400 transition-colors duration-200 font-medium tracking-wide text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-gray-900 rounded"
+                  aria-label={`Navigate to ${link.label} section`}
+                >
+                  {link.label}
+                </button>
+              )
+            }
+            return (
+              <Link
+                key={index}
+                to={link.path}
+                onClick={() => {
+                  requestAnimationFrame(() => {
+                    window.scrollTo({ 
+                      top: 0, 
+                      behavior: 'smooth' 
+                    })
+                  })
+                }}
+                className="text-gray-300 hover:text-yellow-400 transition-colors duration-200 font-medium tracking-wide text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-gray-900 rounded"
+                aria-label={`Navigate to ${link.label} page`}
+              >
+                {link.label}
+              </Link>
+            )
+          })}
         </nav>
 
         {/* Social Media Icons */}

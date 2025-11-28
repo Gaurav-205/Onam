@@ -1,5 +1,3 @@
-
-
 import { useEffect, useRef, useState, useCallback } from 'react'
 
 const VideoSection = () => {
@@ -89,16 +87,6 @@ const VideoSection = () => {
       }
     }
   }, [handleIntersection])
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (videoRef.current) {
-        videoRef.current.pause()
-        setIsVideoPlaying(false)
-      }
-    }
-  }, [])
 
   return (
     <section 
