@@ -8,47 +8,20 @@
     <meta name="keywords" content="Onam, Kerala, festival, Mahabali, boat races, sadya, pookalam, traditional games" />
     <title>ONAM - Celebration of Kerala's Tradition & Culture</title>
     
-    <!-- Font preloading to prevent FOUT -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Great+Vibes:wght@400&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Noto+Serif+Malayalam:wght@400&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Prata:wght@400&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <!-- Google Fonts - Preconnect for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     
-    <!-- Fallback for browsers that don't support preload -->
-    <noscript>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Great+Vibes:wght@400&display=swap">
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+Malayalam:wght@400&display=swap">
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prata:wght@400&display=swap">
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap">
-    </noscript>
+    <!-- Font stylesheets -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Great+Vibes:wght@400&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+Malayalam:wght@400&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prata:wght@400&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap">
   </head>
   <body>
     <div id="root"></div>
     <!-- Loading optimization script -->
     <script>
-      // Preload critical video resources
-      const preloadHeroVideo = document.createElement('link')
-      preloadHeroVideo.rel = 'preload'
-      preloadHeroVideo.as = 'video'
-      preloadHeroVideo.href = '/onam-background.mp4'
-      preloadHeroVideo.type = 'video/mp4'
-      document.head.appendChild(preloadHeroVideo)
-      
-      // Preload other videos
-      const preloadSadyaVideo = document.createElement('link')
-      preloadSadyaVideo.rel = 'preload'
-      preloadSadyaVideo.as = 'video'
-      preloadSadyaVideo.href = '/sadya-video.mp4'
-      preloadSadyaVideo.type = 'video/mp4'
-      document.head.appendChild(preloadSadyaVideo)
-      
-      const preloadCelebrationVideo = document.createElement('link')
-      preloadCelebrationVideo.rel = 'preload'
-      preloadCelebrationVideo.as = 'video'
-      preloadCelebrationVideo.href = '/onam-celebration-video.mp4'
-      preloadCelebrationVideo.type = 'video/mp4'
-      document.head.appendChild(preloadCelebrationVideo)
-      
       // Performance monitoring
       window.addEventListener('load', () => {
         console.log('Onam website loaded successfully!')
