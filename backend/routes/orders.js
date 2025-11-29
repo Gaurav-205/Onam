@@ -1,25 +1,14 @@
 import express from 'express'
-import { body, validationResult } from 'express-validator'
-import rateLimit from 'express-rate-limit'
+import { body } from 'express-validator'
 import Order from '../models/Order.js'
 import { logger } from '../utils/logger.js'
 import { sendOrderConfirmationEmail } from '../utils/emailService.js'
 import { APP_CONFIG } from '../config/app.js'
+import { orderLimiter } from '../utils/rateLimiter.js'
+import { checkDatabaseConnection } from '../middleware/database.js'
+import { handleValidationErrors, validateObjectId, isValidOrderStatus } from '../middleware/validation.js'
 
 const router = express.Router()
-
-// Stricter rate limit for order creation
-const orderLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  message: {
-    success: false,
-    message: 'Too many order requests. Please wait before creating another order.'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-  validate: false, // Disable strict validation (trust proxy is set to 1, which is secure)
-})
 
 // Validation and sanitization middleware
 const validateOrder = [
@@ -133,29 +122,10 @@ const validateOrder = [
 ]
 
 // Create new order (with stricter rate limiting)
-router.post('/', orderLimiter, validateOrder, async (req, res) => {
+router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatabaseConnection, async (req, res) => {
   const requestStartTime = Date.now()
   
   try {
-    // Check if database is connected
-    const mongoose = await import('mongoose')
-    if (mongoose.default.connection.readyState !== 1) {
-      logger.warn('Order creation attempted but database is not connected')
-      return res.status(503).json({
-        success: false,
-        message: 'Database is not available. Please try again later.'
-      })
-    }
-
-    // Check validation errors
-    const errors = validationResult(req)
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: errors.array()
-      })
-    }
 
     const { studentInfo, orderItems, payment, totalAmount, orderDate } = req.body
 
@@ -291,27 +261,9 @@ router.post('/', orderLimiter, validateOrder, async (req, res) => {
 })
 
 // Get order by ID
-router.get('/:orderId', async (req, res) => {
+router.get('/:orderId', validateObjectId, checkDatabaseConnection, async (req, res) => {
   try {
-    // Validate orderId format (MongoDB ObjectId is 24 hex characters)
-    const orderId = req.params.orderId?.trim()
-    if (!orderId || !/^[a-f\d]{24}$/i.test(orderId)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid order ID format'
-      })
-    }
-
-    // Check if database is connected
-    const mongoose = await import('mongoose')
-    if (mongoose.default.connection.readyState !== 1) {
-      logger.warn(`Order fetch attempted but database is not connected: ${orderId}`)
-      return res.status(503).json({
-        success: false,
-        message: 'Database is not available. Please try again later.'
-      })
-    }
-
+    const orderId = req.params.orderId.trim()
     const order = await Order.findById(orderId)
     
     if (!order) {
@@ -338,18 +290,8 @@ router.get('/:orderId', async (req, res) => {
 })
 
 // Get orders by student ID or email
-router.get('/', async (req, res) => {
+router.get('/', checkDatabaseConnection, async (req, res) => {
   try {
-    // Check if database is connected
-    const mongoose = await import('mongoose')
-    if (mongoose.default.connection.readyState !== 1) {
-      logger.warn('Orders query attempted but database is not connected')
-      return res.status(503).json({
-        success: false,
-        message: 'Database is not available. Please try again later.'
-      })
-    }
-
     const { studentId, email, status } = req.query
     logger.debug(`Orders query: studentId=${studentId}, email=${email}, status=${status}`)
     const query = {}
@@ -404,30 +346,12 @@ router.get('/', async (req, res) => {
 })
 
 // Update order status
-router.patch('/:orderId/status', async (req, res) => {
+router.patch('/:orderId/status', validateObjectId, checkDatabaseConnection, async (req, res) => {
   try {
-    // Validate orderId format
-    const orderId = req.params.orderId?.trim()
-    if (!orderId || !/^[a-f\d]{24}$/i.test(orderId)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid order ID format'
-      })
-    }
-
-    // Check if database is connected
-    const mongoose = await import('mongoose')
-    if (mongoose.default.connection.readyState !== 1) {
-      logger.warn(`Order status update attempted but database is not connected: ${orderId}`)
-      return res.status(503).json({
-        success: false,
-        message: 'Database is not available. Please try again later.'
-      })
-    }
-
+    const orderId = req.params.orderId.trim()
     const { status } = req.body
     
-    if (!status || typeof status !== 'string' || !['pending', 'confirmed', 'cancelled', 'completed'].includes(status.trim())) {
+    if (!isValidOrderStatus(status)) {
       logger.warn(`Invalid status update attempt: ${status} for order ${orderId}`)
       return res.status(400).json({
         success: false,

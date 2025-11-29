@@ -1,12 +1,13 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import rateLimit from 'express-rate-limit'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import connectDB from './config/database.js'
 import orderRoutes from './routes/orders.js'
 import { logger } from './utils/logger.js'
+import { defaultLimiter, lightLimiter } from './utils/rateLimiter.js'
+import { getDatabaseStatus } from './middleware/database.js'
 
 // Load environment variables from .env file in backend directory
 const __filename = fileURLToPath(import.meta.url)
@@ -174,38 +175,8 @@ app.use((req, res, next) => {
   next()
 })
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: {
-    success: false,
-    message: 'Too many requests from this IP, please try again later.'
-  },
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  validate: false, // Disable strict validation (trust proxy is set to 1, which is secure)
-  skip: (req) => {
-    // Skip rate limiting for health check in production
-    return req.path === '/health' && process.env.NODE_ENV === 'production'
-  }
-})
-
-// Light rate limiting for config endpoint
-const configLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 30, // Limit each IP to 30 requests per minute
-  message: {
-    success: false,
-    message: 'Too many requests. Please try again later.'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-  validate: false, // Disable strict validation (trust proxy is set to 1, which is secure)
-})
-
 // Apply rate limiting to all API requests
-app.use('/api/', limiter)
+app.use('/api/', defaultLimiter)
 
 // Health check endpoint
 app.get('/health', async (req, res) => {
@@ -217,20 +188,14 @@ app.get('/health', async (req, res) => {
   }
 
   // Check database connection
-  try {
-    const mongoose = await import('mongoose')
-    if (mongoose.default.connection.readyState === 1) {
-      health.database = 'connected'
-      health.databaseName = mongoose.default.connection.name
-    } else {
-      health.database = 'disconnected'
-      health.status = 'degraded'
-      health.message = 'API running but database is not connected'
-    }
-  } catch (error) {
-    health.database = 'error'
+  const dbStatus = await getDatabaseStatus()
+  if (dbStatus.connected) {
+    health.database = 'connected'
+    health.databaseName = dbStatus.databaseName
+  } else {
+    health.database = 'disconnected'
     health.status = 'degraded'
-    health.message = 'API running but database check failed'
+    health.message = 'API running but database is not connected'
   }
 
   const statusCode = health.status === 'OK' ? 200 : 503
@@ -238,7 +203,7 @@ app.get('/health', async (req, res) => {
 })
 
 // Config endpoint (public, returns non-sensitive config)
-app.get('/api/config', configLimiter, (req, res) => {
+app.get('/api/config', lightLimiter, (req, res) => {
   res.json({
     success: true,
     config: {
@@ -254,7 +219,7 @@ app.get('/api/config', configLimiter, (req, res) => {
 })
 
 // Email test endpoint (available in all environments for debugging)
-app.get('/api/test-email', configLimiter, async (req, res) => {
+app.get('/api/test-email', lightLimiter, async (req, res) => {
   try {
     const { testEmailConnection } = await import('./utils/emailService.js')
     const result = await testEmailConnection()
@@ -282,7 +247,7 @@ app.get('/api/test-email', configLimiter, async (req, res) => {
 })
 
 // Email diagnostic endpoint (production-safe, shows configuration status)
-app.get('/api/email-diagnostics', configLimiter, async (req, res) => {
+app.get('/api/email-diagnostics', lightLimiter, async (req, res) => {
   const diagnostics = {
     success: true,
     emailConfigured: !!(process.env.EMAIL_USER && process.env.EMAIL_PASSWORD),
