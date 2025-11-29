@@ -408,7 +408,14 @@ const server = app.listen(PORT, () => {
   
   // Check email configuration on startup and verify connection
   if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
-    logger.info(`Email configured for: ${process.env.EMAIL_USER}`)
+    const emailUser = process.env.EMAIL_USER.trim()
+    logger.info(`Email configured for: ${emailUser}`)
+    
+    // Detect deployment platform for better logging
+    const isRender = process.env.RENDER === 'true' || !!process.env.RENDER_SERVICE_NAME
+    const isVercel = !!process.env.VERCEL
+    const platform = isRender ? 'Render' : isVercel ? 'Vercel' : process.env.NODE_ENV === 'production' ? 'Production' : 'Development'
+    logger.info(`Deployment platform: ${platform}`)
     
     // Verify email connection on startup (non-blocking)
     import('./utils/emailService.js').then(({ testEmailConnection }) => {
@@ -416,21 +423,29 @@ const server = app.listen(PORT, () => {
         .then(result => {
           if (result.success) {
             logger.info('✓ Email service verified and ready')
+            if (result.warning) {
+              logger.warn(`⚠ ${result.warning}`)
+            }
           } else {
             logger.warn(`⚠ Email service verification failed: ${result.message}`)
             if (result.code) {
               logger.warn(`Error code: ${result.code}`)
             }
+            logger.warn('Email sending may still work - verification is often blocked by cloud providers')
           }
         })
         .catch(err => {
           logger.error('Failed to verify email service on startup:', err.message)
+          logger.warn('Email sending will still be attempted when orders are created')
         })
     }).catch(err => {
       logger.error('Failed to import email service for startup check:', err.message)
     })
   } else {
-    logger.warn(`Email not configured - EMAIL_USER: ${process.env.EMAIL_USER ? 'SET' : 'NOT SET'}, EMAIL_PASSWORD: ${process.env.EMAIL_PASSWORD ? 'SET' : 'NOT SET'}`)
+    const emailUserStatus = process.env.EMAIL_USER ? 'SET' : 'NOT SET'
+    const emailPassStatus = process.env.EMAIL_PASSWORD ? 'SET' : 'NOT SET'
+    logger.warn(`Email not configured - EMAIL_USER: ${emailUserStatus}, EMAIL_PASSWORD: ${emailPassStatus}`)
+    logger.warn('Order confirmation emails will not be sent. Set EMAIL_USER and EMAIL_PASSWORD environment variables.')
   }
   
   // Production warnings
