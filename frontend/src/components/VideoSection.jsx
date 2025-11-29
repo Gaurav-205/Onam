@@ -79,8 +79,9 @@ const VideoSection = () => {
       }
       observer.disconnect()
       // Ensure video is paused when component unmounts
-      if (videoRef.current) {
-        videoRef.current.pause()
+      const video = videoRef.current
+      if (video) {
+        video.pause()
         setIsVideoPlaying(false)
       }
     }

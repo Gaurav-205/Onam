@@ -50,7 +50,7 @@ const Checkout = () => {
             setWhatsappLink(config.config.communication.whatsappGroupLink)
           }
         }
-      } catch (error) {
+      } catch {
         // Fallback to env var if API fails - silent fail
       }
     }
@@ -253,7 +253,7 @@ const Checkout = () => {
       showToast(errorMessage, 'error', 5000)
       
       // Log error for debugging (only in development)
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.MODE === 'development') {
         console.error('Order submission error:', {
           message: error.message,
           name: error.name,

@@ -3,6 +3,7 @@ import { parsePrice } from '../utils/price'
 
 const CartContext = createContext()
 
+/* eslint-disable react-refresh/only-export-components */
 export const useCart = () => {
   const context = useContext(CartContext)
   if (!context) {
@@ -20,7 +21,7 @@ export const CartProvider = ({ children }) => {
     if (savedCart) {
       try {
         setCartItems(JSON.parse(savedCart))
-      } catch (error) {
+      } catch {
         // Clear corrupted cart data
         localStorage.removeItem('onam_cart')
       }
@@ -31,7 +32,7 @@ export const CartProvider = ({ children }) => {
   useEffect(() => {
     try {
       localStorage.setItem('onam_cart', JSON.stringify(cartItems))
-    } catch (error) {
+    } catch {
       // Handle quota exceeded or other localStorage errors silently
       // Cart will still work in memory, just won't persist
     }

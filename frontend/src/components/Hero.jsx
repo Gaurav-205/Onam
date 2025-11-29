@@ -17,7 +17,7 @@ const loadFonts = async () => {
       document.fonts.load('1em Montserrat')
     ])
     return true
-  } catch (error) {
+  } catch {
     return false
   }
 }

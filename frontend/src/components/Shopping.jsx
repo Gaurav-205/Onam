@@ -30,7 +30,7 @@ const ProductCard = memo(({ item, onAddToCart, onUpdateQuantity, isInCart, itemQ
     onAddToCart(item)
     onShowToast(`${item.name} added to cart!`, 'success')
     setAddingToCart(false)
-  }, [item, onAddToCart, onShowToast])
+  }, [item, onAddToCart, onShowToast, addingToCart])
 
   const handleQuantityChange = useCallback(async (delta) => {
     const newQuantity = itemQuantity + delta
