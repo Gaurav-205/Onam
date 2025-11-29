@@ -22,22 +22,22 @@ jobs:
     
     - name: Install backend dependencies
       run: |
-        cd Onam/backend
+        cd backend
         npm ci
     
     - name: Install frontend dependencies
       run: |
-        cd Onam/frontend
+        cd frontend
         npm ci
     
     - name: Lint frontend
       run: |
-        cd Onam/frontend
+        cd frontend
         npm run lint
     
     - name: Build frontend
       run: |
-        cd Onam/frontend
+        cd frontend
         npm run build
       env:
         VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL || 'http://localhost:3000' }}
