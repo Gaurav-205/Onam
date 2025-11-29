@@ -72,7 +72,7 @@ const Checkout = () => {
     setErrors(prev => {
       if (prev[name]) {
         return { ...prev, [name]: '' }
-      }
+    }
       return prev
     })
   }, [])
@@ -128,8 +128,8 @@ const Checkout = () => {
     
     // Set a safety timeout to ensure isProcessing is always reset
     const safetyTimeout = setTimeout(() => {
-      setIsProcessing(false)
-      showToast('Request is taking longer than expected. Please check your connection and try again.', 'error', 5000)
+        setIsProcessing(false)
+        showToast('Request is taking longer than expected. Please check your connection and try again.', 'error', 5000)
     }, 65000) // 65 seconds - slightly longer than the API timeout
     
     try {

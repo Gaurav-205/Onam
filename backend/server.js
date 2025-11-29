@@ -5,10 +5,12 @@ import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import connectDB from './config/database.js'
 import orderRoutes from './routes/orders.js'
+import authRoutes from './routes/auth.js'
 import { logger } from './utils/logger.js'
 import { defaultLimiter, lightLimiter } from './utils/rateLimiter.js'
 import { getDatabaseStatus } from './middleware/database.js'
 import { APP_CONFIG } from './config/app.js'
+import { getCSRFToken, csrfProtection } from './middleware/csrf.js'
 
 // Load environment variables from .env file in backend directory
 const __filename = fileURLToPath(import.meta.url)
@@ -186,6 +188,10 @@ app.use((req, res, next) => {
 // Apply rate limiting to all API requests
 app.use('/api/', defaultLimiter)
 
+// Apply CSRF protection to state-changing API requests
+// Note: GET requests are excluded in the middleware itself
+app.use('/api/', csrfProtection)
+
 // Health check endpoint
 app.get('/health', async (req, res) => {
   const health = {
@@ -198,12 +204,12 @@ app.get('/health', async (req, res) => {
   // Check database connection
   const dbStatus = await getDatabaseStatus()
   if (dbStatus.connected) {
-    health.database = 'connected'
+      health.database = 'connected'
     health.databaseName = dbStatus.databaseName
-  } else {
-    health.database = 'disconnected'
-    health.status = 'degraded'
-    health.message = 'API running but database is not connected'
+    } else {
+      health.database = 'disconnected'
+      health.status = 'degraded'
+      health.message = 'API running but database is not connected'
   }
 
   const statusCode = health.status === 'OK' ? 200 : 503
@@ -225,6 +231,9 @@ app.get('/api/config', lightLimiter, (req, res) => {
     }
   })
 })
+
+// CSRF token endpoint (public, returns CSRF token for frontend)
+app.get('/api/csrf-token', lightLimiter, getCSRFToken)
 
 // Helper function to get email configuration status (without sensitive data)
 const getEmailConfigStatus = () => {
@@ -314,7 +323,10 @@ app.post('/api/test-email-send', lightLimiter, async (req, res) => {
 })
 
 // API Routes
-// Apply stricter rate limiting to order creation
+// Authentication routes (public)
+app.use('/api/auth', authRoutes)
+
+// Order routes (protected - require authentication)
 app.use('/api/orders', orderRoutes)
 
 // 404 handler

@@ -4,9 +4,11 @@ import Order from '../models/Order.js'
 import { logger } from '../utils/logger.js'
 import { sendOrderConfirmationEmail } from '../utils/emailService.js'
 import { APP_CONFIG } from '../config/app.js'
-import { orderLimiter } from '../utils/rateLimiter.js'
+import { orderLimiter, getEndpointLimiter } from '../utils/rateLimiter.js'
 import { checkDatabaseConnection } from '../middleware/database.js'
 import { handleValidationErrors, validateObjectId, isValidOrderStatus } from '../middleware/validation.js'
+import { authenticate, authorize } from '../middleware/auth.js'
+// Note: CSRF protection is applied globally in server.js
 
 const router = express.Router()
 
@@ -121,13 +123,24 @@ const validateOrder = [
     .withMessage('Notes must be less than 500 characters'),
 ]
 
-// Create new order (with stricter rate limiting)
-router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatabaseConnection, async (req, res) => {
+// Create new order (requires authentication, with stricter rate limiting)
+router.post('/', authenticate, orderLimiter, validateOrder, handleValidationErrors, checkDatabaseConnection, async (req, res) => {
   const requestStartTime = Date.now()
   
   try {
 
     const { studentInfo, orderItems, payment, totalAmount, orderDate } = req.body
+
+    // Verify that the authenticated user matches the order's student info
+    // This prevents users from creating orders for other students
+    if (studentInfo.email.toLowerCase() !== req.user.email.toLowerCase()) {
+      logger.warn(`User ${req.user.email} attempted to create order for ${studentInfo.email}`)
+      return res.status(403).json({
+        success: false,
+        message: 'You can only create orders for your own account.',
+        code: 'UNAUTHORIZED_ORDER_CREATION'
+      })
+    }
 
     // Additional validation for UPI payment
     if (payment.method === 'upi') {
@@ -264,8 +277,8 @@ router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatab
   }
 })
 
-// Get order by ID
-router.get('/:orderId', validateObjectId, checkDatabaseConnection, async (req, res) => {
+// Get order by ID (requires authentication, with rate limiting)
+router.get('/:orderId', authenticate, getEndpointLimiter, validateObjectId, checkDatabaseConnection, async (req, res) => {
   try {
     const orderId = req.params.orderId.trim()
     const order = await Order.findById(orderId)
@@ -274,6 +287,16 @@ router.get('/:orderId', validateObjectId, checkDatabaseConnection, async (req, r
       return res.status(404).json({
         success: false,
         message: 'Order not found'
+      })
+    }
+
+    // Verify that the authenticated user owns this order (or is admin)
+    if (order.studentInfo.email.toLowerCase() !== req.user.email.toLowerCase() && req.user.role !== 'admin') {
+      logger.warn(`User ${req.user.email} attempted to access order ${orderId} belonging to ${order.studentInfo.email}`)
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to access this order.',
+        code: 'UNAUTHORIZED_ORDER_ACCESS'
       })
     }
     
@@ -293,39 +316,38 @@ router.get('/:orderId', validateObjectId, checkDatabaseConnection, async (req, r
   }
 })
 
-// Get orders by student ID or email
-router.get('/', checkDatabaseConnection, async (req, res) => {
+// Get orders by student ID or email (requires authentication, with rate limiting)
+router.get('/', authenticate, getEndpointLimiter, checkDatabaseConnection, async (req, res) => {
   try {
     const { studentId, email, status } = req.query
     logger.debug(`Orders query: studentId=${studentId}, email=${email}, status=${status}`)
     const query = {}
 
-    if (studentId) {
-      const sanitizedStudentId = studentId.trim()
-      if (sanitizedStudentId.length > 0 && sanitizedStudentId.length <= 50) {
-        query['studentInfo.studentId'] = sanitizedStudentId
+    // Non-admin users can only query their own orders
+    if (req.user.role !== 'admin') {
+      query['studentInfo.email'] = req.user.email.toLowerCase()
+    } else {
+      // Admins can query any orders, but still respect query parameters
+      if (studentId) {
+        const sanitizedStudentId = studentId.trim()
+        if (sanitizedStudentId.length > 0 && sanitizedStudentId.length <= 50) {
+          query['studentInfo.studentId'] = sanitizedStudentId
+        }
+      }
+      if (email) {
+        const sanitizedEmail = email.trim().toLowerCase()
+        // Basic email format validation
+        if (sanitizedEmail.length > 0 && sanitizedEmail.length <= 100 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sanitizedEmail)) {
+          query['studentInfo.email'] = sanitizedEmail
+        }
       }
     }
-    if (email) {
-      const sanitizedEmail = email.trim().toLowerCase()
-      // Basic email format validation
-      if (sanitizedEmail.length > 0 && sanitizedEmail.length <= 100 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sanitizedEmail)) {
-        query['studentInfo.email'] = sanitizedEmail
-      }
-    }
+
     if (status) {
       const sanitizedStatus = status.trim()
       if (['pending', 'confirmed', 'cancelled', 'completed'].includes(sanitizedStatus)) {
         query.status = sanitizedStatus
       }
-    }
-    
-    // Require at least one query parameter
-    if (Object.keys(query).length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'At least one query parameter (studentId, email, or status) is required'
-      })
     }
 
     const orders = await Order.find(query)
@@ -349,8 +371,8 @@ router.get('/', checkDatabaseConnection, async (req, res) => {
   }
 })
 
-// Update order status
-router.patch('/:orderId/status', validateObjectId, checkDatabaseConnection, async (req, res) => {
+// Update order status (requires authentication, admin only, with rate limiting)
+router.patch('/:orderId/status', authenticate, authorize('admin'), getEndpointLimiter, validateObjectId, checkDatabaseConnection, async (req, res) => {
   try {
     const orderId = req.params.orderId.trim()
     const { status } = req.body
