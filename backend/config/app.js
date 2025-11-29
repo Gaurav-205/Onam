@@ -13,7 +13,7 @@ export const APP_CONFIG = {
   
   // Date Configuration
   DATES: {
-    ONAM_DATE: '2025-09-12T00:00:00', // Main Onam date
+    ONAM_DATE: '2026-08-26T00:00:00', // Main Onam date (Thiruvonam)
   },
   
   // Payment Configuration

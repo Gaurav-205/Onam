@@ -6,7 +6,7 @@
 export const APP_CONFIG = {
   // Event Dates
   DATES: {
-    ONAM_DATE: '2025-09-12T00:00:00', // Main Onam date
+    ONAM_DATE: '2026-08-26T00:00:00', // Main Onam date (Thiruvonam)
   },
   
   // UI Configuration
