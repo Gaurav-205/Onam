@@ -10,18 +10,14 @@ export default defineConfig({
   esbuild: {
     loader: 'jsx',
     include: /src\/.*\.jsx?$/,
-    exclude: []
+    exclude: [],
+    // Drop console and debugger in production builds
+    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : []
   },
   build: {
     outDir: 'dist',
     sourcemap: false,
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true
-      }
-    },
+    minify: 'esbuild', // Use esbuild instead of terser (faster, no extra dependency)
     rollupOptions: {
       output: {
         manualChunks: {
