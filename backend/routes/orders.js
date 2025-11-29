@@ -136,7 +136,8 @@ router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatab
       if (!payment.upiId || !payment.transactionId) {
         return res.status(400).json({
           success: false,
-          message: 'UPI ID and Transaction ID are required for UPI payment'
+          message: 'UPI ID and Transaction ID are required for UPI payment',
+          requestId
         })
       }
     }
@@ -202,20 +203,20 @@ router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatab
       sendOrderConfirmationEmail(orderPlainObject, whatsappLink)
         .then(result => {
           if (result.success) {
-            logger.info(`Order confirmation email sent for order ${savedOrder.orderNumber}`)
+            logger.info(`[${requestId}] Order confirmation email sent for order ${savedOrder.orderNumber}`)
           } else {
-            logger.warn(`Failed to send email for order ${savedOrder.orderNumber}: ${result.message}`)
+            logger.warn(`[${requestId}] Failed to send email for order ${savedOrder.orderNumber}: ${result.message}`)
           }
         })
         .catch(err => {
           const errorMessage = err?.message || err?.error || 'Unknown error occurred'
-          logger.error(`Email sending error for order ${savedOrder.orderNumber}:`, {
+          logger.error(`[${requestId}] Email sending error for order ${savedOrder.orderNumber}:`, {
             message: errorMessage,
             error: err
           })
         })
     } catch (emailError) {
-      logger.error(`Error initiating email for order ${savedOrder.orderNumber}:`, emailError)
+      logger.error(`[${requestId}] Error initiating email for order ${savedOrder.orderNumber}:`, emailError)
     }
 
     res.status(201).json({

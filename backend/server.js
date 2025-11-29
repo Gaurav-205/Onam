@@ -9,7 +9,7 @@ import { logger } from './utils/logger.js'
 import { defaultLimiter, lightLimiter } from './utils/rateLimiter.js'
 import { getDatabaseStatus } from './middleware/database.js'
 import { APP_CONFIG } from './config/app.js'
-import { requestIdMiddleware } from './middleware/requestId.js'
+import { requestIdMiddleware, getRequestId } from './middleware/requestId.js'
 
 // Load environment variables from .env file in backend directory
 const __filename = fileURLToPath(import.meta.url)
@@ -193,22 +193,24 @@ app.use('/api/', defaultLimiter)
 
 // Health check endpoint
 app.get('/health', async (req, res) => {
+  const requestId = getRequestId(req)
   const health = {
     status: 'OK', 
     message: 'Onam Festival API is running',
     timestamp: new Date().toISOString(),
-    database: 'unknown'
+    database: 'unknown',
+    requestId
   }
 
   // Check database connection
   const dbStatus = await getDatabaseStatus()
   if (dbStatus.connected) {
-      health.database = 'connected'
+    health.database = 'connected'
     health.databaseName = dbStatus.databaseName
-    } else {
-      health.database = 'disconnected'
-      health.status = 'degraded'
-      health.message = 'API running but database is not connected'
+  } else {
+    health.database = 'disconnected'
+    health.status = 'degraded'
+    health.message = 'API running but database is not connected'
   }
 
   const statusCode = health.status === 'OK' ? 200 : 503
@@ -217,6 +219,7 @@ app.get('/health', async (req, res) => {
 
 // Config endpoint (public, returns non-sensitive config)
 app.get('/api/config', lightLimiter, (req, res) => {
+  const requestId = getRequestId(req)
   res.json({
     success: true,
     config: {
@@ -227,7 +230,8 @@ app.get('/api/config', lightLimiter, (req, res) => {
       communication: {
         whatsappGroupLink: APP_CONFIG.COMMUNICATION.WHATSAPP_GROUP_LINK || null
       }
-    }
+    },
+    requestId
   })
 })
 
@@ -244,19 +248,22 @@ const getEmailConfigStatus = () => {
 
 // Email test endpoint (available in all environments for debugging)
 app.get('/api/test-email', lightLimiter, async (req, res) => {
+  const requestId = getRequestId(req)
   try {
     const { testEmailConnection } = await import('./utils/emailService.js')
     const result = await testEmailConnection()
     
     res.json({
       ...result,
-      config: getEmailConfigStatus()
+      config: getEmailConfigStatus(),
+      requestId
     })
   } catch (error) {
     res.status(500).json({
       success: false,
       message: 'Failed to test email connection',
       error: error.message,
+      requestId,
       ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
     })
   }
@@ -264,25 +271,29 @@ app.get('/api/test-email', lightLimiter, async (req, res) => {
 
 // Email diagnostic endpoint (production-safe, shows configuration status)
 app.get('/api/email-diagnostics', lightLimiter, async (req, res) => {
+  const requestId = getRequestId(req)
   const config = getEmailConfigStatus()
   res.json({
     success: true,
     ...config,
     emailPasswordLength: process.env.EMAIL_PASSWORD ? process.env.EMAIL_PASSWORD.length : 0,
     environment: process.env.NODE_ENV || 'development',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    requestId
   })
 })
 
 // Send test email endpoint (for testing email functionality)
 app.post('/api/test-email-send', lightLimiter, async (req, res) => {
+  const requestId = getRequestId(req)
   try {
     const { email } = req.body
     
     if (!email || typeof email !== 'string' || !email.includes('@')) {
       return res.status(400).json({
         success: false,
-        message: 'Valid email address is required in the request body. Send: { "email": "your-email@example.com" }'
+        message: 'Valid email address is required in the request body. Send: { "email": "your-email@example.com" }',
+        requestId
       })
     }
     
@@ -296,7 +307,8 @@ app.post('/api/test-email-send', lightLimiter, async (req, res) => {
         messageId: result.messageId,
         emailFrom: result.emailFrom,
         emailTo: result.emailTo,
-        config: getEmailConfigStatus()
+        config: getEmailConfigStatus(),
+        requestId
       })
     } else {
       res.status(500).json({
@@ -304,6 +316,7 @@ app.post('/api/test-email-send', lightLimiter, async (req, res) => {
         message: result.message,
         code: result.code,
         config: getEmailConfigStatus(),
+        requestId,
         ...(result.details && { details: result.details })
       })
     }
@@ -313,6 +326,7 @@ app.post('/api/test-email-send', lightLimiter, async (req, res) => {
       message: 'Failed to send test email',
       error: error.message,
       config: getEmailConfigStatus(),
+      requestId,
       ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
     })
   }
@@ -324,16 +338,19 @@ app.use('/api/orders', orderRoutes)
 
 // 404 handler
 app.use((req, res) => {
+  const requestId = getRequestId(req)
   res.status(404).json({ 
     success: false, 
-    message: 'Route not found' 
+    message: 'Route not found',
+    requestId
   })
 })
 
 // Error handler
 app.use((err, req, res, next) => {
+  const requestId = getRequestId(req)
   // Log error with request context
-  logger.error(`Unhandled error on ${req.method} ${req.path}:`, err)
+  logger.error(`[${requestId}] Unhandled error on ${req.method} ${req.path}:`, err)
   
   // Don't expose internal errors in production
   const statusCode = err.status || 500
@@ -342,6 +359,7 @@ app.use((err, req, res, next) => {
   res.status(statusCode).json({
     success: false,
     message: isDevelopment ? err.message : 'Internal server error',
+    requestId,
     ...(isDevelopment && { 
       stack: err.stack,
       path: req.path,

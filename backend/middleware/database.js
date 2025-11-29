@@ -4,31 +4,35 @@
  */
 
 import { logger } from '../utils/logger.js'
+import { getRequestId } from './requestId.js'
 
 /**
  * Middleware to check if database is connected
  * Returns 503 if database is not available
  */
 export const checkDatabaseConnection = async (req, res, next) => {
+  const requestId = getRequestId(req)
   try {
     const mongoose = await import('mongoose')
     
     if (mongoose.default.connection.readyState !== 1) {
       const endpoint = `${req.method} ${req.path}`
-      logger.warn(`Database not connected for ${endpoint}`)
+      logger.warn(`[${requestId}] Database not connected for ${endpoint}`)
       
       return res.status(503).json({
         success: false,
         message: 'Database is not available. Please try again later.',
+        requestId
       })
     }
     
     next()
   } catch (error) {
-    logger.error('Error checking database connection:', error)
+    logger.error(`[${requestId}] Error checking database connection:`, error)
     return res.status(503).json({
       success: false,
       message: 'Database is not available. Please try again later.',
+      requestId
     })
   }
 }

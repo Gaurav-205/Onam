@@ -4,6 +4,7 @@
  */
 
 import { validationResult } from 'express-validator'
+import { getRequestId } from './requestId.js'
 
 /**
  * Middleware to handle validation errors from express-validator
@@ -13,10 +14,12 @@ export const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req)
   
   if (!errors.isEmpty()) {
+    const requestId = getRequestId(req)
     return res.status(400).json({
       success: false,
       message: 'Validation failed',
       errors: errors.array(),
+      requestId
     })
   }
   
@@ -51,9 +54,11 @@ export const validateObjectId = (req, res, next) => {
   const { orderId } = req.params
   
   if (!isValidObjectId(orderId)) {
+    const requestId = getRequestId(req)
     return res.status(400).json({
       success: false,
       message: 'Invalid order ID format',
+      requestId
     })
   }
   
