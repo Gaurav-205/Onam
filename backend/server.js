@@ -124,13 +124,17 @@ if (process.env.NODE_ENV === 'development') {
 app.use(express.json({ limit: '2mb' }))
 app.use(express.urlencoded({ extended: true, limit: '2mb' }))
 
-// Request timeout middleware
+// Request timeout middleware (increased for order creation which may take longer)
 app.use((req, res, next) => {
-  req.setTimeout(30000, () => {
-    res.status(408).json({
-      success: false,
-      message: 'Request timeout'
-    })
+  // Longer timeout for order creation endpoint
+  const timeout = req.path.includes('/orders') && req.method === 'POST' ? 60000 : 30000
+  req.setTimeout(timeout, () => {
+    if (!res.headersSent) {
+      res.status(408).json({
+        success: false,
+        message: 'Request timeout'
+      })
+    }
   })
   next()
 })
@@ -376,8 +380,8 @@ server.on('error', (error) => {
   }
 })
 
-// Set server timeout (30 seconds)
-server.timeout = 30000
+// Set server timeout (60 seconds to allow for order creation which may take longer)
+server.timeout = 60000
 server.keepAliveTimeout = 65000
 server.headersTimeout = 66000
 

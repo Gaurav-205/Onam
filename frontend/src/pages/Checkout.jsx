@@ -171,11 +171,11 @@ const Checkout = () => {
         orderDate: new Date().toISOString(),
       }
 
-      // Send order to backend with timeout handling
+      // Send order to backend with timeout handling (60 seconds for order creation)
       const response = await Promise.race([
         createOrder(orderData),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Request timeout. Please try again.')), 30000)
+          setTimeout(() => reject(new Error('Request timeout. Please try again.')), 60000)
         )
       ])
       

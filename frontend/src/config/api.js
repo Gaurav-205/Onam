@@ -27,7 +27,7 @@ const defaultOptions = {
 /**
  * API request helper with error handling, timeout, and retry logic
  */
-const REQUEST_TIMEOUT = 30000 // 30 seconds
+const REQUEST_TIMEOUT = 60000 // 60 seconds (increased for order creation)
 const MAX_RETRIES = 2
 const RETRY_DELAY = 1000 // 1 second
 
