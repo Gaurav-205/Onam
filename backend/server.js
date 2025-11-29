@@ -52,21 +52,28 @@ const allowedOrigins = process.env.FRONTEND_URL
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, etc.) in development
+    // In production, require origin
+    if (process.env.NODE_ENV === 'production' && !origin) {
+      return callback(new Error('Not allowed by CORS - origin required in production'))
+    }
+    
+    // Allow requests with no origin only in development
     if (!origin && process.env.NODE_ENV === 'development') {
       return callback(null, true)
     }
     
     // Check if origin is allowed
-    if (allowedOrigins.includes(origin) || !origin) {
+    if (allowedOrigins.includes(origin)) {
       callback(null, true)
     } else {
+      logger.warn(`CORS blocked request from origin: ${origin}`)
       callback(new Error('Not allowed by CORS'))
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  maxAge: 86400 // 24 hours
 }))
 
 // Request logging middleware (development only)
@@ -81,9 +88,26 @@ if (process.env.NODE_ENV === 'development') {
   })
 }
 
-// Request size limits (reduced for security)
+// Security: Request size limits (reduced for security)
 app.use(express.json({ limit: '2mb' }))
 app.use(express.urlencoded({ extended: true, limit: '2mb' }))
+
+// Security: Add security headers
+app.use((req, res, next) => {
+  // Prevent clickjacking
+  res.setHeader('X-Frame-Options', 'DENY')
+  // Prevent MIME type sniffing
+  res.setHeader('X-Content-Type-Options', 'nosniff')
+  // Enable XSS protection
+  res.setHeader('X-XSS-Protection', '1; mode=block')
+  // Referrer policy
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
+  // Content Security Policy
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https:;")
+  }
+  next()
+})
 
 // Rate limiting
 const limiter = rateLimit({
@@ -197,9 +221,15 @@ app.use((err, req, res, next) => {
 
 // Start server with error handling
 const server = app.listen(PORT, () => {
-  logger.info(`Server running on http://localhost:${PORT}`)
-  logger.info(`Health check: http://localhost:${PORT}/health`)
-  logger.info(`API base: http://localhost:${PORT}/api`)
+  const isProduction = process.env.NODE_ENV === 'production'
+  const serverUrl = isProduction 
+    ? `Server running on port ${PORT}` 
+    : `http://localhost:${PORT}`
+  
+  logger.info(`Server running on ${serverUrl}`)
+  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`)
+  logger.info(`Health check: ${isProduction ? `https://yourdomain.com/health` : `http://localhost:${PORT}/health`}`)
+  logger.info(`API base: ${isProduction ? `https://yourdomain.com/api` : `http://localhost:${PORT}/api`}`)
   logger.info(`Log level: ${process.env.LOG_LEVEL || 'info'}`)
   
   // Check email configuration on startup
@@ -207,6 +237,16 @@ const server = app.listen(PORT, () => {
     logger.info(`Email configured for: ${process.env.EMAIL_USER}`)
   } else {
     logger.warn(`Email not configured - EMAIL_USER: ${process.env.EMAIL_USER ? 'SET' : 'NOT SET'}, EMAIL_PASSWORD: ${process.env.EMAIL_PASSWORD ? 'SET' : 'NOT SET'}`)
+  }
+  
+  // Production warnings
+  if (isProduction) {
+    if (!process.env.MONGODB_URI || process.env.MONGODB_URI.includes('localhost')) {
+      logger.warn('Warning: Using localhost MongoDB URI in production. Update MONGODB_URI in environment variables.')
+    }
+    if (!process.env.FRONTEND_URL || process.env.FRONTEND_URL.includes('localhost')) {
+      logger.warn('Warning: Using localhost in FRONTEND_URL. Update FRONTEND_URL in environment variables.')
+    }
   }
 })
 

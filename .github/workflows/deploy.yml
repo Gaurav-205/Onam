@@ -1,0 +1,44 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: '**/package-lock.json'
+    
+    - name: Install backend dependencies
+      run: |
+        cd Onam/backend
+        npm ci
+    
+    - name: Install frontend dependencies
+      run: |
+        cd Onam/frontend
+        npm ci
+    
+    - name: Lint frontend
+      run: |
+        cd Onam/frontend
+        npm run lint
+    
+    - name: Build frontend
+      run: |
+        cd Onam/frontend
+        npm run build
+      env:
+        VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL || 'http://localhost:3000' }}
+
