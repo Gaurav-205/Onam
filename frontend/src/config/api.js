@@ -83,7 +83,7 @@ export const apiRequest = async (url, options = {}, retryCount = 0) => {
     }
 
     if (error instanceof Error) {
-      throw error
+    throw error
     }
     throw new Error(error.message || 'Network request failed')
   }
