@@ -128,10 +128,63 @@ router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatab
   const requestStartTime = Date.now()
   
   try {
+    // Validate request body exists
+    if (!req.body || typeof req.body !== 'object') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid request body',
+        requestId
+      })
+    }
 
     const { studentInfo, orderItems, payment, totalAmount, orderDate } = req.body
 
+    // Validate required fields exist
+    if (!studentInfo || !orderItems || !payment || totalAmount === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields: studentInfo, orderItems, payment, and totalAmount are required',
+        requestId
+      })
+    }
+
+    // Validate orderItems is an array
+    if (!Array.isArray(orderItems) || orderItems.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'orderItems must be a non-empty array',
+        requestId
+      })
+    }
+
+    // Validate each order item has required fields
+    for (let i = 0; i < orderItems.length; i++) {
+      const item = orderItems[i]
+      if (!item || typeof item !== 'object') {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid order item at index ${i}: item must be an object`,
+          requestId
+        })
+      }
+      if (!item.id || !item.name || item.quantity === undefined || item.price === undefined || item.total === undefined) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid order item at index ${i}: missing required fields (id, name, quantity, price, total)`,
+          requestId
+        })
+      }
+    }
+
     // Additional validation for UPI payment
+    if (!payment || typeof payment !== 'object') {
+      return res.status(400).json({
+        success: false,
+        message: 'Payment information is required',
+        requestId
+      })
+    }
+
     if (payment.method === 'upi') {
       if (!payment.upiId || !payment.transactionId) {
         return res.status(400).json({
@@ -156,7 +209,8 @@ router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatab
     if (isNaN(totalAmountNum) || totalAmountNum < 0) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid total amount'
+        message: 'Invalid total amount',
+        requestId
       })
     }
     
@@ -164,6 +218,7 @@ router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatab
       return res.status(400).json({
         success: false,
         message: 'Total amount mismatch',
+        requestId,
         ...(process.env.NODE_ENV === 'development' && {
           details: {
             calculated: calculatedTotal,

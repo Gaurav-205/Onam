@@ -204,15 +204,20 @@ orderSchema.pre('save', async function(next) {
               counter = await Counter.findOneAndUpdate(
                 { counterId },
                 { $inc: { sequence: 1 } },
-                { new: true }
+                { new: true, upsert: false }
               )
+              // If still null after retry, use fallback
+              if (!counter) {
+                throw new Error('Counter creation and retry both failed')
+              }
             } else {
               throw createError
             }
           }
         }
         
-        if (counter?.sequence > 0) {
+        // Validate counter exists and has valid sequence
+        if (counter && counter.sequence > 0) {
           const padding = APP_CONFIG?.ORDER?.NUMBER_PADDING || 4
           const paddedSequence = String(counter.sequence).padStart(padding, '0')
           this.orderNumber = `${prefix}-${datePrefix}-${paddedSequence}`

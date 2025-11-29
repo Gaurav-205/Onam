@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react'
 import { parsePrice } from '../utils/price'
+import { APP_CONFIG } from '../config/app'
 
 const CartContext = createContext()
 
@@ -40,14 +41,21 @@ export const CartProvider = ({ children }) => {
 
   // Add item to cart
   const addToCart = useCallback((product) => {
+    // Validate product before adding
+    if (!product || !product.id) {
+      console.error('Invalid product: product and product.id are required')
+      return
+    }
+
     setCartItems(prevItems => {
       const existingItem = prevItems.find(item => item.id === product.id)
       
       if (existingItem) {
-        // If item exists, increase quantity
+        // If item exists, increase quantity (with max limit)
+        const maxQuantity = APP_CONFIG?.CART?.MAX_QUANTITY || 99
         return prevItems.map(item =>
           item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: Math.min((item.quantity || 1) + 1, maxQuantity) }
             : item
         )
       } else {

@@ -75,8 +75,9 @@ const createTransporter = () => {
       connectionTimeout: isCloud ? 120000 : 90000, // 120s for cloud, 90s for local
       greetingTimeout: isCloud ? 90000 : 60000,   // 90s for cloud, 60s for local
       socketTimeout: isCloud ? 180000 : 120000,    // 180s for cloud, 120s for local
-      debug: process.env.NODE_ENV === 'development',
-      logger: process.env.NODE_ENV === 'development',
+      // Enable debug logs only when explicitly needed (set EMAIL_DEBUG=true)
+      debug: process.env.EMAIL_DEBUG === 'true',
+      logger: process.env.EMAIL_DEBUG === 'true',
       // Add pool option for better connection handling
       pool: true,
       maxConnections: 1,

@@ -17,7 +17,7 @@ const Checkout = () => {
   const [orderDetails, setOrderDetails] = useState(null)
   const [upiId, setUpiId] = useState(APP_CONFIG.PAYMENT.UPI_ID || null)
   const [whatsappLink, setWhatsappLink] = useState(null)
-  const redirectTimeoutRef = useRef(null)
+  const safetyTimeoutRef = useRef(null)
 
   // Form state - Student information for university event
   const [formData, setFormData] = useState({
@@ -59,8 +59,8 @@ const Checkout = () => {
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
-      if (redirectTimeoutRef.current) {
-        clearTimeout(redirectTimeoutRef.current)
+      if (safetyTimeoutRef.current) {
+        clearTimeout(safetyTimeoutRef.current)
       }
     }
   }, [])
@@ -119,6 +119,13 @@ const Checkout = () => {
     // Prevent duplicate submissions
     if (isProcessing || orderPlaced) return
     
+    // Validate cart is not empty
+    if (!cartItems || cartItems.length === 0) {
+      showToast('Your cart is empty. Please add items before checkout.', 'error')
+      navigate('/shopping')
+      return
+    }
+
     if (!validateForm()) {
       showToast('Please fill in all required fields correctly', 'error')
       return
@@ -126,15 +133,30 @@ const Checkout = () => {
 
     setIsProcessing(true)
     
+    // Clear any existing safety timeout
+    if (safetyTimeoutRef.current) {
+      clearTimeout(safetyTimeoutRef.current)
+    }
+    
     // Set a safety timeout to ensure isProcessing is always reset
-    const safetyTimeout = setTimeout(() => {
+    safetyTimeoutRef.current = setTimeout(() => {
         setIsProcessing(false)
         showToast('Request is taking longer than expected. Please check your connection and try again.', 'error', 5000)
+        safetyTimeoutRef.current = null
     }, 65000) // 65 seconds - slightly longer than the API timeout
     
     try {
+      // Validate cart items exist and are valid
+      if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
+        throw new Error('Cart is empty. Please add items before checkout.')
+      }
+
       // Prepare order data with validation
       const orderItems = cartItems.map(item => {
+        // Validate item structure
+        if (!item || typeof item !== 'object') {
+          throw new Error('Invalid cart item structure')
+        }
         const price = item.priceValue || parsePrice(item.price, 0)
         const quantity = item.quantity || 1
         const total = price * quantity
@@ -183,7 +205,11 @@ const Checkout = () => {
       // Send order to backend (timeout is handled by apiRequest)
       const response = await createOrder(orderData)
       
-      clearTimeout(safetyTimeout)
+      // Clear safety timeout on success
+      if (safetyTimeoutRef.current) {
+        clearTimeout(safetyTimeoutRef.current)
+        safetyTimeoutRef.current = null
+      }
       
       // Validate response
       if (!response) {
@@ -214,14 +240,13 @@ const Checkout = () => {
       clearCart()
       
       // Show success message
-      showToast('Registration successful! Redirecting...', 'success', 3000)
-      
-      // Redirect to home after 5 seconds (increased to show order details)
-      redirectTimeoutRef.current = setTimeout(() => {
-        navigate('/')
-      }, 5000)
+      showToast('Registration successful! Please take a screenshot of your receipt.', 'success', 5000)
     } catch (error) {
-      clearTimeout(safetyTimeout)
+      // Clear safety timeout on error
+      if (safetyTimeoutRef.current) {
+        clearTimeout(safetyTimeoutRef.current)
+        safetyTimeoutRef.current = null
+      }
       setIsProcessing(false)
       
       // Show error message using Toast
@@ -273,24 +298,39 @@ const Checkout = () => {
           </p>
             
             {orderDetails && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4 text-left">
-                <p className="text-sm font-semibold text-gray-800 mb-2">Order Details:</p>
-                <p className="text-sm text-gray-700">
-                  <span className="font-medium">Order Number:</span>{' '}
-                  <span className="font-mono text-onam-green">{orderDetails.orderNumber || 'N/A'}</span>
-                </p>
-                {orderDetails.totalAmount && (
-                  <p className="text-sm text-gray-700 mt-1">
-                    <span className="font-medium">Total Amount:</span>{' '}
-                    <span className="font-semibold text-onam-green">{formatPrice(orderDetails.totalAmount)}</span>
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 rounded-lg p-5 mb-4 text-left">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-base font-bold text-gray-800">📋 Order Receipt</p>
+                  <div className="bg-amber-100 border border-amber-300 rounded-lg px-3 py-1">
+                    <p className="text-xs font-semibold text-amber-800 flex items-center">
+                      <span className="mr-1">📸</span>
+                      Take Screenshot
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-700">
+                    <span className="font-medium">Order Number:</span>{' '}
+                    <span className="font-mono text-lg font-bold text-onam-green">{orderDetails.orderNumber || 'N/A'}</span>
                   </p>
-                )}
-                {orderDetails.status && (
-                  <p className="text-sm text-gray-700 mt-1">
-                    <span className="font-medium">Status:</span>{' '}
-                    <span className="capitalize text-onam-gold">{orderDetails.status}</span>
+                  {orderDetails.totalAmount && (
+                    <p className="text-sm text-gray-700">
+                      <span className="font-medium">Total Amount:</span>{' '}
+                      <span className="font-semibold text-lg text-onam-green">{formatPrice(orderDetails.totalAmount)}</span>
+                    </p>
+                  )}
+                  {orderDetails.status && (
+                    <p className="text-sm text-gray-700">
+                      <span className="font-medium">Status:</span>{' '}
+                      <span className="capitalize text-onam-gold font-semibold">{orderDetails.status}</span>
+                    </p>
+                  )}
+                </div>
+                <div className="mt-4 pt-3 border-t border-green-200">
+                  <p className="text-xs text-amber-700 font-medium bg-amber-50 rounded p-2">
+                    ⚠️ <strong>Important:</strong> Please take a screenshot of this receipt. Sometimes confirmation emails may not be received. Keep this screenshot as proof of your registration.
                   </p>
-                )}
+                </div>
               </div>
             )}
 
@@ -315,22 +355,24 @@ const Checkout = () => {
               </div>
             )}
             
-          <p className="text-sm text-gray-500 mb-6">
-            A confirmation email has been sent to your registered email address with all the details. See you at the event!
-          </p>
-            <button
-              onClick={() => {
-                if (redirectTimeoutRef.current) {
-                  clearTimeout(redirectTimeoutRef.current)
-                }
-                navigate('/')
-              }}
-              className="bg-onam-green text-white font-semibold py-2 px-6 rounded-full hover:bg-green-700 transition-colors mb-2"
-            >
-              Return to Home
-            </button>
-          <p className="text-xs text-gray-400">
-              Redirecting automatically in a few seconds...
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-gray-700 mb-2">
+              <strong>📧 Email Confirmation:</strong> A confirmation email has been sent to your registered email address with all the details.
+            </p>
+            <p className="text-xs text-amber-700 font-medium">
+              ⚠️ <strong>Note:</strong> If you don't receive the email, please check your spam folder. In case of any issues, the screenshot of this page serves as proof of your registration.
+            </p>
+          </div>
+          
+          <button
+            onClick={() => navigate('/')}
+            className="bg-onam-green text-white font-semibold py-3 px-8 rounded-full hover:bg-green-700 transition-colors shadow-lg hover:shadow-xl transform hover:scale-105 mb-3"
+          >
+            Return to Home
+          </button>
+          
+          <p className="text-xs text-gray-500">
+            See you at the event! 🎉
           </p>
         </div>
       </div>
