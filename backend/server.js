@@ -57,11 +57,15 @@ if (trustProxyValue) {
 // This ensures CORS headers are set before any route handlers
 // Supports multiple origins: comma-separated in FRONTEND_URL env var
 // Default includes localhost for development and Netlify for production
-const defaultOrigins = [
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'https://onammitadt.netlify.app'
-]
+const defaultOrigins = isDevelopment
+  ? [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'https://onammitadt.netlify.app'
+    ]
+  : [
+      'https://onammitadt.netlify.app'
+    ]
 
 let allowedOrigins = process.env.FRONTEND_URL 
   ? process.env.FRONTEND_URL.split(',').map(url => url.trim().replace(/\/$/, '')).filter(url => url.length > 0)
@@ -471,8 +475,14 @@ const server = app.listen(PORT, () => {
     if (!process.env.MONGODB_URI || process.env.MONGODB_URI.includes('localhost')) {
       logger.warn('Warning: Using localhost MongoDB URI in production. Update MONGODB_URI in environment variables.')
     }
-    if (!process.env.FRONTEND_URL || process.env.FRONTEND_URL.includes('localhost')) {
-      logger.warn('Warning: Using localhost in FRONTEND_URL. Update FRONTEND_URL in environment variables.')
+    // Check if any allowed origin contains localhost (not just FRONTEND_URL env var)
+    const hasLocalhost = allowedOrigins.some(origin => origin.includes('localhost'))
+    if (hasLocalhost) {
+      logger.warn('Warning: localhost origins detected in CORS configuration. Set FRONTEND_URL environment variable to remove localhost origins in production.')
+    }
+    // Warn if FRONTEND_URL is not set in production
+    if (!process.env.FRONTEND_URL) {
+      logger.warn('Warning: FRONTEND_URL environment variable is not set. Using default origins. Set FRONTEND_URL for production deployment.')
     }
   }
 })
