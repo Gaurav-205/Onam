@@ -103,30 +103,52 @@ const createTransporter = () => {
       // This gives us more control over connection settings
       delete config.service // Remove service to use explicit host
       config.host = 'smtp.gmail.com'
-      config.port = 587
-      config.secure = false // Use TLS instead of SSL
-      config.requireTLS = true
       
-      // For cloud deployments, also try port 465 with SSL as fallback option
-      // But we'll use 587 with STARTTLS as primary
-      if (isCloud) {
-        logger.info('Using Gmail SMTP (cloud-optimized): smtp.gmail.com:587 with STARTTLS')
-        logger.info('Note: If this fails, try setting EMAIL_PORT=465 and EMAIL_SECURE=true')
+      // Check if port is explicitly set via environment variable
+      // Port 465 (SSL) is often more reliable on cloud providers like Render
+      if (process.env.EMAIL_PORT) {
+        config.port = parseInt(process.env.EMAIL_PORT)
+        config.secure = process.env.EMAIL_SECURE === 'true' || config.port === 465
+        config.requireTLS = !config.secure && config.port === 587
+        logger.info(`Using Gmail SMTP with custom port: smtp.gmail.com:${config.port} (secure: ${config.secure})`)
+      } else if (isCloud) {
+        // For cloud deployments, prefer port 465 (SSL) as it's more reliable
+        // Many cloud providers block or have issues with port 587 (STARTTLS)
+        config.port = 465
+        config.secure = true // SSL instead of STARTTLS
+        config.requireTLS = false
+        logger.info('Using Gmail SMTP (cloud-optimized): smtp.gmail.com:465 with SSL')
+        logger.info('Port 465 is more reliable on cloud providers. If issues persist, try EMAIL_PORT=587')
       } else {
+        // Local development - use port 587 with STARTTLS
+        config.port = 587
+        config.secure = false // Use TLS instead of SSL
+        config.requireTLS = true
         logger.info('Using Gmail SMTP: smtp.gmail.com:587 with STARTTLS')
       }
     }
 
   // For custom SMTP (not Gmail) - check for override environment variables
   // This allows overriding Gmail settings for cloud deployments if needed
-  if (process.env.EMAIL_HOST) {
+  // EMAIL_PORT and EMAIL_SECURE can override Gmail defaults even without EMAIL_HOST
+  if (process.env.EMAIL_PORT && emailService === 'gmail') {
+    // Allow overriding Gmail port/secure settings via environment variables
+    config.port = parseInt(process.env.EMAIL_PORT)
+    if (process.env.EMAIL_SECURE !== undefined) {
+      config.secure = process.env.EMAIL_SECURE === 'true'
+      config.requireTLS = !config.secure
+    } else {
+      // Auto-detect based on port
+      config.secure = config.port === 465
+      config.requireTLS = config.port === 587
+    }
+    logger.info(`Using Gmail SMTP with override: smtp.gmail.com:${config.port} (secure: ${config.secure})`)
+  } else if (process.env.EMAIL_HOST) {
+    // Custom SMTP host
     config.host = process.env.EMAIL_HOST
     config.port = parseInt(process.env.EMAIL_PORT || (config.secure ? '465' : '587'))
-    config.secure = process.env.EMAIL_SECURE === 'true'
-    if (process.env.EMAIL_PORT === '465') {
-      config.secure = true
-      config.requireTLS = false
-    }
+    config.secure = process.env.EMAIL_SECURE === 'true' || config.port === 465
+    config.requireTLS = !config.secure && config.port === 587
     logger.info(`Using custom SMTP (override): ${config.host}:${config.port} (secure: ${config.secure})`)
   } else if (emailService !== 'gmail' && process.env.EMAIL_SERVICE) {
     // Keep existing behavior for non-Gmail services
@@ -815,11 +837,17 @@ export const testEmailConnection = async () => {
     
     logger.info('Verifying email connection...')
     try {
-      // Use a longer timeout for verification (30 seconds)
-      // Some hosting providers have slow SMTP connections
+      // Use cloud-aware timeout for verification
+      // Cloud providers often have slower connections and may block verification
+      const isCloudEnv = isCloudEnvironment()
+      const verificationTimeout = isCloudEnv ? 60000 : 30000 // 60s for cloud, 30s for local
+      const timeoutMessage = `Verification timeout after ${verificationTimeout / 1000} seconds`
+      
+      logger.info(`Verifying email connection (timeout: ${verificationTimeout / 1000}s)...`)
+      
       await Promise.race([
         transporter.verify(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Verification timeout after 30 seconds')), 30000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error(timeoutMessage)), verificationTimeout))
       ])
       
       logger.info('Email connection verified successfully')
@@ -830,16 +858,29 @@ export const testEmailConnection = async () => {
       }
     } catch (verifyError) {
       // Log but don't fail - some hosting providers block SMTP verification but allow sending
+      // This is especially common on Render and other cloud platforms
+      const isCloudEnv = isCloudEnvironment()
+      const platform = process.env.RENDER === 'true' || !!process.env.RENDER_SERVICE_NAME ? 'Render' : 
+                       process.env.VERCEL ? 'Vercel' : 
+                       process.env.RAILWAY_ENVIRONMENT ? 'Railway' : 
+                       isCloudEnv ? 'Cloud' : 'Local'
+      
       logger.warn('Email verification failed (this is often okay - some hosts block verification but allow sending):', {
         message: verifyError.message,
+        platform: platform,
         note: 'Email sending will still be attempted when orders are created'
       })
+      
       // Return success with warning - actual sending will reveal if there's a real issue
+      const warningMessage = isCloudEnv 
+        ? `SMTP verification timed out - this is common on ${platform}. Email sending will still be attempted.`
+        : 'SMTP verification timed out. Email sending will still be attempted.'
+      
       return { 
         success: true, 
         message: 'Email service configured. Verification failed but sending may still work (some hosts block verification)',
         emailUser: process.env.EMAIL_USER,
-        warning: 'SMTP verification timed out - this is common on Render. Email sending will still be attempted.'
+        warning: warningMessage
       }
     }
   } catch (error) {
