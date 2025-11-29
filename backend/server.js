@@ -370,9 +370,29 @@ const server = app.listen(PORT, () => {
   
   logger.info(`Log level: ${process.env.LOG_LEVEL || 'info'}`)
   
-  // Check email configuration on startup
+  // Check email configuration on startup and verify connection
   if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
     logger.info(`Email configured for: ${process.env.EMAIL_USER}`)
+    
+    // Verify email connection on startup (non-blocking)
+    import('./utils/emailService.js').then(({ testEmailConnection }) => {
+      testEmailConnection()
+        .then(result => {
+          if (result.success) {
+            logger.info('✓ Email service verified and ready')
+          } else {
+            logger.warn(`⚠ Email service verification failed: ${result.message}`)
+            if (result.code) {
+              logger.warn(`Error code: ${result.code}`)
+            }
+          }
+        })
+        .catch(err => {
+          logger.error('Failed to verify email service on startup:', err.message)
+        })
+    }).catch(err => {
+      logger.error('Failed to import email service for startup check:', err.message)
+    })
   } else {
     logger.warn(`Email not configured - EMAIL_USER: ${process.env.EMAIL_USER ? 'SET' : 'NOT SET'}, EMAIL_PASSWORD: ${process.env.EMAIL_PASSWORD ? 'SET' : 'NOT SET'}`)
   }
