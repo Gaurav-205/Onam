@@ -86,8 +86,11 @@ export const csrfProtection = (req, res, next) => {
     return next()
   }
 
-  // For development, allow bypass if CSRF_DISABLED is set
-  if (process.env.NODE_ENV === 'development' && process.env.CSRF_DISABLED === 'true') {
+  // Allow bypass if CSRF_DISABLED is set (for both dev and production - use with caution)
+  if (process.env.CSRF_DISABLED === 'true') {
+    if (process.env.NODE_ENV === 'production') {
+      logger.warn('CSRF protection is DISABLED in production. This should only be temporary until frontend is updated.')
+    }
     return next()
   }
 
@@ -97,7 +100,10 @@ export const csrfProtection = (req, res, next) => {
 
   // Validate token
   if (!token) {
-    logger.warn(`CSRF token missing for ${req.method} ${req.path} from ${req.ip}`)
+    // Only log warning in development - in production, just return error (less noisy)
+    if (process.env.NODE_ENV === 'development') {
+      logger.warn(`CSRF token missing for ${req.method} ${req.path} from ${req.ip}`)
+    }
     return res.status(403).json({
       success: false,
       message: 'CSRF token missing. Please refresh the page and try again.',
@@ -106,7 +112,10 @@ export const csrfProtection = (req, res, next) => {
   }
 
   if (!validateCSRFToken(token, origin)) {
-    logger.warn(`CSRF token invalid for ${req.method} ${req.path} from ${req.ip}`)
+    // Only log warning in development - in production, just return error (less noisy)
+    if (process.env.NODE_ENV === 'development') {
+      logger.warn(`CSRF token invalid for ${req.method} ${req.path} from ${req.ip}`)
+    }
     return res.status(403).json({
       success: false,
       message: 'Invalid or expired CSRF token. Please refresh the page and try again.',
