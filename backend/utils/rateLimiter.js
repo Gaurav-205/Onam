@@ -72,3 +72,13 @@ export const orderLimiter = createRateLimiter({
   message: 'Too many order requests. Please wait before creating another order.',
 })
 
+/**
+ * Query rate limiter for GET endpoints - 60 requests per 5 minutes
+ * More lenient than order creation but still prevents abuse
+ */
+export const queryLimiter = createRateLimiter({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 60,
+  message: 'Too many query requests. Please try again later.',
+})
+

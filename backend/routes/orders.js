@@ -1,12 +1,13 @@
 import express from 'express'
-import { body } from 'express-validator'
+import { body, query } from 'express-validator'
 import Order from '../models/Order.js'
 import { logger } from '../utils/logger.js'
 import { sendOrderConfirmationEmail } from '../utils/emailService.js'
 import { APP_CONFIG } from '../config/app.js'
-import { orderLimiter } from '../utils/rateLimiter.js'
+import { orderLimiter, queryLimiter } from '../utils/rateLimiter.js'
 import { checkDatabaseConnection } from '../middleware/database.js'
 import { handleValidationErrors, validateObjectId, isValidOrderStatus } from '../middleware/validation.js'
+import { getRequestId } from '../middleware/requestId.js'
 
 const router = express.Router()
 
@@ -123,6 +124,7 @@ const validateOrder = [
 
 // Create new order (with stricter rate limiting)
 router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatabaseConnection, async (req, res) => {
+  const requestId = getRequestId(req)
   const requestStartTime = Date.now()
   
   try {
@@ -189,7 +191,7 @@ router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatab
     const savedOrder = await order.save()
     
     const requestDuration = Date.now() - requestStartTime
-    logger.info(`Order created successfully: ${savedOrder.orderNumber} (${requestDuration}ms)`)
+    logger.info(`[${requestId}] Order created successfully: ${savedOrder.orderNumber} (${requestDuration}ms)`)
 
     // Get WhatsApp link for response and email
     const whatsappLink = APP_CONFIG.COMMUNICATION.WHATSAPP_GROUP_LINK || null
@@ -226,11 +228,12 @@ router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatab
         totalAmount: savedOrder.totalAmount,
         orderDate: savedOrder.orderDate
       },
-      whatsappLink: whatsappLink
+      whatsappLink: whatsappLink,
+      requestId
     })
 
   } catch (error) {
-    logger.error('Order creation error:', {
+    logger.error(`[${requestId}] Order creation error:`, {
       message: error.message,
       code: error.code,
       name: error.name,
@@ -240,14 +243,16 @@ router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatab
     if (error.code === 11000) {
       return res.status(400).json({
         success: false,
-        message: 'Duplicate order number. Please try again.'
+        message: 'Duplicate order number. Please try again.',
+        requestId
       })
     }
 
     // Send detailed error in development, generic in production
     const errorResponse = {
       success: false,
-      message: 'Failed to create order'
+      message: 'Failed to create order',
+      requestId
     }
     
     if (process.env.NODE_ENV === 'development') {
@@ -264,132 +269,196 @@ router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatab
   }
 })
 
+// Validation for query parameters
+const validateQueryParams = [
+  query('studentId')
+    .optional()
+    .trim()
+    .escape()
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Student ID must be between 1 and 50 characters'),
+  query('email')
+    .optional()
+    .trim()
+    .normalizeEmail()
+    .isEmail()
+    .withMessage('Valid email is required')
+    .isLength({ max: 100 })
+    .withMessage('Email must be less than 100 characters'),
+  query('status')
+    .optional()
+    .trim()
+    .isIn(['pending', 'confirmed', 'cancelled', 'completed'])
+    .withMessage('Status must be one of: pending, confirmed, cancelled, completed'),
+  query('page')
+    .optional()
+    .isInt({ min: 1, max: 1000 })
+    .withMessage('Page must be between 1 and 1000')
+    .toInt(),
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: APP_CONFIG.PAGINATION.MAX_LIMIT })
+    .withMessage(`Limit must be between 1 and ${APP_CONFIG.PAGINATION.MAX_LIMIT}`)
+    .toInt(),
+]
+
 // Get order by ID
-router.get('/:orderId', validateObjectId, checkDatabaseConnection, async (req, res) => {
+router.get('/:orderId', queryLimiter, validateObjectId, checkDatabaseConnection, async (req, res) => {
+  const requestId = getRequestId(req)
+  
   try {
     const orderId = req.params.orderId.trim()
     const order = await Order.findById(orderId)
     
     if (!order) {
+      logger.debug(`[${requestId}] Order not found: ${orderId}`)
       return res.status(404).json({
         success: false,
-        message: 'Order not found'
+        message: 'Order not found',
+        requestId
       })
     }
     
-    logger.debug(`Order fetched: ${orderId}`)
+    logger.debug(`[${requestId}] Order fetched: ${orderId}`)
 
     res.json({
       success: true,
-      order
+      order,
+      requestId
     })
 
   } catch (error) {
-    logger.error('Get order error:', error)
+    logger.error(`[${requestId}] Get order error:`, error)
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch order'
+      message: 'Failed to fetch order',
+      requestId
     })
   }
 })
 
-// Get orders by student ID or email
-router.get('/', checkDatabaseConnection, async (req, res) => {
+// Get orders by student ID or email (with pagination)
+router.get('/', queryLimiter, validateQueryParams, handleValidationErrors, checkDatabaseConnection, async (req, res) => {
+  const requestId = getRequestId(req)
+  
   try {
-    const { studentId, email, status } = req.query
-    logger.debug(`Orders query: studentId=${studentId}, email=${email}, status=${status}`)
-    const query = {}
+    const { studentId, email, status, page = 1, limit } = req.query
+    
+    // Build query object
+    const queryObj = {}
 
     if (studentId) {
-      const sanitizedStudentId = studentId.trim()
-      if (sanitizedStudentId.length > 0 && sanitizedStudentId.length <= 50) {
-        query['studentInfo.studentId'] = sanitizedStudentId
-      }
+      queryObj['studentInfo.studentId'] = studentId.trim()
     }
     if (email) {
-      const sanitizedEmail = email.trim().toLowerCase()
-      // Basic email format validation
-      if (sanitizedEmail.length > 0 && sanitizedEmail.length <= 100 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sanitizedEmail)) {
-        query['studentInfo.email'] = sanitizedEmail
-      }
+      queryObj['studentInfo.email'] = email.trim().toLowerCase()
     }
     if (status) {
-      const sanitizedStatus = status.trim()
-      if (['pending', 'confirmed', 'cancelled', 'completed'].includes(sanitizedStatus)) {
-        query.status = sanitizedStatus
-      }
+      queryObj.status = status.trim()
     }
     
     // Require at least one query parameter
-    if (Object.keys(query).length === 0) {
+    if (Object.keys(queryObj).length === 0) {
+      logger.warn(`[${requestId}] Orders query with no parameters`)
       return res.status(400).json({
         success: false,
-        message: 'At least one query parameter (studentId, email, or status) is required'
+        message: 'At least one query parameter (studentId, email, or status) is required',
+        requestId
       })
     }
 
-    const orders = await Order.find(query)
+    // Pagination configuration
+    const pageNum = parseInt(page) || 1
+    const limitNum = limit ? parseInt(limit) : APP_CONFIG.PAGINATION.DEFAULT_LIMIT
+    const maxLimit = APP_CONFIG.PAGINATION.MAX_LIMIT
+    const finalLimit = Math.min(limitNum, maxLimit)
+    const skip = (pageNum - 1) * finalLimit
+
+    logger.debug(`[${requestId}] Orders query: studentId=${studentId || 'N/A'}, email=${email || 'N/A'}, status=${status || 'N/A'}, page=${pageNum}, limit=${finalLimit}`)
+
+    // Get total count for pagination metadata
+    const totalCount = await Order.countDocuments(queryObj)
+    const totalPages = Math.ceil(totalCount / finalLimit)
+
+    // Fetch orders with pagination
+    const orders = await Order.find(queryObj)
       .sort({ orderDate: -1 })
-      .limit(50)
+      .skip(skip)
+      .limit(finalLimit)
+      .lean() // Use lean() for better performance when not modifying documents
     
-    logger.debug(`Orders query returned ${orders.length} results`)
+    logger.debug(`[${requestId}] Orders query returned ${orders.length} results (page ${pageNum}/${totalPages}, total: ${totalCount})`)
 
     res.json({
       success: true,
       count: orders.length,
-      orders
+      total: totalCount,
+      page: pageNum,
+      totalPages,
+      limit: finalLimit,
+      hasNextPage: pageNum < totalPages,
+      hasPreviousPage: pageNum > 1,
+      orders,
+      requestId
     })
 
   } catch (error) {
-    logger.error('Get orders error:', error)
+    logger.error(`[${requestId}] Get orders error:`, error)
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch orders'
+      message: 'Failed to fetch orders',
+      requestId
     })
   }
 })
 
 // Update order status
-router.patch('/:orderId/status', validateObjectId, checkDatabaseConnection, async (req, res) => {
+router.patch('/:orderId/status', queryLimiter, validateObjectId, checkDatabaseConnection, async (req, res) => {
+  const requestId = getRequestId(req)
+  
   try {
     const orderId = req.params.orderId.trim()
     const { status } = req.body
     
     if (!isValidOrderStatus(status)) {
-      logger.warn(`Invalid status update attempt: ${status} for order ${orderId}`)
+      logger.warn(`[${requestId}] Invalid status update attempt: ${status} for order ${orderId}`)
       return res.status(400).json({
         success: false,
-        message: 'Invalid status. Must be one of: pending, confirmed, cancelled, completed'
+        message: 'Invalid status. Must be one of: pending, confirmed, cancelled, completed',
+        requestId
       })
     }
 
     const order = await Order.findByIdAndUpdate(
       orderId,
-      { status },
+      { status: status.trim() },
       { new: true, runValidators: true }
     )
 
     if (!order) {
-      logger.warn(`Order status update failed - order not found: ${orderId}`)
+      logger.warn(`[${requestId}] Order status update failed - order not found: ${orderId}`)
       return res.status(404).json({
         success: false,
-        message: 'Order not found'
+        message: 'Order not found',
+        requestId
       })
     }
     
-    logger.info(`Order status updated: ${order.orderNumber} -> ${status.trim()}`)
+    logger.info(`[${requestId}] Order status updated: ${order.orderNumber} -> ${status.trim()}`)
 
     res.json({
       success: true,
       message: 'Order status updated',
-      order
+      order,
+      requestId
     })
 
   } catch (error) {
-    logger.error('Update order error:', error)
+    logger.error(`[${requestId}] Update order error:`, error)
     res.status(500).json({
       success: false,
-      message: 'Failed to update order'
+      message: 'Failed to update order',
+      requestId
     })
   }
 })

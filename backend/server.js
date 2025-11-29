@@ -9,6 +9,7 @@ import { logger } from './utils/logger.js'
 import { defaultLimiter, lightLimiter } from './utils/rateLimiter.js'
 import { getDatabaseStatus } from './middleware/database.js'
 import { APP_CONFIG } from './config/app.js'
+import { requestIdMiddleware } from './middleware/requestId.js'
 
 // Load environment variables from .env file in backend directory
 const __filename = fileURLToPath(import.meta.url)
@@ -135,13 +136,17 @@ connectDB()
     logger.error('Failed to initialize database connection:', err.message)
   })
 
+// Request ID middleware (must be early in the middleware chain)
+app.use(requestIdMiddleware)
+
 // Request logging middleware (development only)
 if (process.env.NODE_ENV === 'development') {
   app.use((req, res, next) => {
     const start = Date.now()
     res.on('finish', () => {
       const duration = Date.now() - start
-      logger.request(req.method, req.path, res.statusCode, duration)
+      const requestId = req.id || 'unknown'
+      logger.request(`${req.method} ${req.path} [${requestId}]`, res.statusCode, duration)
     })
     next()
   })
