@@ -25,6 +25,24 @@ if (envResult.error) {
 const app = express()
 const PORT = process.env.PORT || 3000
 
+// Trust proxy - Required for Render and other reverse proxy hosting providers
+// This allows Express to correctly identify client IPs behind proxies
+// Default to true (trust proxy) unless explicitly in development mode
+// This ensures hosted environments (Render, Heroku, etc.) work correctly
+const isDevelopment = process.env.NODE_ENV === 'development'
+const isRender = process.env.RENDER === 'true' || !!process.env.RENDER_SERVICE_NAME
+// Trust proxy unless we're explicitly in development mode (local development)
+// Hosting platforms like Render always use reverse proxies
+const shouldTrustProxy = !isDevelopment || isRender
+
+app.set('trust proxy', shouldTrustProxy)
+
+if (shouldTrustProxy) {
+  logger.info(`Trust proxy enabled (development mode: ${isDevelopment}, Render: ${isRender})`)
+} else {
+  logger.info('Trust proxy disabled (local development mode)')
+}
+
 // CORS Configuration with validation - MUST be before other middleware
 // This ensures CORS headers are set before any route handlers
 // Supports multiple origins: comma-separated in FRONTEND_URL env var
