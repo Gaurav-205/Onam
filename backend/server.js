@@ -55,11 +55,12 @@ const defaultOrigins = [
 ]
 
 let allowedOrigins = process.env.FRONTEND_URL 
-  ? process.env.FRONTEND_URL.split(',').map(url => url.trim()).filter(url => url.length > 0)
+  ? process.env.FRONTEND_URL.split(',').map(url => url.trim().replace(/\/$/, '')).filter(url => url.length > 0)
   : [...defaultOrigins]
 
-// Always include Netlify origin if not already present
-if (!allowedOrigins.includes('https://onammitadt.netlify.app')) {
+// Always include Netlify origin if not already present (normalize URLs)
+const normalizeUrl = (url) => url.replace(/\/$/, '')
+if (!allowedOrigins.map(normalizeUrl).includes('https://onammitadt.netlify.app')) {
   allowedOrigins.push('https://onammitadt.netlify.app')
 }
 
@@ -74,8 +75,11 @@ const corsOptions = {
       return callback(null, true)
     }
     
-    // Check if origin is allowed
-    if (allowedOrigins.includes(origin)) {
+    // Normalize origin (remove trailing slash) for comparison
+    const normalizedOrigin = origin.replace(/\/$/, '')
+    
+    // Check if origin is allowed (compare normalized)
+    if (allowedOrigins.includes(origin) || allowedOrigins.includes(normalizedOrigin)) {
       callback(null, true)
     } else {
       // Log blocked origins for debugging
@@ -97,8 +101,11 @@ const corsOptions = {
 app.options('*', (req, res) => {
   const origin = req.headers.origin
   
+  // Normalize origin for comparison (remove trailing slash)
+  const normalizedOrigin = origin ? origin.replace(/\/$/, '') : null
+  
   // Check if origin is allowed (or no origin for health checks)
-  if (!origin || allowedOrigins.includes(origin)) {
+  if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes(normalizedOrigin)) {
     res.header('Access-Control-Allow-Origin', origin || '*')
     res.header('Access-Control-Allow-Methods', 'GET, POST, PATCH, PUT, DELETE, OPTIONS')
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')

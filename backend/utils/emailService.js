@@ -79,9 +79,9 @@ const createTransporter = () => {
   }
 
   try {
-    const transporter = nodemailer.createTransport(config)
+    const newTransporter = nodemailer.createTransport(config)
     logger.info('Email transporter created successfully')
-    return transporter
+    return newTransporter
   } catch (error) {
     logger.error('Failed to create email transporter:', {
       message: error.message,

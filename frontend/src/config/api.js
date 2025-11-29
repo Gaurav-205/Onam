@@ -8,8 +8,18 @@
 const envApiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
 const API_BASE_URL = envApiUrl.endsWith('/api') ? envApiUrl : `${envApiUrl}/api`
 
+// Helper to normalize URL and ensure proper /api path
+const normalizeApiUrl = (url) => {
+  // Remove trailing slash
+  url = url.replace(/\/$/, '')
+  // Remove /api if it exists at the end
+  url = url.replace(/\/api$/, '')
+  // Add /api/config
+  return `${url}/api/config`
+}
+
 export const API_ENDPOINTS = {
-  GET_CONFIG: `${envApiUrl.replace(/\/api$/, '')}/api/config`,
+  GET_CONFIG: normalizeApiUrl(envApiUrl),
   CREATE_ORDER: `${API_BASE_URL}/orders`,
   GET_ORDER: (orderId) => `${API_BASE_URL}/orders/${orderId}`,
   GET_ORDERS: `${API_BASE_URL}/orders`,

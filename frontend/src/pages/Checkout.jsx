@@ -182,20 +182,8 @@ const Checkout = () => {
         orderDate: new Date().toISOString(),
       }
 
-      // Send order to backend with timeout handling (60 seconds for order creation)
-      let response
-      try {
-        response = await Promise.race([
-          createOrder(orderData),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Request timeout. The server is taking too long to respond. Please try again.')), 60000)
-          )
-        ])
-      } catch (apiError) {
-        // Handle API errors specifically
-        clearTimeout(safetyTimeout)
-        throw apiError
-      }
+      // Send order to backend (timeout is handled by apiRequest)
+      const response = await createOrder(orderData)
       
       clearTimeout(safetyTimeout)
       
