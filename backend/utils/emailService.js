@@ -53,7 +53,7 @@ export const sendOrderConfirmationEmail = async (order, whatsappLink) => {
     }
 
     if (!transporter) {
-      logger.warn('⚠️ Email transporter not available. Skipping email send.')
+      logger.warn('Email transporter not available. Skipping email send.')
       return { success: false, message: 'Email service not configured' }
     }
 
@@ -94,7 +94,7 @@ export const sendOrderConfirmationEmail = async (order, whatsappLink) => {
 <body>
   <div class="container">
     <div class="header">
-      <h1>🎉 Onam Festival Registration Confirmed!</h1>
+      <h1>Onam Festival Registration Confirmed!</h1>
       <p>Thank you for registering for Onam celebrations at MIT ADT University</p>
     </div>
     <div class="content">
@@ -154,7 +154,7 @@ export const sendOrderConfirmationEmail = async (order, whatsappLink) => {
         <h3>Join Our WhatsApp Group!</h3>
         <p>Stay updated with Onam festival updates, event schedules, and more:</p>
         <a href="${whatsappLink}" class="whatsapp-button" target="_blank">
-          📱 Join WhatsApp Group
+          Join WhatsApp Group
         </a>
       </div>
       ` : ''}
@@ -171,7 +171,7 @@ export const sendOrderConfirmationEmail = async (order, whatsappLink) => {
     `
 
     const textContent = `
-🎉 Onam Festival Registration Confirmed!
+Onam Festival Registration Confirmed!
 
 Thank you for registering for Onam celebrations at MIT ADT University.
 
@@ -209,7 +209,7 @@ This is an automated confirmation email. Please do not reply.
     const mailOptions = {
       from: `"Onam Festival - MIT ADT University" <${process.env.EMAIL_USER}>`,
       to: studentInfo.email,
-      subject: `🎉 Onam Festival Registration Confirmed - Order ${orderNumber}`,
+      subject: `Onam Festival Registration Confirmed - Order ${orderNumber}`,
       text: textContent,
       html: htmlContent,
     }

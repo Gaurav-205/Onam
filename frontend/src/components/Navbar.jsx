@@ -157,11 +157,11 @@ const Navbar = ({ currentSection, scrollToSection }) => {
     let ticking = false
     return () => {
       if (!ticking) {
+        ticking = true
         requestAnimationFrame(() => {
           handleScroll()
           ticking = false
         })
-        ticking = true
       }
     }
   }, [handleScroll])
@@ -170,15 +170,10 @@ const Navbar = ({ currentSection, scrollToSection }) => {
   useEffect(() => {
     if (location.pathname === '/') {
       handleScroll() // Initial check
-      let scrollHandler = null
-      if (throttledScroll) {
-        scrollHandler = throttledScroll()
-        window.addEventListener('scroll', scrollHandler, { passive: true })
-      }
+      const scrollHandler = throttledScroll()
+      window.addEventListener('scroll', scrollHandler, { passive: true })
       return () => {
-        if (scrollHandler) {
-          window.removeEventListener('scroll', scrollHandler)
-        }
+        window.removeEventListener('scroll', scrollHandler)
       }
     } else {
       setIsScrolled(true)

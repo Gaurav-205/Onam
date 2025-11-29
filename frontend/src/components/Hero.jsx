@@ -167,27 +167,22 @@ const Hero = () => {
     let ticking = false
     return () => {
       if (!ticking) {
+        ticking = true
         requestAnimationFrame(() => {
           handleVideoScroll()
           handleScrollState()
           ticking = false
         })
-        ticking = true
       }
     }
   }, [handleVideoScroll, handleScrollState])
 
   // Consolidated useEffect for scroll handling
   useEffect(() => {
-    let scrollHandler = null
-    if (throttledScroll) {
-      scrollHandler = throttledScroll()
-      window.addEventListener('scroll', scrollHandler, { passive: true })
-    }
+    const scrollHandler = throttledScroll()
+    window.addEventListener('scroll', scrollHandler, { passive: true })
     return () => {
-      if (scrollHandler) {
-        window.removeEventListener('scroll', scrollHandler)
-      }
+      window.removeEventListener('scroll', scrollHandler)
     }
   }, [throttledScroll])
 

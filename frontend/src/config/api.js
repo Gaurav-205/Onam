@@ -3,10 +3,13 @@
  * Centralized API endpoint configuration
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+// Get API base URL from environment or use default
+// Can be either: 'http://localhost:3000' or 'http://localhost:3000/api'
+const envApiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+const API_BASE_URL = envApiUrl.endsWith('/api') ? envApiUrl : `${envApiUrl}/api`
 
 export const API_ENDPOINTS = {
-  GET_CONFIG: `${API_BASE_URL.replace('/api', '')}/api/config`,
+  GET_CONFIG: `${envApiUrl.replace(/\/api$/, '')}/api/config`,
   CREATE_ORDER: `${API_BASE_URL}/orders`,
   GET_ORDER: (orderId) => `${API_BASE_URL}/orders/${orderId}`,
   GET_ORDERS: `${API_BASE_URL}/orders`,
