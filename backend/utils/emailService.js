@@ -75,8 +75,8 @@ const createTransporter = () => {
       connectionTimeout: isCloud ? 120000 : 90000, // 120s for cloud, 90s for local
       greetingTimeout: isCloud ? 90000 : 60000,   // 90s for cloud, 60s for local
       socketTimeout: isCloud ? 180000 : 120000,    // 180s for cloud, 120s for local
-      debug: false, // Disable nodemailer debug logs (use our logger instead)
-      logger: false, // Disable nodemailer logger (use our logger instead)
+      debug: process.env.NODE_ENV === 'development',
+      logger: process.env.NODE_ENV === 'development',
       // Add pool option for better connection handling
       pool: true,
       maxConnections: 1,

@@ -5,29 +5,21 @@ import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import connectDB from './config/database.js'
 import orderRoutes from './routes/orders.js'
-import authRoutes from './routes/auth.js'
 import { logger } from './utils/logger.js'
 import { defaultLimiter, lightLimiter } from './utils/rateLimiter.js'
 import { getDatabaseStatus } from './middleware/database.js'
 import { APP_CONFIG } from './config/app.js'
-import { getCSRFToken, csrfProtection } from './middleware/csrf.js'
 
 // Load environment variables from .env file in backend directory
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 // Load .env file explicitly from backend directory
-// Note: On production platforms like Render, environment variables are set via dashboard
-// so .env file may not exist - this is normal and expected
 const envPath = join(__dirname, '.env')
 const envResult = dotenv.config({ path: envPath })
 
 if (envResult.error) {
-  // Only log warning in development - in production (Render), env vars come from platform
-  if (process.env.NODE_ENV === 'development') {
-    logger.warn(`Failed to load .env file from ${envPath}:`, envResult.error.message)
-  }
-  // Silently continue in production - environment variables are set via platform
+  logger.warn(`Failed to load .env file from ${envPath}:`, envResult.error.message)
 } else {
   logger.info(`Loaded .env file from ${envPath}`)
 }
@@ -57,15 +49,11 @@ if (trustProxyValue) {
 // This ensures CORS headers are set before any route handlers
 // Supports multiple origins: comma-separated in FRONTEND_URL env var
 // Default includes localhost for development and Netlify for production
-const defaultOrigins = isDevelopment
-  ? [
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'https://onammitadt.netlify.app'
-    ]
-  : [
-      'https://onammitadt.netlify.app'
-    ]
+const defaultOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://onammitadt.netlify.app'
+]
 
 let allowedOrigins = process.env.FRONTEND_URL 
   ? process.env.FRONTEND_URL.split(',').map(url => url.trim().replace(/\/$/, '')).filter(url => url.length > 0)
@@ -198,10 +186,6 @@ app.use((req, res, next) => {
 // Apply rate limiting to all API requests
 app.use('/api/', defaultLimiter)
 
-// Apply CSRF protection to state-changing API requests
-// Note: GET requests are excluded in the middleware itself
-app.use('/api/', csrfProtection)
-
 // Health check endpoint
 app.get('/health', async (req, res) => {
   const health = {
@@ -241,9 +225,6 @@ app.get('/api/config', lightLimiter, (req, res) => {
     }
   })
 })
-
-// CSRF token endpoint (public, returns CSRF token for frontend)
-app.get('/api/csrf-token', lightLimiter, getCSRFToken)
 
 // Helper function to get email configuration status (without sensitive data)
 const getEmailConfigStatus = () => {
@@ -333,10 +314,7 @@ app.post('/api/test-email-send', lightLimiter, async (req, res) => {
 })
 
 // API Routes
-// Authentication routes (public)
-app.use('/api/auth', authRoutes)
-
-// Order routes (protected - require authentication)
+// Apply stricter rate limiting to order creation
 app.use('/api/orders', orderRoutes)
 
 // 404 handler
@@ -475,14 +453,8 @@ const server = app.listen(PORT, () => {
     if (!process.env.MONGODB_URI || process.env.MONGODB_URI.includes('localhost')) {
       logger.warn('Warning: Using localhost MongoDB URI in production. Update MONGODB_URI in environment variables.')
     }
-    // Check if any allowed origin contains localhost (not just FRONTEND_URL env var)
-    const hasLocalhost = allowedOrigins.some(origin => origin.includes('localhost'))
-    if (hasLocalhost) {
-      logger.warn('Warning: localhost origins detected in CORS configuration. Set FRONTEND_URL environment variable to remove localhost origins in production.')
-    }
-    // Warn if FRONTEND_URL is not set in production
-    if (!process.env.FRONTEND_URL) {
-      logger.warn('Warning: FRONTEND_URL environment variable is not set. Using default origins. Set FRONTEND_URL for production deployment.')
+    if (!process.env.FRONTEND_URL || process.env.FRONTEND_URL.includes('localhost')) {
+      logger.warn('Warning: Using localhost in FRONTEND_URL. Update FRONTEND_URL in environment variables.')
     }
   }
 })
