@@ -172,10 +172,12 @@ const VideoSection = () => {
 
               {/* Loading State */}
               {!isVideoLoaded && !videoError && (
-                <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 sm:h-12 w-8 sm:w-12 border-b-2 border-onam-green mx-auto mb-2 sm:mb-4"></div>
-                    <p className="text-gray-600 font-medium text-sm sm:text-base">Loading video...</p>
+                <div className="absolute inset-0 bg-gray-200 animate-pulse rounded-xl sm:rounded-2xl">
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="h-12 w-12 bg-gray-300 rounded-full mx-auto mb-4 animate-pulse"></div>
+                      <div className="h-4 w-32 bg-gray-300 rounded mx-auto"></div>
+                    </div>
                   </div>
                 </div>
               )}

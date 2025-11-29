@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react'
 import Hero from '../components/Hero'
-import LoadingSpinner from '../components/LoadingSpinner'
+import { SectionSkeleton } from '../components/SkeletonLoader'
 
 const VideoSection = lazy(() => import('../components/VideoSection'))
 const Sadya = lazy(() => import('../components/Sadya'))
@@ -11,16 +11,16 @@ const Home = () => {
   return (
     <>
       <Hero />
-      <Suspense fallback={<LoadingSpinner message="Loading video..." />}>
+      <Suspense fallback={<SectionSkeleton type="video" />}>
         <VideoSection />
       </Suspense>
-      <Suspense fallback={<LoadingSpinner message="Loading Sadya..." />}>
+      <Suspense fallback={<SectionSkeleton type="sadya" />}>
         <Sadya />
       </Suspense>
-      <Suspense fallback={<LoadingSpinner message="Loading Events..." />}>
+      <Suspense fallback={<SectionSkeleton type="events" />}>
         <Events />
       </Suspense>
-      <Suspense fallback={<LoadingSpinner message="Loading..." />}>
+      <Suspense fallback={<SectionSkeleton />}>
         <UnderDevelopment />
       </Suspense>
     </>

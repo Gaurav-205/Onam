@@ -69,10 +69,9 @@ const ProductCard = memo(({ item, onAddToCart, onUpdateQuantity, isInCart, itemQ
       <div className="relative h-64 bg-gradient-to-br from-gray-100 to-gray-200">
         {/* Loading State */}
         {!imageLoaded && !imageError && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-onam-green mx-auto mb-2"></div>
-              <p className="text-gray-600 text-sm">Loading image...</p>
+          <div className="absolute inset-0 bg-gray-200 animate-pulse">
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="h-16 w-16 bg-gray-300 rounded-full animate-pulse"></div>
             </div>
           </div>
         )}

@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
-import LoadingSpinner from './components/LoadingSpinner'
+import { PageSkeleton } from './components/SkeletonLoader'
 
 // Lazy load pages for better performance
 const Home = lazy(() => import('./pages/Home'))
@@ -18,7 +18,7 @@ function App() {
           <Route 
             index 
             element={
-              <Suspense fallback={<LoadingSpinner message="Loading Onam Experience..." />}>
+              <Suspense fallback={<PageSkeleton type="home" />}>
                 <Home />
               </Suspense>
             } 
@@ -26,7 +26,7 @@ function App() {
           <Route 
             path="shopping" 
             element={
-              <Suspense fallback={<LoadingSpinner message="Loading Shopping..." />}>
+              <Suspense fallback={<PageSkeleton type="shopping" />}>
                 <Shopping />
               </Suspense>
             } 
@@ -34,7 +34,7 @@ function App() {
           <Route 
             path="cart" 
             element={
-              <Suspense fallback={<LoadingSpinner message="Loading Cart..." />}>
+              <Suspense fallback={<PageSkeleton type="cart" />}>
                 <Cart />
               </Suspense>
             } 
@@ -42,7 +42,7 @@ function App() {
           <Route 
             path="checkout" 
             element={
-              <Suspense fallback={<LoadingSpinner message="Loading Checkout..." />}>
+              <Suspense fallback={<PageSkeleton type="checkout" />}>
                 <Checkout />
               </Suspense>
             } 
@@ -50,7 +50,7 @@ function App() {
           <Route 
             path="coming-soon" 
             element={
-              <Suspense fallback={<LoadingSpinner message="Loading..." />}>
+              <Suspense fallback={<PageSkeleton />}>
                 <ComingSoon />
               </Suspense>
             } 
