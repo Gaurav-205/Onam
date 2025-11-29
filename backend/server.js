@@ -233,22 +233,49 @@ app.get('/api/config', configLimiter, (req, res) => {
   })
 })
 
-// Email test endpoint (development only)
-if (process.env.NODE_ENV === 'development') {
-  app.get('/api/test-email', async (req, res) => {
-    try {
-      const { testEmailConnection } = await import('./utils/emailService.js')
-      const result = await testEmailConnection()
-      res.json(result)
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Failed to test email connection',
-        error: error.message
-      })
+// Email test endpoint (available in all environments for debugging)
+app.get('/api/test-email', configLimiter, async (req, res) => {
+  try {
+    const { testEmailConnection } = await import('./utils/emailService.js')
+    const result = await testEmailConnection()
+    
+    // Include configuration status (without sensitive data)
+    const emailConfig = {
+      hasEmailUser: !!process.env.EMAIL_USER,
+      hasEmailPassword: !!process.env.EMAIL_PASSWORD,
+      emailService: process.env.EMAIL_SERVICE || 'gmail',
+      isProduction: process.env.NODE_ENV === 'production'
     }
-  })
-}
+    
+    res.json({
+      ...result,
+      config: emailConfig
+    })
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to test email connection',
+      error: error.message,
+      ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+    })
+  }
+})
+
+// Email diagnostic endpoint (production-safe, shows configuration status)
+app.get('/api/email-diagnostics', configLimiter, async (req, res) => {
+  const diagnostics = {
+    success: true,
+    emailConfigured: !!(process.env.EMAIL_USER && process.env.EMAIL_PASSWORD),
+    emailService: process.env.EMAIL_SERVICE || 'gmail',
+    hasEmailUser: !!process.env.EMAIL_USER,
+    hasEmailPassword: !!process.env.EMAIL_PASSWORD,
+    emailPasswordLength: process.env.EMAIL_PASSWORD ? process.env.EMAIL_PASSWORD.length : 0,
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString()
+  }
+  
+  res.json(diagnostics)
+})
 
 // API Routes
 // Apply stricter rate limiting to order creation

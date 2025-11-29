@@ -13,13 +13,28 @@ const createTransporter = () => {
   // Use Gmail SMTP or custom SMTP based on environment
   const emailService = process.env.EMAIL_SERVICE || 'gmail'
   const emailUser = process.env.EMAIL_USER?.trim()
-  // Gmail app passwords have spaces - remove all spaces for authentication
-  // Format from .env: "oike gcpd aeyk uang" -> "oikegcpaeykuang"
-  const emailPassword = process.env.EMAIL_PASSWORD?.trim().replace(/\s+/g, '')
+  // Gmail app passwords - handle with or without spaces
+  // Some deployment platforms may add spaces, some may not
+  const emailPasswordRaw = process.env.EMAIL_PASSWORD?.trim() || ''
+  // Remove spaces only if they exist (Gmail app passwords work with or without spaces)
+  const emailPassword = emailPasswordRaw.replace(/\s+/g, '')
+
+  // Detailed logging for debugging
+  logger.info('Email configuration check:', {
+    hasEmailUser: !!emailUser,
+    hasEmailPassword: !!emailPassword,
+    emailPasswordLength: emailPassword.length,
+    emailService,
+    isProduction: process.env.NODE_ENV === 'production'
+  })
 
   if (!emailUser || !emailPassword) {
     logger.warn('Email credentials not configured. Email sending will be disabled.')
-    logger.warn(`EMAIL_USER: ${emailUser ? 'SET' : 'NOT SET'}, EMAIL_PASSWORD: ${emailPassword ? 'SET' : 'NOT SET'}`)
+    logger.warn(`EMAIL_USER: ${emailUser ? 'SET (length: ' + emailUser.length + ')' : 'NOT SET'}`)
+    logger.warn(`EMAIL_PASSWORD: ${emailPassword ? 'SET (length: ' + emailPassword.length + ')' : 'NOT SET'}`)
+    if (process.env.NODE_ENV === 'production') {
+      logger.error('CRITICAL: Email credentials missing in production! Check environment variables.')
+    }
     return null
   }
   
@@ -31,6 +46,12 @@ const createTransporter = () => {
       user: emailUser,
       pass: emailPassword,
     },
+    // Add connection timeout and debug options
+    connectionTimeout: 60000,
+    greetingTimeout: 30000,
+    socketTimeout: 60000,
+    debug: process.env.NODE_ENV === 'development',
+    logger: process.env.NODE_ENV === 'development',
   }
 
   // For custom SMTP (not Gmail)
@@ -38,9 +59,21 @@ const createTransporter = () => {
     config.host = process.env.EMAIL_HOST
     config.port = parseInt(process.env.EMAIL_PORT || '587')
     config.secure = process.env.EMAIL_SECURE === 'true'
+    logger.info(`Using custom SMTP: ${config.host}:${config.port}`)
   }
 
-  return nodemailer.createTransport(config)
+  try {
+    const transporter = nodemailer.createTransport(config)
+    logger.info('Email transporter created successfully')
+    return transporter
+  } catch (error) {
+    logger.error('Failed to create email transporter:', {
+      message: error.message,
+      code: error.code,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    })
+    return null
+  }
 }
 
 /**
@@ -48,13 +81,39 @@ const createTransporter = () => {
  */
 export const sendOrderConfirmationEmail = async (order, whatsappLink) => {
   try {
+    // Recreate transporter if it doesn't exist (allows retry after config fix)
     if (!transporter) {
+      logger.info('Creating email transporter...')
       transporter = createTransporter()
     }
 
     if (!transporter) {
-      logger.warn('Email transporter not available. Skipping email send.')
-      return { success: false, message: 'Email service not configured' }
+      const errorMsg = 'Email transporter not available. Check EMAIL_USER and EMAIL_PASSWORD environment variables.'
+      logger.warn(errorMsg)
+      return { success: false, message: errorMsg }
+    }
+
+    // Verify transporter connection before sending (with timeout)
+    try {
+      await Promise.race([
+        transporter.verify(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Verification timeout')), 10000))
+      ])
+      logger.debug('Email transporter verified successfully')
+    } catch (verifyError) {
+      logger.error('Email transporter verification failed. Attempting to recreate...', {
+        message: verifyError.message,
+        code: verifyError.code
+      })
+      // Try to recreate transporter
+      transporter = createTransporter()
+      if (!transporter) {
+        return { 
+          success: false, 
+          message: 'Email service verification failed. Please check email configuration.',
+          error: verifyError.message 
+        }
+      }
     }
 
     const { studentInfo, orderItems, orderNumber, totalAmount, orderDate, payment } = order
@@ -578,18 +637,48 @@ contact the event organizers directly.
       html: htmlContent,
     }
 
-    const info = await transporter.sendMail(mailOptions)
-    logger.info(`Order confirmation email sent to ${studentInfo.email} (Message ID: ${info.messageId})`)
+    // Send email with timeout
+    const sendPromise = transporter.sendMail(mailOptions)
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Email send timeout after 30 seconds')), 30000)
+    )
+    
+    const info = await Promise.race([sendPromise, timeoutPromise])
+    
+    logger.info(`Order confirmation email sent successfully to ${studentInfo.email} (Message ID: ${info.messageId})`)
     return { success: true, messageId: info.messageId }
   } catch (error) {
     const errorMessage = error?.message || 'Unknown error'
     const errorCode = error?.code || 'UNKNOWN'
+    const errorResponse = error?.response || null
+    
+    // Log detailed error information
     logger.error(`Failed to send order confirmation email to ${studentInfo.email}:`, {
       message: errorMessage,
       code: errorCode,
-      orderNumber: order.orderNumber
+      orderNumber: order?.orderNumber || 'unknown',
+      response: errorResponse,
+      command: error?.command,
+      responseCode: error?.responseCode,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     })
-    return { success: false, error: errorMessage, code: errorCode }
+    
+    // Reset transporter on certain errors to allow retry
+    if (errorCode === 'EAUTH' || errorCode === 'ECONNECTION' || errorCode === 'ETIMEDOUT') {
+      logger.warn('Resetting email transporter due to connection/auth error. Will recreate on next attempt.')
+      transporter = null
+    }
+    
+    return { 
+      success: false, 
+      error: errorMessage, 
+      code: errorCode,
+      details: process.env.NODE_ENV === 'development' ? {
+        response: errorResponse,
+        command: error?.command,
+        responseCode: error?.responseCode
+      } : undefined
+    }
   }
 }
 
@@ -599,15 +688,52 @@ contact the event organizers directly.
 export const testEmailConnection = async () => {
   try {
     if (!transporter) {
+      logger.info('Creating transporter for email test...')
       transporter = createTransporter()
     }
     if (!transporter) {
-      return { success: false, message: 'Email service not configured' }
+      return { 
+        success: false, 
+        message: 'Email service not configured. Check EMAIL_USER and EMAIL_PASSWORD environment variables.',
+        details: {
+          hasEmailUser: !!process.env.EMAIL_USER,
+          hasEmailPassword: !!process.env.EMAIL_PASSWORD
+        }
+      }
     }
-    await transporter.verify()
-    return { success: true, message: 'Email service is configured correctly' }
+    
+    logger.info('Verifying email connection...')
+    await Promise.race([
+      transporter.verify(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Verification timeout after 10 seconds')), 10000))
+    ])
+    
+    logger.info('Email connection verified successfully')
+    return { 
+      success: true, 
+      message: 'Email service is configured correctly and connection verified',
+      emailUser: process.env.EMAIL_USER
+    }
   } catch (error) {
-    return { success: false, message: error.message }
+    logger.error('Email connection test failed:', {
+      message: error.message,
+      code: error.code,
+      command: error?.command,
+      responseCode: error?.responseCode
+    })
+    
+    // Reset transporter on error
+    transporter = null
+    
+    return { 
+      success: false, 
+      message: error.message || 'Email connection test failed',
+      code: error.code,
+      details: process.env.NODE_ENV === 'development' ? {
+        command: error?.command,
+        responseCode: error?.responseCode
+      } : undefined
+    }
   }
 }
 
