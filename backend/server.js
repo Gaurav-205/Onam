@@ -17,11 +17,17 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 // Load .env file explicitly from backend directory
+// Note: On production platforms like Render, environment variables are set via dashboard
+// so .env file may not exist - this is normal and expected
 const envPath = join(__dirname, '.env')
 const envResult = dotenv.config({ path: envPath })
 
 if (envResult.error) {
-  logger.warn(`Failed to load .env file from ${envPath}:`, envResult.error.message)
+  // Only log warning in development - in production (Render), env vars come from platform
+  if (process.env.NODE_ENV === 'development') {
+    logger.warn(`Failed to load .env file from ${envPath}:`, envResult.error.message)
+  }
+  // Silently continue in production - environment variables are set via platform
 } else {
   logger.info(`Loaded .env file from ${envPath}`)
 }
