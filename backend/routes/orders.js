@@ -328,19 +328,19 @@ router.get('/', authenticate, getEndpointLimiter, checkDatabaseConnection, async
       query['studentInfo.email'] = req.user.email.toLowerCase()
     } else {
       // Admins can query any orders, but still respect query parameters
-      if (studentId) {
-        const sanitizedStudentId = studentId.trim()
-        if (sanitizedStudentId.length > 0 && sanitizedStudentId.length <= 50) {
-          query['studentInfo.studentId'] = sanitizedStudentId
-        }
+    if (studentId) {
+      const sanitizedStudentId = studentId.trim()
+      if (sanitizedStudentId.length > 0 && sanitizedStudentId.length <= 50) {
+        query['studentInfo.studentId'] = sanitizedStudentId
       }
-      if (email) {
-        const sanitizedEmail = email.trim().toLowerCase()
-        // Basic email format validation
-        if (sanitizedEmail.length > 0 && sanitizedEmail.length <= 100 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sanitizedEmail)) {
-          query['studentInfo.email'] = sanitizedEmail
-        }
+    }
+    if (email) {
+      const sanitizedEmail = email.trim().toLowerCase()
+      // Basic email format validation
+      if (sanitizedEmail.length > 0 && sanitizedEmail.length <= 100 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sanitizedEmail)) {
+        query['studentInfo.email'] = sanitizedEmail
       }
+    }
     }
 
     if (status) {

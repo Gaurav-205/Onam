@@ -66,9 +66,8 @@ userSchema.methods.toJSON = function() {
   return userObject
 }
 
-// Indexes
-userSchema.index({ email: 1 })
-userSchema.index({ studentId: 1 })
+// Note: Indexes are automatically created by unique: true on email and studentId fields
+// No need to explicitly define them again
 
 const User = mongoose.models.User || mongoose.model('User', userSchema)
 
