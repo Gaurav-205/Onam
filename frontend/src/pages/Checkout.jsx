@@ -387,7 +387,7 @@ const Checkout = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Checkout Form */}
           <div className="lg:col-span-2">
-            <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg p-6 sm:p-8 space-y-6">
+            <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
               {/* Student Information */}
               <div>
                 <h2 className="text-xl font-bold text-gray-800 mb-4">Student Information</h2>
@@ -686,7 +686,7 @@ const Checkout = () => {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
+            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 sticky top-20 lg:top-24">
               <h2 className="text-xl font-bold text-gray-800 mb-4">Registration Summary</h2>
               <p className="text-sm text-gray-600 mb-4">Items selected for Onam Festival</p>
               

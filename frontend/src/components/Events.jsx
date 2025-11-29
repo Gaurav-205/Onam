@@ -10,8 +10,8 @@ const EventImage = memo(({ image, title }) => {
   }
 
   return (
-    <div className="flex-shrink-0">
-      <div className="w-96 h-64 rounded-lg overflow-hidden shadow-md">
+    <div className="flex-shrink-0 w-full lg:w-96">
+      <div className="w-full h-48 sm:h-56 md:h-64 lg:h-64 rounded-lg overflow-hidden shadow-md">
         <img
           src={image}
           alt={title}
@@ -29,8 +29,8 @@ EventImage.displayName = 'EventImage'
 // Memoized EventContent component
 const EventContent = memo(({ event }) => {
   return (
-    <div className="flex-1 min-w-0 pt-2 relative min-h-[256px]">
-      <h3 className="text-xl lg:text-2xl font-bold text-gray-800 mb-4 font-heading">
+    <div className="flex-1 min-w-0 pt-2 sm:pt-4 lg:pt-2 relative min-h-[192px] sm:min-h-[256px]">
+      <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-3 sm:mb-4 font-heading">
         {event.title}
       </h3>
       
@@ -66,7 +66,7 @@ EventContent.displayName = 'EventContent'
 
 // Memoized EventCard component
 const EventCard = memo(({ event }) => (
-  <div className="flex flex-col lg:flex-row items-start gap-4 sm:gap-6 lg:gap-8">
+  <div className="flex flex-col lg:flex-row items-start gap-4 sm:gap-6 lg:gap-8 bg-white rounded-xl p-4 sm:p-6 shadow-md hover:shadow-lg transition-shadow duration-300">
     <EventImage image={event.image} title={event.title} />
     <EventContent event={event} />
   </div>

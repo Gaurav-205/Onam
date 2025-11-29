@@ -70,6 +70,48 @@
     /* Prevent layout shift */
     aspect-ratio: attr(width) / attr(height);
   }
+  
+  /* Ensure all media is responsive */
+  img {
+    display: block;
+    width: 100%;
+    object-fit: cover;
+  }
+  
+  video {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+  }
+  
+  /* Prevent horizontal scroll */
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
+  }
+  
+  /* Ensure containers don't exceed viewport */
+  .container, .max-w-7xl, .max-w-6xl, .max-w-4xl {
+    width: 100%;
+    max-width: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  @media (min-width: 640px) {
+    .container, .max-w-7xl, .max-w-6xl, .max-w-4xl {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .container, .max-w-7xl, .max-w-6xl, .max-w-4xl {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
 
   /* Optimize animations */
   @media (prefers-reduced-motion: reduce) {
@@ -480,6 +522,84 @@
   .backdrop-blur-optimized {
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
+  }
+  
+  /* Prevent horizontal overflow on mobile */
+  body {
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
+  }
+  
+  /* Ensure all containers respect viewport width */
+  * {
+    max-width: 100%;
+  }
+  
+  /* Fix table overflow on mobile */
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  /* Ensure proper spacing on tablets */
+  .section-padding {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+/* Large screen optimizations */
+@media (min-width: 1920px) {
+  /* Limit max width on very large screens */
+  .max-w-7xl {
+    max-width: 1280px;
+  }
+  
+  .max-w-6xl {
+    max-width: 1152px;
+  }
+  
+  .max-w-4xl {
+    max-width: 896px;
+  }
+}
+
+/* Landscape mobile optimizations */
+@media (max-width: 896px) and (orientation: landscape) {
+  /* Adjust hero section for landscape */
+  #home {
+    min-height: 100vh;
+    height: auto;
+  }
+  
+  /* Reduce padding in landscape */
+  .section-padding {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Larger touch targets */
+  button, a, input, select, textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Remove hover effects on touch devices */
+  .hover\:shadow-xl:hover {
+    box-shadow: inherit;
+  }
+  
+  .hover\:scale-105:hover {
+    transform: none;
   }
 }
 

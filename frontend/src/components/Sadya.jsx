@@ -124,7 +124,7 @@ const VideoPlayer = memo(({ onVideoError }) => {
   }, [isIntersecting])
 
   return (
-    <div ref={sectionRef} className="w-full h-[320px] md:h-[455px] bg-black rounded-2xl overflow-hidden shadow-xl relative">
+    <div ref={sectionRef} className="w-full h-64 sm:h-80 md:h-[320px] lg:h-[455px] bg-black rounded-xl sm:rounded-2xl overflow-hidden shadow-xl relative">
       {/* Video Player with Zoomed Poster */}
       <video
         ref={videoRef}
