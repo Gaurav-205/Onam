@@ -113,7 +113,32 @@ export const sendOrderConfirmationEmail = async (order, whatsappLink) => {
     // but allow actual email sending. We'll attempt to send directly and catch errors then.
     logger.info('Skipping pre-send verification (some hosts block it). Attempting direct send...')
 
-    const { studentInfo, orderItems, orderNumber, totalAmount, orderDate, payment } = order
+    // Validate order structure before destructuring
+    if (!order || typeof order !== 'object') {
+      throw new Error('Invalid order object provided')
+    }
+
+    // Safely destructure order properties with defaults
+    const studentInfo = order.studentInfo || {}
+    const orderItems = order.orderItems || []
+    const orderNumber = order.orderNumber || 'N/A'
+    const totalAmount = order.totalAmount || 0
+    const orderDate = order.orderDate || new Date()
+    const payment = order.payment || {}
+
+    // Validate required fields early to provide clear error messages
+    if (!studentInfo || typeof studentInfo !== 'object') {
+      throw new Error('Order missing required field: studentInfo')
+    }
+    if (!studentInfo.email || typeof studentInfo.email !== 'string') {
+      throw new Error('Order missing required field: studentInfo.email')
+    }
+    if (!Array.isArray(orderItems) || orderItems.length === 0) {
+      throw new Error('Order missing required field: orderItems (must be a non-empty array)')
+    }
+    if (!orderNumber || typeof orderNumber !== 'string') {
+      throw new Error('Order missing required field: orderNumber')
+    }
 
     // Sanitize user input to prevent XSS in email
     const sanitize = (str) => {
@@ -649,11 +674,15 @@ contact the event organizers directly.
     const errorCode = error?.code || 'UNKNOWN'
     const errorResponse = error?.response || null
     
+    // Safely get email address from order object or error context
+    const recipientEmail = order?.studentInfo?.email || order?.email || 'unknown'
+    const orderNum = order?.orderNumber || 'unknown'
+    
     // Log detailed error information
-    logger.error(`Failed to send order confirmation email to ${studentInfo.email}:`, {
+    logger.error(`Failed to send order confirmation email to ${recipientEmail}:`, {
       message: errorMessage,
       code: errorCode,
-      orderNumber: order?.orderNumber || 'unknown',
+      orderNumber: orderNum,
       response: errorResponse,
       command: error?.command,
       responseCode: error?.responseCode,
