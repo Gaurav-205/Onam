@@ -21,13 +21,10 @@ const Layout = () => {
     if (location.pathname !== '/') {
       // Use setTimeout to ensure content is rendered before scrolling
       setTimeout(() => {
-        window.scrollTo({ 
-          top: 0, 
-          behavior: 'smooth' 
-        })
+        smoothScrollToTop()
       }, 100)
     }
-  }, [location.pathname])
+  }, [location.pathname, smoothScrollToTop])
 
   // Convert pathname to section ID for Navbar compatibility
   const currentSection = useMemo(() => {
@@ -37,6 +34,17 @@ const Layout = () => {
     if (path === '/coming-soon') return 'under-development'
     return 'home'
   }, [location.pathname])
+
+  // Helper function to scroll to a section element
+  const scrollToElement = useCallback((elementId) => {
+    const element = document.getElementById(elementId)
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      })
+    }
+  }, [])
 
   // Navigation handler for Navbar - smart scrolling based on context
   const scrollToSection = useCallback((sectionId) => {
@@ -51,31 +59,18 @@ const Layout = () => {
     
     // If it's a home page section
     if (homePageSections.includes(sectionId)) {
+      const elementId = sectionId === 'home' ? 'home' : sectionId
+      
       // If we're already on home page, scroll directly to section
       if (location.pathname === '/') {
-        const element = document.getElementById(sectionId === 'home' ? 'home' : sectionId)
-        if (element) {
-          // Scroll directly to the section without going to top first
-          element.scrollIntoView({ 
-            behavior: 'smooth',
-            block: 'start'
-          })
-        }
+        scrollToElement(elementId)
       } else {
         // Navigate to home first, then scroll to section after navigation
         navigate('/')
         setTimeout(() => {
           // Wait for route change and DOM update
           requestAnimationFrame(() => {
-            setTimeout(() => {
-              const element = document.getElementById(sectionId === 'home' ? 'home' : sectionId)
-              if (element) {
-                element.scrollIntoView({ 
-                  behavior: 'smooth',
-                  block: 'start'
-                })
-              }
-            }, 100)
+            setTimeout(() => scrollToElement(elementId), 100)
           })
         }, 100)
       }
@@ -89,7 +84,7 @@ const Layout = () => {
         smoothScrollToTop()
       }
     }
-  }, [location.pathname, navigate, smoothScrollToTop])
+  }, [location.pathname, navigate, smoothScrollToTop, scrollToElement])
 
   // Determine if we're on home page (no top padding needed for hero section)
   const isHomePage = location.pathname === '/'

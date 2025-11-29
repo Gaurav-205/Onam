@@ -5,11 +5,33 @@
 
 import nodemailer from 'nodemailer'
 import { logger } from './logger.js'
+import { APP_CONFIG } from '../config/app.js'
 
 // Create reusable transporter
 let transporter = null
 
+/**
+ * Detect if running in a cloud/deployment environment
+ */
+const isCloudEnvironment = () => {
+  return (
+    process.env.RENDER === 'true' || 
+    !!process.env.RENDER_SERVICE_NAME ||
+    !!process.env.VERCEL ||
+    !!process.env.RAILWAY_ENVIRONMENT ||
+    !!process.env.HEROKU ||
+    process.env.NODE_ENV === 'production'
+  )
+}
+
 const createTransporter = () => {
+  // Detect deployment environment
+  const isProduction = process.env.NODE_ENV === 'production'
+  const isRender = process.env.RENDER === 'true' || !!process.env.RENDER_SERVICE_NAME
+  const isVercel = !!process.env.VERCEL
+  const isRailway = !!process.env.RAILWAY_ENVIRONMENT
+  const isCloud = isCloudEnvironment()
+  
   // Use Gmail SMTP or custom SMTP based on environment
   const emailService = process.env.EMAIL_SERVICE || 'gmail'
   const emailUser = process.env.EMAIL_USER?.trim()
@@ -19,13 +41,15 @@ const createTransporter = () => {
   // Remove spaces only if they exist (Gmail app passwords work with or without spaces)
   const emailPassword = emailPasswordRaw.replace(/\s+/g, '')
 
-  // Detailed logging for debugging
+  // Detailed logging for debugging (enhanced for cloud deployment)
   logger.info('Email configuration check:', {
     hasEmailUser: !!emailUser,
     hasEmailPassword: !!emailPassword,
     emailPasswordLength: emailPassword.length,
     emailService,
-    isProduction: process.env.NODE_ENV === 'production'
+    isProduction,
+    isCloud,
+    deploymentPlatform: isRender ? 'Render' : isVercel ? 'Vercel' : isRailway ? 'Railway' : isProduction ? 'Production' : 'Development'
   })
 
   if (!emailUser || !emailPassword) {
@@ -40,23 +64,37 @@ const createTransporter = () => {
   
   logger.info(`Email service configured for: ${emailUser}`)
 
-    const config = {
+  const config = {
       service: emailService,
       auth: {
         user: emailUser,
         pass: emailPassword,
       },
       // Extended timeouts for hosting providers that may have slower connections
-      // Render and other cloud providers often have slower SMTP connections
-      connectionTimeout: 90000, // 90 seconds - increased for cloud providers
-      greetingTimeout: 60000,   // 60 seconds - increased for slow networks
-      socketTimeout: 120000,    // 120 seconds - increased for slow connections
+      // Cloud providers often have slower SMTP connections and network restrictions
+      connectionTimeout: isCloud ? 120000 : 90000, // 120s for cloud, 90s for local
+      greetingTimeout: isCloud ? 90000 : 60000,   // 90s for cloud, 60s for local
+      socketTimeout: isCloud ? 180000 : 120000,    // 180s for cloud, 120s for local
       debug: process.env.NODE_ENV === 'development',
       logger: process.env.NODE_ENV === 'development',
       // Add pool option for better connection handling
       pool: true,
       maxConnections: 1,
       maxMessages: 3,
+      // Additional options for cloud providers
+      tls: {
+        // Don't reject unauthorized certificates (some cloud providers have issues)
+        // In cloud environments, we're more lenient to handle network middleboxes
+        rejectUnauthorized: !isCloud, // Strict in development, lenient in cloud
+        minVersion: 'TLSv1.2',
+        // Allow modern TLS ciphers for better compatibility
+        ciphers: isCloud ? 'HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!SRP:!CAMELLIA' : undefined
+      },
+      // Retry configuration for cloud environments
+      ...(isCloud && {
+        retries: 3,
+        retryDelay: 2000
+      })
     }
     
     // For Gmail, use explicit SMTP settings for better compatibility with hosting providers
@@ -68,15 +106,31 @@ const createTransporter = () => {
       config.port = 587
       config.secure = false // Use TLS instead of SSL
       config.requireTLS = true
-      logger.info('Using Gmail SMTP: smtp.gmail.com:587 with STARTTLS')
+      
+      // For cloud deployments, also try port 465 with SSL as fallback option
+      // But we'll use 587 with STARTTLS as primary
+      if (isCloud) {
+        logger.info('Using Gmail SMTP (cloud-optimized): smtp.gmail.com:587 with STARTTLS')
+        logger.info('Note: If this fails, try setting EMAIL_PORT=465 and EMAIL_SECURE=true')
+      } else {
+        logger.info('Using Gmail SMTP: smtp.gmail.com:587 with STARTTLS')
+      }
     }
 
-  // For custom SMTP (not Gmail)
-  if (emailService !== 'gmail' && process.env.EMAIL_HOST) {
+  // For custom SMTP (not Gmail) - check for override environment variables
+  // This allows overriding Gmail settings for cloud deployments if needed
+  if (process.env.EMAIL_HOST) {
     config.host = process.env.EMAIL_HOST
-    config.port = parseInt(process.env.EMAIL_PORT || '587')
+    config.port = parseInt(process.env.EMAIL_PORT || (config.secure ? '465' : '587'))
     config.secure = process.env.EMAIL_SECURE === 'true'
-    logger.info(`Using custom SMTP: ${config.host}:${config.port}`)
+    if (process.env.EMAIL_PORT === '465') {
+      config.secure = true
+      config.requireTLS = false
+    }
+    logger.info(`Using custom SMTP (override): ${config.host}:${config.port} (secure: ${config.secure})`)
+  } else if (emailService !== 'gmail' && process.env.EMAIL_SERVICE) {
+    // Keep existing behavior for non-Gmail services
+    logger.info(`Using service: ${emailService}`)
   }
 
   try {
@@ -102,6 +156,13 @@ export const sendOrderConfirmationEmail = async (order, whatsappLink) => {
     if (!transporter) {
       logger.info('Creating email transporter...')
       transporter = createTransporter()
+      
+      // If creation failed, try once more
+      if (!transporter) {
+        logger.warn('First transporter creation attempt failed. Retrying...')
+        await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1 second
+        transporter = createTransporter()
+      }
     }
 
     if (!transporter) {
@@ -652,17 +713,26 @@ contact the event organizers directly.
 ═══════════════════════════════════════════════════════════
     `
 
+    // Get email from name from config or use default
+    const emailFromName = APP_CONFIG.COMMUNICATION.EMAIL_FROM_NAME || 'Onam Festival - MIT ADT University'
+    const emailUser = process.env.EMAIL_USER?.trim()
+    
+    if (!emailUser) {
+      throw new Error('EMAIL_USER environment variable is not set')
+    }
+    
     const mailOptions = {
-      from: `"Onam Festival - MIT ADT University" <${process.env.EMAIL_USER}>`,
+      from: `"${emailFromName}" <${emailUser}>`,
       to: studentInfo.email,
       subject: `Onam Festival Registration Confirmed - Order ${sanitize(orderNumber)}`,
       text: textContent,
       html: htmlContent,
     }
 
-    // Send email with timeout (increased for production environments like Render)
-    // Render and other hosting providers may have slower SMTP connections
-    const emailTimeout = process.env.NODE_ENV === 'production' ? 60000 : 30000 // 60s production, 30s dev
+    // Send email with timeout (increased for cloud environments)
+    // Cloud providers may have slower SMTP connections and network restrictions
+    const isCloudEnv = isCloudEnvironment()
+    const emailTimeout = isCloudEnv ? 90000 : 30000 // 90s for cloud, 30s for local
     const sendPromise = transporter.sendMail(mailOptions)
     const timeoutPromise = new Promise((_, reject) => 
       setTimeout(() => reject(new Error(`Email send timeout after ${emailTimeout / 1000} seconds`)), emailTimeout)
@@ -698,22 +768,33 @@ contact the event organizers directly.
       transporter = null
     }
     
+    // More detailed error messages for common issues
+    let userFriendlyMessage = errorMessage
+    if (errorCode === 'EAUTH') {
+      userFriendlyMessage = 'Email authentication failed. Please check EMAIL_USER and EMAIL_PASSWORD. For Gmail, ensure you\'re using an App Password, not your regular password.'
+    } else if (errorCode === 'ECONNECTION') {
+      userFriendlyMessage = 'Email connection failed. Please check your network connection and email service configuration.'
+    } else if (errorCode === 'ETIMEDOUT') {
+      userFriendlyMessage = 'Email sending timed out. The email service may be slow or unavailable. Please try again later.'
+    }
+    
     return { 
       success: false, 
-      message: errorMessage, // Changed from 'error' to 'message' for consistency
-      error: errorMessage, // Keep both for backward compatibility
+      message: userFriendlyMessage,
+      error: errorMessage, // Keep original error for debugging
       code: errorCode,
       details: process.env.NODE_ENV === 'development' ? {
         response: errorResponse,
         command: error?.command,
-        responseCode: error?.responseCode
+        responseCode: error?.responseCode,
+        originalError: errorMessage
       } : undefined
     }
   }
 }
 
 /**
- * Test email configuration
+ * Test email configuration (verify connection)
  */
 export const testEmailConnection = async () => {
   try {
@@ -779,6 +860,181 @@ export const testEmailConnection = async () => {
       details: process.env.NODE_ENV === 'development' ? {
         command: error?.command,
         responseCode: error?.responseCode
+      } : undefined
+    }
+  }
+}
+
+/**
+ * Send a test email to verify email sending functionality
+ * @param {string} testEmail - Email address to send test email to
+ * @returns {Promise<Object>} Result object with success status
+ */
+export const sendTestEmail = async (testEmail) => {
+  try {
+    // Validate email address
+    if (!testEmail || typeof testEmail !== 'string' || !testEmail.includes('@')) {
+      throw new Error('Valid email address is required')
+    }
+    
+    // Recreate transporter if it doesn't exist
+    if (!transporter) {
+      logger.info('Creating transporter for test email...')
+      transporter = createTransporter()
+    }
+    
+    if (!transporter) {
+      const errorMsg = 'Email transporter not available. Check EMAIL_USER and EMAIL_PASSWORD environment variables.'
+      logger.warn(errorMsg)
+      return { success: false, message: errorMsg }
+    }
+    
+    const emailFromName = APP_CONFIG.COMMUNICATION.EMAIL_FROM_NAME || 'Onam Festival - MIT ADT University'
+    const emailUser = process.env.EMAIL_USER?.trim()
+    
+    if (!emailUser) {
+      throw new Error('EMAIL_USER environment variable is not set')
+    }
+    
+    const testSubject = 'Onam Festival - Test Email'
+    const testHtmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Email</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #1f2937;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f3f4f6;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .success {
+      color: #059669;
+      font-weight: 600;
+      margin-top: 20px;
+    }
+    .info {
+      background: #f0fdf4;
+      border-left: 4px solid #059669;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>✓ Test Email Successful!</h1>
+    </div>
+    <p>This is a test email from the Onam Festival email service.</p>
+    <div class="info">
+      <p><strong>Email Configuration Status:</strong></p>
+      <ul>
+        <li>From: ${emailFromName} &lt;${emailUser}&gt;</li>
+        <li>To: ${testEmail}</li>
+        <li>Service: ${process.env.EMAIL_SERVICE || 'gmail'}</li>
+        <li>Status: Connected and sending emails successfully</li>
+      </ul>
+    </div>
+    <p class="success">If you received this email, your email service is working correctly!</p>
+    <p style="margin-top: 20px; color: #6b7280; font-size: 14px;">
+      This test email was sent at ${new Date().toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'medium' })}.
+    </p>
+  </div>
+</body>
+</html>
+    `
+    
+    const testTextContent = `
+═══════════════════════════════════════════
+  ONAM FESTIVAL - TEST EMAIL
+═══════════════════════════════════════════
+
+This is a test email from the Onam Festival email service.
+
+Email Configuration Status:
+───────────────────────────────────────────
+From: ${emailFromName} <${emailUser}>
+To: ${testEmail}
+Service: ${process.env.EMAIL_SERVICE || 'gmail'}
+Status: Connected and sending emails successfully
+
+If you received this email, your email service is working correctly!
+
+Sent at: ${new Date().toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'medium' })}
+═══════════════════════════════════════════
+    `
+    
+    const mailOptions = {
+      from: `"${emailFromName}" <${emailUser}>`,
+      to: testEmail.trim(),
+      subject: testSubject,
+      text: testTextContent,
+      html: testHtmlContent,
+    }
+    
+    logger.info(`Sending test email to ${testEmail}...`)
+    
+    // Send email with timeout
+    const emailTimeout = process.env.NODE_ENV === 'production' ? 60000 : 30000
+    const sendPromise = transporter.sendMail(mailOptions)
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error(`Email send timeout after ${emailTimeout / 1000} seconds`)), emailTimeout)
+    )
+    
+    const info = await Promise.race([sendPromise, timeoutPromise])
+    
+    logger.info(`Test email sent successfully to ${testEmail} (Message ID: ${info.messageId})`)
+    return { 
+      success: true, 
+      message: `Test email sent successfully to ${testEmail}`,
+      messageId: info.messageId,
+      emailFrom: `${emailFromName} <${emailUser}>`,
+      emailTo: testEmail
+    }
+  } catch (error) {
+    const errorMessage = error?.message || 'Unknown error'
+    const errorCode = error?.code || 'UNKNOWN'
+    
+    logger.error(`Failed to send test email to ${testEmail}:`, {
+      message: errorMessage,
+      code: errorCode,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    })
+    
+    // Reset transporter on certain errors to allow retry
+    if (errorCode === 'EAUTH' || errorCode === 'ECONNECTION' || errorCode === 'ETIMEDOUT') {
+      logger.warn('Resetting email transporter due to connection/auth error. Will recreate on next attempt.')
+      transporter = null
+    }
+    
+    return { 
+      success: false, 
+      message: errorMessage,
+      code: errorCode,
+      details: process.env.NODE_ENV === 'development' ? {
+        stack: error.stack
       } : undefined
     }
   }

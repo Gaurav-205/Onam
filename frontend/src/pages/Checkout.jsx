@@ -18,7 +18,6 @@ const Checkout = () => {
   const [upiId, setUpiId] = useState(APP_CONFIG.PAYMENT.UPI_ID || null)
   const [whatsappLink, setWhatsappLink] = useState(null)
   const redirectTimeoutRef = useRef(null)
-  const isProcessingRef = useRef(false)
 
   // Form state - Student information for university event
   const [formData, setFormData] = useState({
@@ -70,10 +69,13 @@ const Checkout = () => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
     // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }))
-    }
-  }, [errors])
+    setErrors(prev => {
+      if (prev[name]) {
+        return { ...prev, [name]: '' }
+      }
+      return prev
+    })
+  }, [])
 
   const validateForm = useCallback(() => {
     const newErrors = {}
@@ -123,15 +125,11 @@ const Checkout = () => {
     }
 
     setIsProcessing(true)
-    isProcessingRef.current = true
     
     // Set a safety timeout to ensure isProcessing is always reset
     const safetyTimeout = setTimeout(() => {
-      if (isProcessingRef.current) {
-        isProcessingRef.current = false
-        setIsProcessing(false)
-        showToast('Request is taking longer than expected. Please check your connection and try again.', 'error', 5000)
-      }
+      setIsProcessing(false)
+      showToast('Request is taking longer than expected. Please check your connection and try again.', 'error', 5000)
     }, 65000) // 65 seconds - slightly longer than the API timeout
     
     try {
@@ -199,14 +197,18 @@ const Checkout = () => {
       setIsProcessing(false)
       setOrderPlaced(true)
       
-      // Include WhatsApp link from response if available
+      // Update WhatsApp link if provided in response
+      if (response.whatsappLink) {
+        setWhatsappLink(response.whatsappLink)
+      }
+      
+      // Set order details
       setOrderDetails({
         orderId: response.order?.orderId || response.orderId,
         orderNumber: response.order?.orderNumber || response.orderNumber,
         status: response.order?.status || response.status,
         totalAmount: response.order?.totalAmount || response.totalAmount,
         orderDate: response.order?.orderDate || response.orderDate,
-        whatsappLink: response.whatsappLink || whatsappLink
       })
       
       clearCart()
@@ -220,7 +222,6 @@ const Checkout = () => {
       }, 5000)
     } catch (error) {
       clearTimeout(safetyTimeout)
-      isProcessingRef.current = false
       setIsProcessing(false)
       
       // Show error message using Toast
@@ -250,7 +251,7 @@ const Checkout = () => {
         })
       }
     }
-  }, [formData, cartItems, totalPrice, validateForm, clearCart, navigate, isProcessing, orderPlaced, showToast, whatsappLink])
+  }, [formData, cartItems, totalPrice, validateForm, clearCart, navigate, isProcessing, orderPlaced, showToast])
 
   if (orderPlaced) {
     return (
@@ -294,7 +295,7 @@ const Checkout = () => {
             )}
 
             {/* WhatsApp Group Link */}
-            {(orderDetails?.whatsappLink || whatsappLink) && (
+            {whatsappLink && (
               <div className="bg-green-50 border-2 border-green-300 rounded-lg p-6 mb-4">
                 <div className="text-center">
                   <div className="text-4xl mb-3">📱</div>
@@ -303,7 +304,7 @@ const Checkout = () => {
                     Stay updated with Onam festival updates, event schedules, and announcements
                   </p>
                   <a
-                    href={orderDetails?.whatsappLink || whatsappLink}
+                    href={whatsappLink}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-block bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg hover:shadow-xl"

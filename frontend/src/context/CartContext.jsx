@@ -108,6 +108,7 @@ export const CartProvider = ({ children }) => {
     return item ? item.quantity : 0
   }, [cartItems])
 
+  // Memoize context value - callbacks are already memoized so only depend on cartItems and computed values
   const value = useMemo(() => ({
     cartItems,
     addToCart,

@@ -1,5 +1,6 @@
 import mongoose from 'mongoose'
 import { APP_CONFIG } from '../config/app.js'
+import { logger } from '../utils/logger.js'
 
 const orderItemSchema = new mongoose.Schema({
   id: {
@@ -221,7 +222,7 @@ orderSchema.pre('save', async function(next) {
       // Counter failed - fallback already set, continue silently
       // Log only in development to avoid production noise
       if (process.env.NODE_ENV === 'development') {
-        console.error('Counter lookup failed, using fallback order number:', error.message)
+        logger.debug('Counter lookup failed, using fallback order number:', error.message)
       }
     }
   }

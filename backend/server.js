@@ -8,6 +8,7 @@ import orderRoutes from './routes/orders.js'
 import { logger } from './utils/logger.js'
 import { defaultLimiter, lightLimiter } from './utils/rateLimiter.js'
 import { getDatabaseStatus } from './middleware/database.js'
+import { APP_CONFIG } from './config/app.js'
 
 // Load environment variables from .env file in backend directory
 const __filename = fileURLToPath(import.meta.url)
@@ -58,9 +59,9 @@ let allowedOrigins = process.env.FRONTEND_URL
   ? process.env.FRONTEND_URL.split(',').map(url => url.trim().replace(/\/$/, '')).filter(url => url.length > 0)
   : [...defaultOrigins]
 
-// Always include Netlify origin if not already present (normalize URLs)
-const normalizeUrl = (url) => url.replace(/\/$/, '')
-if (!allowedOrigins.map(normalizeUrl).includes('https://onammitadt.netlify.app')) {
+// Always include Netlify origin if not already present (normalize URLs for comparison)
+const normalizedOrigins = allowedOrigins.map(url => url.replace(/\/$/, ''))
+if (!normalizedOrigins.includes('https://onammitadt.netlify.app')) {
   allowedOrigins.push('https://onammitadt.netlify.app')
 }
 
@@ -215,15 +216,26 @@ app.get('/api/config', lightLimiter, (req, res) => {
     success: true,
     config: {
       payment: {
-        upiId: process.env.UPI_ID || null,
-        methods: ['cash', 'upi']
+        upiId: APP_CONFIG.PAYMENT.UPI_ID || null,
+        methods: APP_CONFIG.PAYMENT.METHODS
       },
       communication: {
-        whatsappGroupLink: process.env.WHATSAPP_GROUP_LINK || null
+        whatsappGroupLink: APP_CONFIG.COMMUNICATION.WHATSAPP_GROUP_LINK || null
       }
     }
   })
 })
+
+// Helper function to get email configuration status (without sensitive data)
+const getEmailConfigStatus = () => {
+  return {
+    hasEmailUser: !!process.env.EMAIL_USER,
+    hasEmailPassword: !!process.env.EMAIL_PASSWORD,
+    emailService: process.env.EMAIL_SERVICE || 'gmail',
+    isProduction: process.env.NODE_ENV === 'production',
+    emailConfigured: !!(process.env.EMAIL_USER && process.env.EMAIL_PASSWORD)
+  }
+}
 
 // Email test endpoint (available in all environments for debugging)
 app.get('/api/test-email', lightLimiter, async (req, res) => {
@@ -231,17 +243,9 @@ app.get('/api/test-email', lightLimiter, async (req, res) => {
     const { testEmailConnection } = await import('./utils/emailService.js')
     const result = await testEmailConnection()
     
-    // Include configuration status (without sensitive data)
-    const emailConfig = {
-      hasEmailUser: !!process.env.EMAIL_USER,
-      hasEmailPassword: !!process.env.EMAIL_PASSWORD,
-      emailService: process.env.EMAIL_SERVICE || 'gmail',
-      isProduction: process.env.NODE_ENV === 'production'
-    }
-    
     res.json({
       ...result,
-      config: emailConfig
+      config: getEmailConfigStatus()
     })
   } catch (error) {
     res.status(500).json({
@@ -255,18 +259,58 @@ app.get('/api/test-email', lightLimiter, async (req, res) => {
 
 // Email diagnostic endpoint (production-safe, shows configuration status)
 app.get('/api/email-diagnostics', lightLimiter, async (req, res) => {
-  const diagnostics = {
+  const config = getEmailConfigStatus()
+  res.json({
     success: true,
-    emailConfigured: !!(process.env.EMAIL_USER && process.env.EMAIL_PASSWORD),
-    emailService: process.env.EMAIL_SERVICE || 'gmail',
-    hasEmailUser: !!process.env.EMAIL_USER,
-    hasEmailPassword: !!process.env.EMAIL_PASSWORD,
+    ...config,
     emailPasswordLength: process.env.EMAIL_PASSWORD ? process.env.EMAIL_PASSWORD.length : 0,
     environment: process.env.NODE_ENV || 'development',
     timestamp: new Date().toISOString()
+  })
+})
+
+// Send test email endpoint (for testing email functionality)
+app.post('/api/test-email-send', lightLimiter, async (req, res) => {
+  try {
+    const { email } = req.body
+    
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid email address is required in the request body. Send: { "email": "your-email@example.com" }'
+      })
+    }
+    
+    const { sendTestEmail } = await import('./utils/emailService.js')
+    const result = await sendTestEmail(email)
+    
+    if (result.success) {
+      res.json({
+        success: true,
+        message: result.message,
+        messageId: result.messageId,
+        emailFrom: result.emailFrom,
+        emailTo: result.emailTo,
+        config: getEmailConfigStatus()
+      })
+    } else {
+      res.status(500).json({
+        success: false,
+        message: result.message,
+        code: result.code,
+        config: getEmailConfigStatus(),
+        ...(result.details && { details: result.details })
+      })
+    }
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send test email',
+      error: error.message,
+      config: getEmailConfigStatus(),
+      ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+    })
   }
-  
-  res.json(diagnostics)
 })
 
 // API Routes
