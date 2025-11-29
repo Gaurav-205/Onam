@@ -25,27 +25,63 @@ const defaultOptions = {
 }
 
 /**
- * API request helper with error handling
+ * API request helper with error handling, timeout, and retry logic
  */
-export const apiRequest = async (url, options = {}) => {
+const REQUEST_TIMEOUT = 30000 // 30 seconds
+const MAX_RETRIES = 2
+const RETRY_DELAY = 1000 // 1 second
+
+const fetchWithTimeout = (url, options, timeout) => {
+  return Promise.race([
+    fetch(url, options),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Request timeout')), timeout)
+    )
+  ])
+}
+
+export const apiRequest = async (url, options = {}, retryCount = 0) => {
+  let timeoutId = null
+  
   try {
-    const response = await fetch(url, {
+    const controller = new AbortController()
+    timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT)
+
+    const response = await fetchWithTimeout(url, {
       ...defaultOptions,
       ...options,
+      signal: controller.signal,
       headers: {
         ...defaultOptions.headers,
         ...options.headers,
       },
     })
 
+    if (timeoutId) clearTimeout(timeoutId)
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+      const error = new Error(errorData.message || `HTTP error! status: ${response.status}`)
+      error.status = response.status
+      throw error
     }
 
     const data = await response.json()
     return data
   } catch (error) {
+    if (timeoutId) clearTimeout(timeoutId)
+    
+    // Retry logic for network errors and 5xx errors
+    if (retryCount < MAX_RETRIES && (
+      error.message === 'Request timeout' ||
+      error.name === 'AbortError' ||
+      error.message === 'Network request failed' ||
+      (error.status && error.status >= 500)
+    )) {
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (retryCount + 1)))
+      return apiRequest(url, options, retryCount + 1)
+    }
+
     if (error instanceof Error) {
       throw error
     }

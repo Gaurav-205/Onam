@@ -205,6 +205,10 @@ orderSchema.pre('save', async function(next) {
       }
     } catch (error) {
       // Counter failed - fallback already set, continue silently
+      // Log only in development to avoid production noise
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Counter lookup failed, using fallback order number:', error.message)
+      }
     }
   }
   

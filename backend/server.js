@@ -92,6 +92,17 @@ if (process.env.NODE_ENV === 'development') {
 app.use(express.json({ limit: '2mb' }))
 app.use(express.urlencoded({ extended: true, limit: '2mb' }))
 
+// Request timeout middleware
+app.use((req, res, next) => {
+  req.setTimeout(30000, () => {
+    res.status(408).json({
+      success: false,
+      message: 'Request timeout'
+    })
+  })
+  next()
+})
+
 // Security: Add security headers
 app.use((req, res, next) => {
   // Prevent clickjacking
@@ -119,9 +130,25 @@ const limiter = rateLimit({
   },
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  skip: (req) => {
+    // Skip rate limiting for health check in production
+    return req.path === '/health' && process.env.NODE_ENV === 'production'
+  }
 })
 
-// Apply rate limiting to all requests
+// Light rate limiting for config endpoint
+const configLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 30, // Limit each IP to 30 requests per minute
+  message: {
+    success: false,
+    message: 'Too many requests. Please try again later.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+// Apply rate limiting to all API requests
 app.use('/api/', limiter)
 
 // Health check endpoint
@@ -155,7 +182,7 @@ app.get('/health', async (req, res) => {
 })
 
 // Config endpoint (public, returns non-sensitive config)
-app.get('/api/config', (req, res) => {
+app.get('/api/config', configLimiter, (req, res) => {
   res.json({
     success: true,
     config: {
@@ -219,6 +246,47 @@ app.use((err, req, res, next) => {
   })
 })
 
+// Graceful shutdown handler
+const gracefulShutdown = (signal) => {
+  logger.info(`${signal} received. Starting graceful shutdown...`)
+  
+  server.close(() => {
+    logger.info('HTTP server closed')
+    
+    // Close database connection
+    import('mongoose').then(mongoose => {
+      mongoose.default.connection.close(false, () => {
+        logger.info('MongoDB connection closed')
+        process.exit(0)
+      })
+    }).catch(() => {
+      process.exit(0)
+    })
+  })
+  
+  // Force shutdown after 10 seconds
+  setTimeout(() => {
+    logger.error('Forced shutdown after timeout')
+    process.exit(1)
+  }, 10000)
+}
+
+// Register shutdown handlers
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
+process.on('SIGINT', () => gracefulShutdown('SIGINT'))
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught Exception:', error)
+  gracefulShutdown('uncaughtException')
+})
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled Rejection at:', { promise, reason })
+  gracefulShutdown('unhandledRejection')
+})
+
 // Start server with error handling
 const server = app.listen(PORT, () => {
   const isProduction = process.env.NODE_ENV === 'production'
@@ -228,8 +296,15 @@ const server = app.listen(PORT, () => {
   
   logger.info(`Server running on ${serverUrl}`)
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`)
-  logger.info(`Health check: ${isProduction ? `https://yourdomain.com/health` : `http://localhost:${PORT}/health`}`)
-  logger.info(`API base: ${isProduction ? `https://yourdomain.com/api` : `http://localhost:${PORT}/api`}`)
+  
+  if (isProduction) {
+    logger.info(`Health check: /health`)
+    logger.info(`API base: /api`)
+  } else {
+    logger.info(`Health check: http://localhost:${PORT}/health`)
+    logger.info(`API base: http://localhost:${PORT}/api`)
+  }
+  
   logger.info(`Log level: ${process.env.LOG_LEVEL || 'info'}`)
   
   // Check email configuration on startup
@@ -257,13 +332,22 @@ server.on('error', (error) => {
     logger.error('Try one of these solutions:')
     logger.error(`  1. Stop the process using port ${PORT}`)
     logger.error(`  2. Set a different PORT in .env file (e.g., PORT=3001)`)
-    logger.error(`  3. Kill the process: netstat -ano | findstr :${PORT}`)
+    if (process.platform === 'win32') {
+      logger.error(`  3. Kill the process: netstat -ano | findstr :${PORT}`)
+    } else {
+      logger.error(`  3. Kill the process: lsof -ti:${PORT} | xargs kill`)
+    }
     process.exit(1)
   } else {
     logger.error('Server error:', error)
     process.exit(1)
   }
 })
+
+// Set server timeout (30 seconds)
+server.timeout = 30000
+server.keepAliveTimeout = 65000
+server.headersTimeout = 66000
 
 export default app
 

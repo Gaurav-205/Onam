@@ -124,36 +124,60 @@ const Checkout = () => {
     setIsProcessing(true)
     
     try {
-      // Prepare order data
+      // Prepare order data with validation
+      const orderItems = cartItems.map(item => {
+        const price = item.priceValue || parsePrice(item.price, 0)
+        const quantity = item.quantity || 1
+        const total = price * quantity
+        
+        // Validate item data
+        if (isNaN(price) || price < 0 || isNaN(quantity) || quantity < 1) {
+          throw new Error(`Invalid item data: ${item.name}`)
+        }
+        
+        return {
+          id: String(item.id || '').trim(),
+          name: String(item.name || '').trim(),
+          quantity: Math.floor(quantity),
+          price: Number(price.toFixed(2)),
+          total: Number(total.toFixed(2)),
+        }
+      })
+      
+      // Validate total price
+      const calculatedTotal = orderItems.reduce((sum, item) => sum + item.total, 0)
+      if (Math.abs(calculatedTotal - totalPrice) > 0.01) {
+        throw new Error('Cart total mismatch. Please refresh and try again.')
+      }
+      
       const orderData = {
         studentInfo: {
-          name: formData.name,
-          studentId: formData.studentId,
-          email: formData.email,
-          phone: formData.phone,
-          course: formData.course,
-          department: formData.department,
-          year: formData.year,
-          hostel: formData.hostel || null,
+          name: String(formData.name || '').trim(),
+          studentId: String(formData.studentId || '').trim(),
+          email: String(formData.email || '').trim().toLowerCase(),
+          phone: String(formData.phone || '').trim(),
+          course: String(formData.course || '').trim(),
+          department: String(formData.department || '').trim(),
+          year: String(formData.year || '').trim(),
+          hostel: formData.hostel ? String(formData.hostel).trim() : null,
         },
-        orderItems: cartItems.map(item => ({
-          id: item.id,
-          name: item.name,
-          quantity: item.quantity,
-          price: item.priceValue || parsePrice(item.price, 0),
-          total: (item.priceValue || parsePrice(item.price, 0)) * item.quantity,
-        })),
+        orderItems,
         payment: {
-          method: formData.paymentMethod,
-          upiId: formData.upiId || null,
-          transactionId: formData.transactionId || null,
+          method: String(formData.paymentMethod || 'cash').trim(),
+          upiId: formData.upiId ? String(formData.upiId).trim() : null,
+          transactionId: formData.transactionId ? String(formData.transactionId).trim() : null,
         },
-        totalAmount: totalPrice,
+        totalAmount: Number(calculatedTotal.toFixed(2)),
         orderDate: new Date().toISOString(),
       }
 
-      // Send order to backend
-      const response = await createOrder(orderData)
+      // Send order to backend with timeout handling
+      const response = await Promise.race([
+        createOrder(orderData),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Request timeout. Please try again.')), 30000)
+        )
+      ])
       
       setIsProcessing(false)
       setOrderPlaced(true)

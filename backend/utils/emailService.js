@@ -59,9 +59,20 @@ export const sendOrderConfirmationEmail = async (order, whatsappLink) => {
 
     const { studentInfo, orderItems, orderNumber, totalAmount, orderDate } = order
 
-    // Format order items
+    // Sanitize user input to prevent XSS in email
+    const sanitize = (str) => {
+      if (!str || typeof str !== 'string') return ''
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;')
+    }
+
+    // Format order items with sanitization
     const itemsList = orderItems.map(item => 
-      `  • ${item.name} × ${item.quantity} = ₹${item.total}`
+      `  • ${sanitize(item.name)} × ${item.quantity} = ₹${item.total}`
     ).join('\n')
 
     // Format order date
@@ -99,40 +110,40 @@ export const sendOrderConfirmationEmail = async (order, whatsappLink) => {
     </div>
     <div class="content">
       <div class="order-details">
-        <div class="order-number">Order Number: ${orderNumber}</div>
+        <div class="order-number">Order Number: ${sanitize(orderNumber)}</div>
         
         <div class="info-row">
           <span class="info-label">Name:</span>
-          <span class="info-value">${studentInfo.name}</span>
+          <span class="info-value">${sanitize(studentInfo.name)}</span>
         </div>
         <div class="info-row">
           <span class="info-label">Student ID:</span>
-          <span class="info-value">${studentInfo.studentId}</span>
+          <span class="info-value">${sanitize(studentInfo.studentId)}</span>
         </div>
         <div class="info-row">
           <span class="info-label">Email:</span>
-          <span class="info-value">${studentInfo.email}</span>
+          <span class="info-value">${sanitize(studentInfo.email)}</span>
         </div>
         <div class="info-row">
           <span class="info-label">Phone:</span>
-          <span class="info-value">${studentInfo.phone}</span>
+          <span class="info-value">${sanitize(studentInfo.phone)}</span>
         </div>
         <div class="info-row">
           <span class="info-label">Course:</span>
-          <span class="info-value">${studentInfo.course}</span>
+          <span class="info-value">${sanitize(studentInfo.course)}</span>
         </div>
         <div class="info-row">
           <span class="info-label">Department:</span>
-          <span class="info-value">${studentInfo.department}</span>
+          <span class="info-value">${sanitize(studentInfo.department)}</span>
         </div>
         <div class="info-row">
           <span class="info-label">Year:</span>
-          <span class="info-value">${studentInfo.year}</span>
+          <span class="info-value">${sanitize(studentInfo.year)}</span>
         </div>
         ${studentInfo.hostel ? `
         <div class="info-row">
           <span class="info-label">Hostel:</span>
-          <span class="info-value">${studentInfo.hostel}</span>
+          <span class="info-value">${sanitize(studentInfo.hostel)}</span>
         </div>
         ` : ''}
         <div class="info-row">
@@ -175,17 +186,17 @@ Onam Festival Registration Confirmed!
 
 Thank you for registering for Onam celebrations at MIT ADT University.
 
-Order Number: ${orderNumber}
+Order Number: ${sanitize(orderNumber)}
 
 Student Information:
-- Name: ${studentInfo.name}
-- Student ID: ${studentInfo.studentId}
-- Email: ${studentInfo.email}
-- Phone: ${studentInfo.phone}
-- Course: ${studentInfo.course}
-- Department: ${studentInfo.department}
-- Year: ${studentInfo.year}
-${studentInfo.hostel ? `- Hostel: ${studentInfo.hostel}` : ''}
+- Name: ${sanitize(studentInfo.name)}
+- Student ID: ${sanitize(studentInfo.studentId)}
+- Email: ${sanitize(studentInfo.email)}
+- Phone: ${sanitize(studentInfo.phone)}
+- Course: ${sanitize(studentInfo.course)}
+- Department: ${sanitize(studentInfo.department)}
+- Year: ${sanitize(studentInfo.year)}
+${studentInfo.hostel ? `- Hostel: ${sanitize(studentInfo.hostel)}` : ''}
 - Order Date: ${formattedDate}
 
 Order Items:
@@ -209,7 +220,7 @@ This is an automated confirmation email. Please do not reply.
     const mailOptions = {
       from: `"Onam Festival - MIT ADT University" <${process.env.EMAIL_USER}>`,
       to: studentInfo.email,
-      subject: `Onam Festival Registration Confirmed - Order ${orderNumber}`,
+      subject: `Onam Festival Registration Confirmed - Order ${sanitize(orderNumber)}`,
       text: textContent,
       html: htmlContent,
     }

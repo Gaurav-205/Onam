@@ -27,9 +27,14 @@ export const CartProvider = ({ children }) => {
     }
   }, [])
 
-  // Save cart to localStorage whenever it changes
+  // Save cart to localStorage whenever it changes (with error handling)
   useEffect(() => {
-    localStorage.setItem('onam_cart', JSON.stringify(cartItems))
+    try {
+      localStorage.setItem('onam_cart', JSON.stringify(cartItems))
+    } catch (error) {
+      // Handle quota exceeded or other localStorage errors silently
+      // Cart will still work in memory, just won't persist
+    }
   }, [cartItems])
 
   // Add item to cart

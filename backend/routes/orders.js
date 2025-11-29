@@ -168,16 +168,34 @@ router.post('/', orderLimiter, validateOrder, async (req, res) => {
       }
     }
 
-    // Calculate total from items to verify
-    const calculatedTotal = orderItems.reduce((sum, item) => sum + (item.total || 0), 0)
-    if (Math.abs(calculatedTotal - totalAmount) > 0.01) {
+    // Calculate total from items to verify (with safety checks)
+    const calculatedTotal = orderItems.reduce((sum, item) => {
+      const itemTotal = Number(item.total) || 0
+      if (isNaN(itemTotal) || itemTotal < 0) {
+        throw new Error('Invalid item total in order')
+      }
+      return sum + itemTotal
+    }, 0)
+    
+    // Validate total amount (allow small floating point differences)
+    const totalAmountNum = Number(totalAmount)
+    if (isNaN(totalAmountNum) || totalAmountNum < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid total amount'
+      })
+    }
+    
+    if (Math.abs(calculatedTotal - totalAmountNum) > 0.01) {
       return res.status(400).json({
         success: false,
         message: 'Total amount mismatch',
-        details: {
-          calculated: calculatedTotal,
-          provided: totalAmount
-        }
+        ...(process.env.NODE_ENV === 'development' && {
+          details: {
+            calculated: calculatedTotal,
+            provided: totalAmountNum
+          }
+        })
       })
     }
 
@@ -274,21 +292,26 @@ router.post('/', orderLimiter, validateOrder, async (req, res) => {
 // Get order by ID
 router.get('/:orderId', async (req, res) => {
   try {
+    // Validate orderId format (MongoDB ObjectId is 24 hex characters)
+    const orderId = req.params.orderId?.trim()
+    if (!orderId || !/^[a-f\d]{24}$/i.test(orderId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid order ID format'
+      })
+    }
+
     // Check if database is connected
     const mongoose = await import('mongoose')
     if (mongoose.default.connection.readyState !== 1) {
-      logger.warn(`Order fetch attempted but database is not connected: ${req.params.orderId}`)
+      logger.warn(`Order fetch attempted but database is not connected: ${orderId}`)
       return res.status(503).json({
         success: false,
         message: 'Database is not available. Please try again later.'
       })
     }
 
-    const order = await Order.findById(req.params.orderId)
-    
-    if (order) {
-      logger.debug(`Order fetched: ${req.params.orderId}`)
-    }
+    const order = await Order.findById(orderId)
     
     if (!order) {
       return res.status(404).json({
@@ -296,6 +319,8 @@ router.get('/:orderId', async (req, res) => {
         message: 'Order not found'
       })
     }
+    
+    logger.debug(`Order fetched: ${orderId}`)
 
     res.json({
       success: true,
@@ -329,13 +354,31 @@ router.get('/', async (req, res) => {
     const query = {}
 
     if (studentId) {
-      query['studentInfo.studentId'] = studentId
+      const sanitizedStudentId = studentId.trim()
+      if (sanitizedStudentId.length > 0 && sanitizedStudentId.length <= 50) {
+        query['studentInfo.studentId'] = sanitizedStudentId
+      }
     }
     if (email) {
-      query['studentInfo.email'] = email.toLowerCase()
+      const sanitizedEmail = email.trim().toLowerCase()
+      // Basic email format validation
+      if (sanitizedEmail.length > 0 && sanitizedEmail.length <= 100 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sanitizedEmail)) {
+        query['studentInfo.email'] = sanitizedEmail
+      }
     }
     if (status) {
-      query.status = status
+      const sanitizedStatus = status.trim()
+      if (['pending', 'confirmed', 'cancelled', 'completed'].includes(sanitizedStatus)) {
+        query.status = sanitizedStatus
+      }
+    }
+    
+    // Require at least one query parameter
+    if (Object.keys(query).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one query parameter (studentId, email, or status) is required'
+      })
     }
 
     const orders = await Order.find(query)
@@ -362,10 +405,19 @@ router.get('/', async (req, res) => {
 // Update order status
 router.patch('/:orderId/status', async (req, res) => {
   try {
+    // Validate orderId format
+    const orderId = req.params.orderId?.trim()
+    if (!orderId || !/^[a-f\d]{24}$/i.test(orderId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid order ID format'
+      })
+    }
+
     // Check if database is connected
     const mongoose = await import('mongoose')
     if (mongoose.default.connection.readyState !== 1) {
-      logger.warn(`Order status update attempted but database is not connected: ${req.params.orderId}`)
+      logger.warn(`Order status update attempted but database is not connected: ${orderId}`)
       return res.status(503).json({
         success: false,
         message: 'Database is not available. Please try again later.'
@@ -374,8 +426,8 @@ router.patch('/:orderId/status', async (req, res) => {
 
     const { status } = req.body
     
-    if (!['pending', 'confirmed', 'cancelled', 'completed'].includes(status)) {
-      logger.warn(`Invalid status update attempt: ${status} for order ${req.params.orderId}`)
+    if (!status || typeof status !== 'string' || !['pending', 'confirmed', 'cancelled', 'completed'].includes(status.trim())) {
+      logger.warn(`Invalid status update attempt: ${status} for order ${orderId}`)
       return res.status(400).json({
         success: false,
         message: 'Invalid status. Must be one of: pending, confirmed, cancelled, completed'
@@ -383,20 +435,20 @@ router.patch('/:orderId/status', async (req, res) => {
     }
 
     const order = await Order.findByIdAndUpdate(
-      req.params.orderId,
+      orderId,
       { status },
       { new: true, runValidators: true }
     )
 
     if (!order) {
-      logger.warn(`Order status update failed - order not found: ${req.params.orderId}`)
+      logger.warn(`Order status update failed - order not found: ${orderId}`)
       return res.status(404).json({
         success: false,
         message: 'Order not found'
       })
     }
     
-    logger.info(`Order status updated: ${order.orderNumber} -> ${status}`)
+    logger.info(`Order status updated: ${order.orderNumber} -> ${status.trim()}`)
 
     res.json({
       success: true,
