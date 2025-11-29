@@ -184,18 +184,32 @@ orderSchema.pre('save', async function(next) {
     try {
       if (mongoose.connection?.readyState === 1) {
         const counterId = `order_${datePrefix}`
-        const counter = await Counter.findOneAndUpdate(
+        
+        // Use findOneAndUpdate with upsert to atomically increment or create
+        // First try to increment existing counter
+        let counter = await Counter.findOneAndUpdate(
           { counterId },
-          { 
-            $setOnInsert: { counterId, sequence: 0 },
-            $inc: { sequence: 1 }
-          },
-          { 
-            new: true, 
-            upsert: true,
-            setDefaultsOnInsert: true
-          }
+          { $inc: { sequence: 1 } },
+          { new: true }
         )
+        
+        // If counter doesn't exist, create it with sequence 1
+        if (!counter) {
+          try {
+            counter = await Counter.create({ counterId, sequence: 1 })
+          } catch (createError) {
+            // If creation fails (race condition), try to increment again
+            if (createError.code === 11000) {
+              counter = await Counter.findOneAndUpdate(
+                { counterId },
+                { $inc: { sequence: 1 } },
+                { new: true }
+              )
+            } else {
+              throw createError
+            }
+          }
+        }
         
         if (counter?.sequence > 0) {
           const padding = APP_CONFIG?.ORDER?.NUMBER_PADDING || 4

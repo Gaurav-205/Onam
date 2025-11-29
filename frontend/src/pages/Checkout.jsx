@@ -18,6 +18,7 @@ const Checkout = () => {
   const [upiId, setUpiId] = useState(APP_CONFIG.PAYMENT.UPI_ID || null)
   const [whatsappLink, setWhatsappLink] = useState(null)
   const redirectTimeoutRef = useRef(null)
+  const isProcessingRef = useRef(false)
 
   // Form state - Student information for university event
   const [formData, setFormData] = useState({
@@ -122,6 +123,16 @@ const Checkout = () => {
     }
 
     setIsProcessing(true)
+    isProcessingRef.current = true
+    
+    // Set a safety timeout to ensure isProcessing is always reset
+    const safetyTimeout = setTimeout(() => {
+      if (isProcessingRef.current) {
+        isProcessingRef.current = false
+        setIsProcessing(false)
+        showToast('Request is taking longer than expected. Please check your connection and try again.', 'error', 5000)
+      }
+    }, 65000) // 65 seconds - slightly longer than the API timeout
     
     try {
       // Prepare order data with validation
@@ -172,32 +183,84 @@ const Checkout = () => {
       }
 
       // Send order to backend with timeout handling (60 seconds for order creation)
-      const response = await Promise.race([
-        createOrder(orderData),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Request timeout. Please try again.')), 60000)
-        )
-      ])
+      let response
+      try {
+        response = await Promise.race([
+          createOrder(orderData),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Request timeout. The server is taking too long to respond. Please try again.')), 60000)
+          )
+        ])
+      } catch (apiError) {
+        // Handle API errors specifically
+        clearTimeout(safetyTimeout)
+        throw apiError
+      }
+      
+      clearTimeout(safetyTimeout)
+      
+      // Validate response
+      if (!response) {
+        throw new Error('No response from server. Please try again.')
+      }
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Order creation failed. Please try again.')
+      }
       
       setIsProcessing(false)
       setOrderPlaced(true)
+      
       // Include WhatsApp link from response if available
       setOrderDetails({
-        ...(response.order || response),
+        orderId: response.order?.orderId || response.orderId,
+        orderNumber: response.order?.orderNumber || response.orderNumber,
+        status: response.order?.status || response.status,
+        totalAmount: response.order?.totalAmount || response.totalAmount,
+        orderDate: response.order?.orderDate || response.orderDate,
         whatsappLink: response.whatsappLink || whatsappLink
       })
+      
       clearCart()
+      
+      // Show success message
+      showToast('Registration successful! Redirecting...', 'success', 3000)
       
       // Redirect to home after 5 seconds (increased to show order details)
       redirectTimeoutRef.current = setTimeout(() => {
         navigate('/')
       }, 5000)
     } catch (error) {
+      clearTimeout(safetyTimeout)
+      isProcessingRef.current = false
       setIsProcessing(false)
       
       // Show error message using Toast
-      const errorMessage = error.message || 'Failed to submit order. Please try again later.'
+      let errorMessage = 'Failed to submit order. Please try again later.'
+      
+      if (error.message) {
+        errorMessage = error.message
+      } else if (error.name === 'AbortError' || error.name === 'TypeError') {
+        errorMessage = 'Network error. Please check your internet connection and try again.'
+      } else if (error.status === 408 || error.status === 504) {
+        errorMessage = 'Request timeout. Please try again.'
+      } else if (error.status >= 500) {
+        errorMessage = 'Server error. Please try again in a few moments.'
+      } else if (error.status >= 400) {
+        errorMessage = error.message || 'Invalid request. Please check your information and try again.'
+      }
+      
       showToast(errorMessage, 'error', 5000)
+      
+      // Log error for debugging (only in development)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Order submission error:', {
+          message: error.message,
+          name: error.name,
+          status: error.status,
+          stack: error.stack
+        })
+      }
     }
   }, [formData, cartItems, totalPrice, validateForm, clearCart, navigate, isProcessing, orderPlaced, showToast, whatsappLink])
 

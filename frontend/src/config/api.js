@@ -31,26 +31,26 @@ const REQUEST_TIMEOUT = 60000 // 60 seconds (increased for order creation)
 const MAX_RETRIES = 2
 const RETRY_DELAY = 1000 // 1 second
 
-const fetchWithTimeout = (url, options, timeout) => {
-  return Promise.race([
-    fetch(url, options),
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Request timeout')), timeout)
-    )
-  ])
-}
-
 export const apiRequest = async (url, options = {}, retryCount = 0) => {
   let timeoutId = null
+  let abortController = null
   
   try {
-    const controller = new AbortController()
-    timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT)
+    abortController = new AbortController()
+    
+    // Use a single timeout mechanism - AbortController
+    timeoutId = setTimeout(() => {
+      if (abortController) {
+        abortController.abort()
+      }
+    }, REQUEST_TIMEOUT)
 
-    const response = await fetchWithTimeout(url, {
+    // Use fetch directly with AbortController signal
+    // The timeout is handled by AbortController, not by Promise.race
+    const response = await fetch(url, {
       ...defaultOptions,
       ...options,
-      signal: controller.signal,
+      signal: abortController.signal,
       headers: {
         ...defaultOptions.headers,
         ...options.headers,
@@ -71,19 +71,23 @@ export const apiRequest = async (url, options = {}, retryCount = 0) => {
   } catch (error) {
     if (timeoutId) clearTimeout(timeoutId)
     
-    // Retry logic for network errors and 5xx errors
+    // Handle AbortError (timeout) - don't retry, just throw with clear message
+    if (error.name === 'AbortError' || error.message === 'Request timeout') {
+      throw new Error('Request timeout. The server is taking too long to respond. Please try again.')
+    }
+    
+    // Retry logic for network errors and 5xx errors (but not timeouts)
     if (retryCount < MAX_RETRIES && (
-      error.message === 'Request timeout' ||
-      error.name === 'AbortError' ||
       error.message === 'Network request failed' ||
-      (error.status && error.status >= 500)
+      error.message === 'Failed to fetch' ||
+      (error.status && error.status >= 500 && error.status !== 408)
     )) {
       await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (retryCount + 1)))
       return apiRequest(url, options, retryCount + 1)
     }
 
     if (error instanceof Error) {
-    throw error
+      throw error
     }
     throw new Error(error.message || 'Network request failed')
   }
