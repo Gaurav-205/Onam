@@ -27,18 +27,18 @@ const PORT = process.env.PORT || 3000
 
 // Trust proxy - Required for Render and other reverse proxy hosting providers
 // This allows Express to correctly identify client IPs behind proxies
-// Default to true (trust proxy) unless explicitly in development mode
-// This ensures hosted environments (Render, Heroku, etc.) work correctly
+// Set to a specific number (1) instead of true for better security with rate limiting
+// Render typically has 1 proxy (load balancer), so we trust only the first proxy
 const isDevelopment = process.env.NODE_ENV === 'development'
 const isRender = process.env.RENDER === 'true' || !!process.env.RENDER_SERVICE_NAME
-// Trust proxy unless we're explicitly in development mode (local development)
-// Hosting platforms like Render always use reverse proxies
-const shouldTrustProxy = !isDevelopment || isRender
+// Trust only the first proxy (more secure than true, prevents IP spoofing)
+// Set to 1 for hosted environments, false for local development
+const trustProxyValue = (!isDevelopment || isRender) ? 1 : false
 
-app.set('trust proxy', shouldTrustProxy)
+app.set('trust proxy', trustProxyValue)
 
-if (shouldTrustProxy) {
-  logger.info(`Trust proxy enabled (development mode: ${isDevelopment}, Render: ${isRender})`)
+if (trustProxyValue) {
+  logger.info(`Trust proxy enabled: trusting ${trustProxyValue} proxy(ies) (development mode: ${isDevelopment}, Render: ${isRender})`)
 } else {
   logger.info('Trust proxy disabled (local development mode)')
 }
@@ -184,6 +184,7 @@ const limiter = rateLimit({
   },
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  validate: false, // Disable strict validation (trust proxy is set to 1, which is secure)
   skip: (req) => {
     // Skip rate limiting for health check in production
     return req.path === '/health' && process.env.NODE_ENV === 'production'
@@ -200,6 +201,7 @@ const configLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false, // Disable strict validation (trust proxy is set to 1, which is secure)
 })
 
 // Apply rate limiting to all API requests

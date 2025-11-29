@@ -18,6 +18,7 @@ const orderLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false, // Disable strict validation (trust proxy is set to 1, which is secure)
 })
 
 // Validation and sanitization middleware
