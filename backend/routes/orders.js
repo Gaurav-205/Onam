@@ -206,7 +206,11 @@ router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatab
           }
         })
         .catch(err => {
-          logger.error(`Email sending error for order ${savedOrder.orderNumber}:`, err)
+          const errorMessage = err?.message || err?.error || 'Unknown error occurred'
+          logger.error(`Email sending error for order ${savedOrder.orderNumber}:`, {
+            message: errorMessage,
+            error: err
+          })
         })
     } catch (emailError) {
       logger.error(`Error initiating email for order ${savedOrder.orderNumber}:`, emailError)

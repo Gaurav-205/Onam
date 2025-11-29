@@ -47,9 +47,10 @@ const createTransporter = () => {
         pass: emailPassword,
       },
       // Extended timeouts for hosting providers that may have slower connections
-      connectionTimeout: 60000, // 60 seconds
-      greetingTimeout: 30000,   // 30 seconds
-      socketTimeout: 90000,     // 90 seconds - increased for slow connections
+      // Render and other cloud providers often have slower SMTP connections
+      connectionTimeout: 90000, // 90 seconds - increased for cloud providers
+      greetingTimeout: 60000,   // 60 seconds - increased for slow networks
+      socketTimeout: 120000,    // 120 seconds - increased for slow connections
       debug: process.env.NODE_ENV === 'development',
       logger: process.env.NODE_ENV === 'development',
       // Add pool option for better connection handling
@@ -659,10 +660,12 @@ contact the event organizers directly.
       html: htmlContent,
     }
 
-    // Send email with timeout
+    // Send email with timeout (increased for production environments like Render)
+    // Render and other hosting providers may have slower SMTP connections
+    const emailTimeout = process.env.NODE_ENV === 'production' ? 60000 : 30000 // 60s production, 30s dev
     const sendPromise = transporter.sendMail(mailOptions)
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Email send timeout after 30 seconds')), 30000)
+      setTimeout(() => reject(new Error(`Email send timeout after ${emailTimeout / 1000} seconds`)), emailTimeout)
     )
     
     const info = await Promise.race([sendPromise, timeoutPromise])
@@ -697,7 +700,8 @@ contact the event organizers directly.
     
     return { 
       success: false, 
-      error: errorMessage, 
+      message: errorMessage, // Changed from 'error' to 'message' for consistency
+      error: errorMessage, // Keep both for backward compatibility
       code: errorCode,
       details: process.env.NODE_ENV === 'development' ? {
         response: errorResponse,
