@@ -43,22 +43,35 @@ connectDB()
 // Default includes localhost for development and Netlify for production
 const defaultOrigins = [
   'http://localhost:5173',
+  'http://localhost:3000',
   'https://onammitadt.netlify.app'
 ]
 
 const allowedOrigins = process.env.FRONTEND_URL 
-  ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
+  ? process.env.FRONTEND_URL.split(',').map(url => url.trim()).filter(url => url.length > 0)
   : defaultOrigins
 
-app.use(cors({
+// Always include Netlify origin if not already present
+if (!allowedOrigins.includes('https://onammitadt.netlify.app')) {
+  allowedOrigins.push('https://onammitadt.netlify.app')
+}
+
+// Log allowed origins in development
+if (process.env.NODE_ENV === 'development') {
+  logger.info(`CORS allowed origins: ${allowedOrigins.join(', ')}`)
+}
+
+// CORS middleware configuration
+const corsOptions = {
   origin: (origin, callback) => {
-    // In production, require origin
-    if (process.env.NODE_ENV === 'production' && !origin) {
-      return callback(new Error('Not allowed by CORS - origin required in production'))
+    // Allow requests with no origin (e.g., mobile apps, Postman, curl) in development
+    if (!origin && process.env.NODE_ENV === 'development') {
+      return callback(null, true)
     }
     
-    // Allow requests with no origin only in development
-    if (!origin && process.env.NODE_ENV === 'development') {
+    // In production, allow requests with no origin for health checks and internal services
+    if (!origin && process.env.NODE_ENV === 'production') {
+      // Allow for health checks and internal requests
       return callback(null, true)
     }
     
@@ -66,15 +79,25 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) {
       callback(null, true)
     } else {
-      logger.warn(`CORS blocked request from origin: ${origin}`)
+      // Log blocked origins for debugging
+      logger.warn(`CORS blocked request from origin: ${origin}. Allowed origins: ${allowedOrigins.join(', ')}`)
       callback(new Error('Not allowed by CORS'))
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  maxAge: 86400 // 24 hours
-}))
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length', 'Content-Type'],
+  maxAge: 86400, // 24 hours
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+}
+
+// Apply CORS middleware
+app.use(cors(corsOptions))
+
+// Explicitly handle OPTIONS preflight requests for all routes
+app.options('*', cors(corsOptions))
 
 // Request logging middleware (development only)
 if (process.env.NODE_ENV === 'development') {
