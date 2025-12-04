@@ -153,13 +153,14 @@ const Hero = () => {
         // MEDIA_ERR_DECODE (3) - decode error, real problem
         // MEDIA_ERR_SRC_NOT_SUPPORTED (4) - format not supported
         if (errorCode === 3 || errorCode === 4) {
-          console.warn('Video failed to load:', video.error)
+          if (import.meta.env.MODE === 'development') {
+            console.warn('Video failed to load:', video.error)
+          }
           setVideoError(true)
           setVideoLoaded(false)
           setVideoCanPlay(false)
         } else if (errorCode === 2) {
           // Network error - might recover, give it time before showing error
-          console.log('Video network error, will retry...')
           // Don't set error immediately - wait and retry
           setTimeout(() => {
             if (video && video.error && video.error.code === 2) {
@@ -209,7 +210,7 @@ const Hero = () => {
               // Autoplay was prevented - this is normal on mobile
               // Video is still loaded and visible, just not autoplaying
               // Don't treat this as an error - video will show first frame
-              if (error.name !== 'NotAllowedError') {
+              if (import.meta.env.MODE === 'development' && error.name !== 'NotAllowedError') {
                 // Only log if it's not just an autoplay restriction
                 console.log('Video play error:', error.name)
               }
@@ -238,7 +239,7 @@ const Hero = () => {
   // Add timeout to detect if video is taking too long to load (mobile networks)
   useEffect(() => {
     const loadTimeout = setTimeout(() => {
-      if (!videoLoaded && !videoCanPlay) {
+      if (!videoLoaded && !videoCanPlay && import.meta.env.MODE === 'development') {
         // Video is taking too long - might be network issue
         // But don't show error yet, give it more time
         console.log('Video loading slowly...')

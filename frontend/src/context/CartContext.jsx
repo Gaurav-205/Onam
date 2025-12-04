@@ -43,7 +43,9 @@ export const CartProvider = ({ children }) => {
   const addToCart = useCallback((product) => {
     // Validate product before adding
     if (!product || !product.id) {
-      console.error('Invalid product: product and product.id are required')
+      if (import.meta.env.MODE === 'development') {
+        console.error('Invalid product: product and product.id are required')
+      }
       return
     }
 

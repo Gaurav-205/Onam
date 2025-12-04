@@ -30,7 +30,6 @@ const Layout = () => {
   const currentSection = useMemo(() => {
     const path = location.pathname
     if (path === '/') return 'home'
-    if (path === '/shopping') return 'shopping'
     if (path === '/coming-soon') return 'under-development'
     return 'home'
   }, [location.pathname])
@@ -53,7 +52,6 @@ const Layout = () => {
     
     // Sections that have separate pages (route navigation)
     const routeMap = {
-      'shopping': '/shopping',
       'under-development': '/coming-soon'
     }
     

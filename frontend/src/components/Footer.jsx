@@ -4,7 +4,6 @@ import { HEADINGS } from '../constants/headings'
 
 const secondaryLinks = [
   { id: 'home', label: 'HOME', path: '/', type: 'scroll' },
-  { id: 'shopping', label: 'SHOPPING', path: '/shopping', type: 'route' },
   { id: 'sadya', label: 'SADYA', path: '/sadya', type: 'scroll' },
   { id: 'events', label: 'EVENTS', path: '/events', type: 'scroll' },
   { id: 'under-development', label: 'COMING SOON', path: '/coming-soon', type: 'route' }
