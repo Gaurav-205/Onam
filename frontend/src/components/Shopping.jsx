@@ -82,7 +82,7 @@ const ProductCard = memo(({ item, onAddToCart, onUpdateQuantity, isInCart, itemQ
           <OptimizedImage
             src={item.image}
             alt={`${item.name} - ${item.description}`}
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
             loading="lazy"
             width={400}
             height={256}

@@ -9,7 +9,12 @@
     "build:prod": "NODE_ENV=production vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "preview:prod": "vite preview --port 4173 --host"
+    "preview:prod": "vite preview --port 4173 --host",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "optimize:images": "node scripts/optimize-images.js",
+    "optimize:large-image": "node scripts/optimize-large-image.js"
   },
   "dependencies": {
     "razorpay": "^2.9.6",
@@ -22,7 +27,11 @@
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^5.0.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@vitest/ui": "^2.1.8",
     "autoprefixer": "^10.4.21",
+    "jsdom": "^25.0.1",
     "eslint": "^9.33.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
@@ -30,6 +39,7 @@
     "postcss": "^8.5.6",
     "sharp": "^0.34.5",
     "tailwindcss": "^3.4.17",
-    "vite": "^7.1.2"
+    "vite": "^7.1.2",
+    "vitest": "^2.1.8"
   }
 }

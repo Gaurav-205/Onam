@@ -35,12 +35,14 @@ const OptimizedImage = memo(({
     return null
   }
 
-  // Remove extension from src if present
+  // Handle image path - keep original path if it exists, otherwise try to generate
+  // Remove extension from src if present for WebP generation
   const baseSrc = src.replace(/\.(jpg|jpeg|png|webp)$/i, '')
   
-  // Generate image paths
+  // Generate image paths - WebP version and fallback
   const webpSrc = `${baseSrc}.webp`
-  const fallbackSrc = src.includes('.') ? src : `${baseSrc}.jpeg`
+  // Use original src as fallback (it should work if file exists)
+  const fallbackSrc = src
   
   const handleError = useCallback((e) => {
     // Only set error state if WebP fails and we haven't already tried fallback
@@ -89,21 +91,26 @@ const OptimizedImage = memo(({
     return null
   }
 
+  // Try WebP first, but always have fallback ready
+  // The browser will automatically fall back to img if WebP doesn't exist
   return (
     <picture>
-      {/* WebP source for modern browsers */}
+      {/* WebP source for modern browsers - browser will skip if file doesn't exist */}
       <source
         srcSet={webpSrc}
         type="image/webp"
         sizes={sizes}
       />
-      {/* Fallback for older browsers */}
+      {/* Fallback for older browsers or when WebP doesn't exist */}
       <img
         src={fallbackSrc}
-        alt={alt}
+        alt={alt || ''}
         className={`${className} ${imageLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
         loading={loading}
-        onError={handleError}
+        onError={(e) => {
+          // Only handle error if it's the final fallback
+          handleError(e)
+        }}
         onLoad={handleLoad}
         width={width}
         height={height}
