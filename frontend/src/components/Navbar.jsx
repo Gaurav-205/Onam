@@ -34,7 +34,7 @@ const NavItem = memo(({ item, isActive, isScrolled, onScrollClick }) => {
     return (
       <button
         onClick={handleClick}
-        className={`relative px-4 py-2 rounded-lg transition-all duration-300 group font-sans ${textColor}`}
+        className={`relative px-3 sm:px-4 py-2 rounded-lg transition-all duration-300 group font-sans text-sm sm:text-base ${textColor}`}
         aria-label={`Navigate to ${item.label} section`}
         aria-current={isActive ? 'page' : undefined}
       >
@@ -57,7 +57,7 @@ const NavItem = memo(({ item, isActive, isScrolled, onScrollClick }) => {
     <Link
       to={item.path}
       onClick={handleLinkClick}
-      className={`relative px-4 py-2 rounded-lg transition-all duration-300 group font-sans ${textColor}`}
+      className={`relative px-3 sm:px-4 py-2 rounded-lg transition-all duration-300 group font-sans text-sm sm:text-base ${textColor}`}
       aria-label={`Navigate to ${item.label} page`}
       aria-current={location.pathname === item.path ? 'page' : undefined}
     >
@@ -235,16 +235,16 @@ const Navbar = ({ currentSection, scrollToSection }) => {
   return (
     <nav className={navbarClasses} role="navigation" aria-label="Main navigation">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-16 min-h-[64px]">
           {/* Logo */}
-          <div className="logo-container">
+          <div className="logo-container flex items-center flex-shrink-0">
             <Logo />
           </div>
 
           {/* Centered Navigation Links - Show when there's space */}
           {!showMobileMenu && (
-            <div className="flex items-center justify-center flex-1">
-              <div className="flex space-x-6 lg:space-x-8">
+            <div className="flex items-center justify-center flex-1 mx-4">
+              <div className="flex items-center space-x-4 sm:space-x-6 lg:space-x-8">
                 {memoizedNavItems.map((item) => {
                   // Determine if item is active
                   let isActive = false
@@ -269,7 +269,7 @@ const Navbar = ({ currentSection, scrollToSection }) => {
           )}
 
           {/* Cart Icon and Mobile Menu Button */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center justify-end space-x-2 flex-shrink-0">
             <CartIcon 
               isScrolled={isScrolled || !isHomePage}
               isActive={location.pathname === '/cart'}
@@ -286,8 +286,8 @@ const Navbar = ({ currentSection, scrollToSection }) => {
 
         {/* Mobile Menu */}
         {isMenuOpen && showMobileMenu && (
-          <div className="bg-white/95 backdrop-blur-md shadow-lg rounded-lg mt-2 py-2">
-            <div className="flex flex-col space-y-1">
+          <div className="bg-white/95 backdrop-blur-md shadow-lg rounded-lg mt-2 py-2 mx-0">
+            <div className="flex flex-col">
               {memoizedNavItems.map((item) => {
                 const isActive = item.type === 'route' 
                   ? location.pathname === item.path
@@ -301,9 +301,9 @@ const Navbar = ({ currentSection, scrollToSection }) => {
                         scrollToSection(item.id)
                         setIsMenuOpen(false)
                       }}
-                      className={`px-4 py-2 text-left transition-colors duration-200 ${
+                      className={`px-4 py-3 text-left transition-colors duration-200 w-full ${
                         isActive
-                          ? 'text-onam-gold-dark font-semibold hover:text-onam-green-dark'
+                          ? 'text-onam-gold-dark font-semibold hover:text-onam-green-dark bg-onam-gold/10'
                           : 'text-gray-700 hover:text-onam-gold-dark hover:bg-gray-50'
                       }`}
                       aria-label={`Navigate to ${item.label} section`}
@@ -326,9 +326,9 @@ const Navbar = ({ currentSection, scrollToSection }) => {
                       })
                       setIsMenuOpen(false)
                     }}
-                    className={`px-4 py-2 text-left transition-colors duration-200 ${
+                    className={`px-4 py-3 text-left transition-colors duration-200 w-full ${
                       isActive
-                        ? 'text-onam-gold-dark font-semibold hover:text-onam-green-dark'
+                        ? 'text-onam-gold-dark font-semibold hover:text-onam-green-dark bg-onam-gold/10'
                         : 'text-gray-700 hover:text-onam-gold-dark hover:bg-gray-50'
                     }`}
                     aria-label={`Navigate to ${item.label} page`}
