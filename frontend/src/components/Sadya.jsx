@@ -6,10 +6,12 @@ import OptimizedImage from './OptimizedImage'
 const DishItem = memo(({ item }) => {
   const handleImageError = useCallback((e) => {
     // Fallback to icon if image fails to load
-    e.target.style.display = 'none'
-    const fallbackIcon = e.target.nextSibling
-    if (fallbackIcon) {
-      fallbackIcon.style.display = 'flex'
+    if (e?.target) {
+      e.target.style.display = 'none'
+      const fallbackIcon = e.target.nextSibling
+      if (fallbackIcon) {
+        fallbackIcon.style.display = 'flex'
+      }
     }
   }, [])
 

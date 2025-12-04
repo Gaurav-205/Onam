@@ -7,7 +7,10 @@ import OptimizedImage from './OptimizedImage'
 const EventImage = memo(({ image, title }) => {
   const handleImageError = (e) => {
     // Fallback to logo if image fails to load
-    e.target.src = '/logo.png'
+    // Note: OptimizedImage handles errors internally, this is a fallback
+    if (e?.target) {
+      e.target.src = '/logo.png'
+    }
   }
 
   return (

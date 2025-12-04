@@ -28,6 +28,12 @@ const OptimizedImage = memo(({
 }) => {
   const [imageError, setImageError] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
+  const [fallbackError, setFallbackError] = useState(false)
+
+  // Validate src
+  if (!src || typeof src !== 'string') {
+    return null
+  }
 
   // Remove extension from src if present
   const baseSrc = src.replace(/\.(jpg|jpeg|png|webp)$/i, '')
@@ -37,11 +43,22 @@ const OptimizedImage = memo(({
   const fallbackSrc = src.includes('.') ? src : `${baseSrc}.jpeg`
   
   const handleError = useCallback((e) => {
-    setImageError(true)
+    // Only set error state if WebP fails and we haven't already tried fallback
+    if (!imageError) {
+      setImageError(true)
+    }
     if (onError) {
       onError(e)
     }
-  }, [onError])
+  }, [onError, imageError])
+  
+  const handleFallbackError = useCallback((e) => {
+    // Prevent infinite loop - if fallback also fails, hide the image
+    setFallbackError(true)
+    if (e?.target) {
+      e.target.style.display = 'none'
+    }
+  }, [])
 
   const handleLoad = useCallback((e) => {
     setImageLoaded(true)
@@ -50,21 +67,26 @@ const OptimizedImage = memo(({
     }
   }, [onLoad])
 
-  // If WebP failed, fallback to original
-  if (imageError) {
+  // If WebP failed, fallback to original (prevent infinite error loop)
+  if (imageError && !fallbackError) {
     return (
       <img
         src={fallbackSrc}
-        alt={alt}
+        alt={alt || ''}
         className={className}
         loading={loading}
-        onError={handleError}
+        onError={handleFallbackError}
         onLoad={handleLoad}
         width={width}
         height={height}
         {...props}
       />
     )
+  }
+  
+  // If both WebP and fallback failed, return null
+  if (fallbackError) {
+    return null
   }
 
   return (

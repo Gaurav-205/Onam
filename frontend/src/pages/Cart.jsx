@@ -43,9 +43,11 @@ const CartItem = memo(({ item, onUpdateQuantity, onRemove }) => {
             alt={item.name}
             className="w-full h-full object-cover"
             onError={(e) => {
-              e.target.style.display = 'none'
-              const fallback = e.target.parentElement?.querySelector('.image-fallback')
-              if (fallback) fallback.style.display = 'flex'
+              if (e?.target) {
+                e.target.style.display = 'none'
+                const fallback = e.target.parentElement?.querySelector('.image-fallback')
+                if (fallback) fallback.style.display = 'flex'
+              }
             }}
             loading="lazy"
             width={128}

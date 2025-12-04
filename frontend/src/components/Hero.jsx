@@ -25,7 +25,9 @@ const loadFonts = async () => {
 // Memoized CountdownCard component with performance optimizations
 const CountdownCard = memo(({ value, label, maxValue }) => {
   const { strokeDasharray, strokeDashoffset } = useMemo(() => {
-    const percentage = (value / maxValue) * 100
+    // Prevent division by zero
+    const safeMaxValue = maxValue || 1
+    const percentage = (value / safeMaxValue) * 100
     const radius = 30
     const circumference = 2 * Math.PI * radius
     const strokeDasharray = circumference
