@@ -100,6 +100,8 @@ ScrollIndicator.displayName = 'ScrollIndicator'
 
 const Hero = () => {
   const [videoError, setVideoError] = useState(false)
+  const [videoLoaded, setVideoLoaded] = useState(false)
+  const [videoCanPlay, setVideoCanPlay] = useState(false)
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -138,26 +140,133 @@ const Hero = () => {
     { value: timeLeft.seconds, label: "Seconds", maxValue: 60 }
   ], [timeLeft])
 
-  // Optimized video error handling
-  const handleVideoError = useCallback(() => setVideoError(true), [])
+  // Optimized video error handling - only set error if video truly fails
+  const handleVideoError = useCallback((e) => {
+    // Only set error if video element itself has an error
+    const video = e?.target
+    if (video) {
+      // Check if there's a real error (network, codec, etc.)
+      if (video.error) {
+        const errorCode = video.error.code
+        // MEDIA_ERR_ABORTED (1) - user aborted, don't treat as error
+        // MEDIA_ERR_NETWORK (2) - network error, might recover - don't show error immediately
+        // MEDIA_ERR_DECODE (3) - decode error, real problem
+        // MEDIA_ERR_SRC_NOT_SUPPORTED (4) - format not supported
+        if (errorCode === 3 || errorCode === 4) {
+          console.warn('Video failed to load:', video.error)
+          setVideoError(true)
+          setVideoLoaded(false)
+          setVideoCanPlay(false)
+        } else if (errorCode === 2) {
+          // Network error - might recover, give it time before showing error
+          console.log('Video network error, will retry...')
+          // Don't set error immediately - wait and retry
+          setTimeout(() => {
+            if (video && video.error && video.error.code === 2) {
+              video.load() // Retry loading
+            }
+          }, 3000)
+        }
+        // For error code 1 (aborted), don't set error - might be intentional
+      }
+    }
+  }, [])
+  
+  // Handle video loaded metadata
+  const handleVideoLoadedMetadata = useCallback(() => {
+    setVideoLoaded(true)
+    setVideoError(false)
+  }, [])
+  
+  // Handle video can play (ready to play)
+  const handleVideoCanPlay = useCallback(() => {
+    setVideoCanPlay(true)
+    setVideoError(false)
+    setVideoLoaded(true)
+  }, [])
+  
+  // Handle video loaded data
+  const handleVideoLoadedData = useCallback(() => {
+    setVideoLoaded(true)
+    setVideoError(false)
+  }, [])
+  
+  // Try to play video when it's ready - but don't treat autoplay failure as error
+  useEffect(() => {
+    if (videoCanPlay && !videoError) {
+      const video = document.querySelector('#hero-background-video')
+      if (video) {
+        // Try to play the video
+        const playPromise = video.play()
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              // Video is playing successfully
+              setVideoError(false)
+              setVideoLoaded(true)
+            })
+            .catch((error) => {
+              // Autoplay was prevented - this is normal on mobile
+              // Video is still loaded and visible, just not autoplaying
+              // Don't treat this as an error - video will show first frame
+              if (error.name !== 'NotAllowedError') {
+                // Only log if it's not just an autoplay restriction
+                console.log('Video play error:', error.name)
+              }
+              // Keep video visible even if not playing - show first frame
+              setVideoError(false)
+              setVideoLoaded(true) // Mark as loaded so it shows
+            })
+        }
+      }
+    }
+  }, [videoCanPlay, videoError])
+  
+  // Also try to show video when metadata is loaded (for mobile where autoplay might fail)
+  useEffect(() => {
+    if (videoLoaded && !videoCanPlay && !videoError) {
+      // Video metadata is loaded but canPlay hasn't fired yet
+      // Show the video anyway - it might just be slow to decode
+      const video = document.querySelector('#hero-background-video')
+      if (video) {
+        // Try to seek to first frame to make it visible
+        video.currentTime = 0.1
+      }
+    }
+  }, [videoLoaded, videoCanPlay, videoError])
+  
+  // Add timeout to detect if video is taking too long to load (mobile networks)
+  useEffect(() => {
+    const loadTimeout = setTimeout(() => {
+      if (!videoLoaded && !videoCanPlay) {
+        // Video is taking too long - might be network issue
+        // But don't show error yet, give it more time
+        console.log('Video loading slowly...')
+      }
+    }, 5000) // 5 second timeout
+    
+    return () => clearTimeout(loadTimeout)
+  }, [videoLoaded, videoCanPlay])
 
   // Optimized scroll handlers with useCallback
   const handleVideoScroll = useCallback(() => {
-    const heroSection = document.querySelector('section')
+    const heroSection = document.querySelector('#home')
     if (!heroSection) return
 
     const rect = heroSection.getBoundingClientRect()
     const isVisible = rect.top < window.innerHeight && rect.bottom > 0
     
-    const backgroundVideo = document.querySelector('section video')
-    if (backgroundVideo) {
+    const backgroundVideo = document.querySelector('#hero-background-video')
+    if (backgroundVideo && (videoCanPlay || videoLoaded) && !videoError) {
       if (isVisible) {
-        backgroundVideo.play().catch(() => {}) // Silent error handling
+        backgroundVideo.play().catch(() => {
+          // Autoplay prevented - normal on mobile, don't treat as error
+        })
       } else {
         backgroundVideo.pause()
       }
     }
-  }, [])
+  }, [videoCanPlay, videoLoaded, videoError])
 
   const handleScrollState = useCallback(() => {
     const scrolled = window.scrollY > SCROLL_THRESHOLD
@@ -255,29 +364,44 @@ const Hero = () => {
       <section id="home" className="min-h-screen h-screen flex items-center justify-center relative overflow-hidden">
         {/* Video Background - Primary */}
         <div className="absolute inset-0 w-full h-full">
-          {!videoError && (
-            <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              preload="metadata"
-              className="w-full h-full object-cover"
-              style={{ objectPosition: 'center center' }}
-              onError={handleVideoError}
-              aria-hidden="true"
-            >
-              <source src="/onam-background.mp4" type="video/mp4" />
-            </video>
-          )}
+          {/* Always show video element - let browser handle loading */}
+          {/* Video should always be in DOM, just control visibility */}
+          <video
+            id="hero-background-video"
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            className={`w-full h-full object-cover transition-opacity duration-700 absolute inset-0 ${
+              videoCanPlay || videoLoaded ? 'opacity-100 z-20' : 'opacity-0 z-10'
+            }`}
+            style={{ objectPosition: 'center center' }}
+            onError={handleVideoError}
+            onLoadedMetadata={handleVideoLoadedMetadata}
+            onLoadedData={handleVideoLoadedData}
+            onCanPlay={handleVideoCanPlay}
+            onCanPlayThrough={handleVideoCanPlay}
+            aria-hidden="true"
+          >
+            <source src="/onam-background.mp4" type="video/mp4" />
+            {/* Fallback message for browsers that don't support video */}
+            Your browser does not support the video tag.
+          </video>
           
-          {/* Fallback Background - Clean gradient if no video */}
-          {videoError && (
-            <div className="w-full h-full bg-gradient-to-br from-onam-green via-onam-gold to-onam-red"></div>
-          )}
+          {/* Fallback Background - Show behind video, only fully visible if video fails */}
+          <div 
+            className={`w-full h-full bg-gradient-to-br from-onam-green via-onam-gold to-onam-red absolute inset-0 transition-opacity duration-700 ${
+              videoError 
+                ? 'opacity-100 z-20' 
+                : videoLoaded || videoCanPlay 
+                  ? 'opacity-0 z-0' 
+                  : 'opacity-50 z-0'
+            }`}
+          ></div>
           
           {/* Minimal overlay for text readability */}
-          <div className="absolute inset-0 bg-black/30"></div>
+          <div className="absolute inset-0 bg-black/30 z-30 pointer-events-none"></div>
         </div>
         
         {/* Main Content - Centered in full viewport */}
