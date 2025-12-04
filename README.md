@@ -67,16 +67,16 @@ A full-stack web application for the Onam Festival celebration at MIT ADT Univer
 
 Before you begin, ensure you have the following installed:
 
-- **Node.js** 18.0.0 or higher
-- **npm** 9.0.0 or higher (or **yarn** 1.22.0+)
+- **Node.js** 20.0.0 or higher (required for Vite 7 and React Router 7)
+- **npm** 10.0.0 or higher (or **yarn** 1.22.0+)
 - **MongoDB** (local installation or MongoDB Atlas account)
 - **Git** for version control
 
 ### Verify Installation
 
 ```bash
-node --version  # Should be v18.0.0 or higher
-npm --version   # Should be v9.0.0 or higher
+node --version  # Should be v20.0.0 or higher
+npm --version   # Should be v10.0.0 or higher
 mongod --version  # If using local MongoDB
 ```
 
