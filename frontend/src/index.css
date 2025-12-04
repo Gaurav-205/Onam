@@ -1,5 +1,5 @@
-/* Font preloading with display swap for better performance */
-@import url('https://fonts.googleapis.com/css2?family=Prata:wght@400&family=Montserrat:wght@300;400;500;600;700;800&family=Samarkan:wght@400&family=Playfair+Display:wght@400;500;600;700&family=Cinzel:wght@400;500;600;700&family=Great+Vibes:wght@400&family=Dancing+Script:wght@400;500;600;700&family=Noto+Sans+Malayalam:wght@400;500;600;700&family=Noto+Serif+Malayalam:wght@400;500;600;700&display=swap');
+/* Fonts are loaded asynchronously via index.html to avoid render blocking */
+/* Removed @import to prevent render-blocking CSS */
 
 @tailwind base;
 @tailwind components;
