@@ -91,33 +91,24 @@ const OptimizedImage = memo(({
     return null
   }
 
-  // Try WebP first, but always have fallback ready
-  // The browser will automatically fall back to img if WebP doesn't exist
+  // For now, use direct img tag to ensure images load
+  // WebP optimization can be added later when WebP files are generated
+  // The picture element can cause issues if WebP files don't exist
   return (
-    <picture>
-      {/* WebP source for modern browsers - browser will skip if file doesn't exist */}
-      <source
-        srcSet={webpSrc}
-        type="image/webp"
-        sizes={sizes}
-      />
-      {/* Fallback for older browsers or when WebP doesn't exist */}
-      <img
-        src={fallbackSrc}
-        alt={alt || ''}
-        className={`${className} ${imageLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
-        loading={loading}
-        onError={(e) => {
-          // Only handle error if it's the final fallback
-          handleError(e)
-        }}
-        onLoad={handleLoad}
-        width={width}
-        height={height}
-        sizes={sizes}
-        {...props}
-      />
-    </picture>
+    <img
+      src={fallbackSrc}
+      alt={alt || ''}
+      className={`${className} ${imageLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
+      loading={loading}
+      onError={(e) => {
+        handleError(e)
+      }}
+      onLoad={handleLoad}
+      width={width}
+      height={height}
+      sizes={sizes}
+      {...props}
+    />
   )
 })
 
