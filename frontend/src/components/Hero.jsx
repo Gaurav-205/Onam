@@ -116,22 +116,19 @@ const Hero = () => {
   const [fontsLoaded, setFontsLoaded] = useState(false)
 
   // Memoized heading text and classes
-  const currentHeadingData = useMemo(() => HEADINGS[currentHeading], [currentHeading])
+  const currentHeadingData = useMemo(() => HEADINGS[currentHeading] || HEADINGS[0], [currentHeading])
   const headingClasses = useMemo(() => {
-    if (!fontsLoaded) {
-      return 'opacity-0' // Hide until fonts are loaded
-    }
-    
     const baseClasses = 'transition-all duration-600 ease-in-out transform'
     const fadeClasses = isFading 
       ? 'opacity-0 scale-95 translate-y-2' 
       : 'opacity-100 scale-100 translate-y-0'
-    const fontClasses = currentHeadingData.lang === 'en' 
+    const fontClasses = currentHeadingData?.lang === 'en' 
       ? 'font-ornate text-yellow-400' 
       : 'font-malayalam text-yellow-400'
     
+    // Show heading even if fonts haven't loaded - use fallback font
     return `${baseClasses} ${fadeClasses} ${fontClasses}`
-  }, [currentHeadingData.lang, isFading, fontsLoaded])
+  }, [currentHeadingData?.lang, isFading])
 
   // Memoized countdown data
   const countdownData = useMemo(() => [
@@ -388,10 +385,10 @@ const Hero = () => {
         </div>
         
         {/* Main Content - Centered in full viewport */}
-        <div className="relative z-10 text-center max-w-4xl mx-auto px-4 sm:px-6 mt-16 sm:mt-20 md:mt-24 lg:mt-32">
+        <div className="relative z-40 text-center max-w-4xl mx-auto px-4 sm:px-6 mt-16 sm:mt-20 md:mt-24 lg:mt-32">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-3 sm:mb-4 text-white drop-shadow-2xl leading-tight">
-            <span className={headingClasses} aria-label={`Onam heading in ${currentHeadingData.lang === 'en' ? 'English' : 'Malayalam'}`}>
-              {currentHeadingData.text}
+            <span className={headingClasses} aria-label={`Onam heading in ${currentHeadingData?.lang === 'en' ? 'English' : 'Malayalam'}`}>
+              {currentHeadingData?.text || 'Onam'}
             </span>
           </h1>
           <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white/90 mb-6 sm:mb-8 font-normal drop-shadow-lg font-sans max-w-2xl mx-auto px-2">
