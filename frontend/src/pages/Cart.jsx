@@ -2,6 +2,7 @@ import { useCallback, memo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { parsePrice, formatPrice } from '../utils/price'
+import OptimizedImage from '../components/OptimizedImage'
 
 // Memoized CartItem component
 const CartItem = memo(({ item, onUpdateQuantity, onRemove }) => {
@@ -37,7 +38,7 @@ const CartItem = memo(({ item, onUpdateQuantity, onRemove }) => {
       {/* Product Image */}
       <div className="w-full sm:w-32 h-48 sm:h-32 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 relative">
         {item.image ? (
-          <img
+          <OptimizedImage
             src={item.image}
             alt={item.name}
             className="w-full h-full object-cover"
@@ -46,6 +47,10 @@ const CartItem = memo(({ item, onUpdateQuantity, onRemove }) => {
               const fallback = e.target.parentElement?.querySelector('.image-fallback')
               if (fallback) fallback.style.display = 'flex'
             }}
+            loading="lazy"
+            width={128}
+            height={128}
+            sizes="(max-width: 640px) 100vw, 128px"
           />
         ) : null}
         <div className={`w-full h-full bg-gradient-to-br ${item.color || 'from-gray-200 to-gray-300'} ${item.image ? 'hidden image-fallback' : 'flex'} items-center justify-center text-4xl absolute inset-0`}>

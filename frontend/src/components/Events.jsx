@@ -1,5 +1,6 @@
 import { useMemo, memo } from 'react'
 import { upcomingEvents } from '../data/events'
+import OptimizedImage from './OptimizedImage'
 
 
 // Memoized EventImage component
@@ -12,12 +13,15 @@ const EventImage = memo(({ image, title }) => {
   return (
     <div className="flex-shrink-0 w-full lg:w-96">
       <div className="w-full h-48 sm:h-56 md:h-64 lg:h-64 rounded-lg overflow-hidden shadow-md">
-        <img
+        <OptimizedImage
           src={image}
           alt={title}
           className="w-full h-full object-cover"
           onError={handleImageError}
           loading="lazy"
+          width={384}
+          height={256}
+          sizes="(max-width: 1024px) 100vw, 384px"
         />
       </div>
     </div>

@@ -322,7 +322,7 @@ const Checkout = () => {
                   {orderDetails.status && (
                     <p className="text-sm text-gray-700">
                       <span className="font-medium">Status:</span>{' '}
-                      <span className="capitalize text-onam-gold font-semibold">{orderDetails.status}</span>
+                      <span className="capitalize text-onam-gold-dark font-semibold">{orderDetails.status}</span>
                     </p>
                   )}
                 </div>

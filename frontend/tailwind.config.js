@@ -8,8 +8,10 @@ export default {
     extend: {
       colors: {
         'onam-green': '#059669',
+        'onam-green-dark': '#047857', // Better contrast for text on light backgrounds
         'onam-gold': '#D97706',
         'onam-gold-dark': '#B45309', // Better contrast version
+        'onam-gold-text': '#92400E', // High contrast text color for gold
         'onam-red': '#DC2626',
         'onam-orange': '#EA580C',
         'onam-yellow': '#EAB308',

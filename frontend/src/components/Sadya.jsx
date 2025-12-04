@@ -1,5 +1,6 @@
 import { useCallback, useMemo, memo, useState, useEffect, useRef } from 'react'
 import { sadyaDishes } from '../data/sadyaDishes'
+import OptimizedImage from './OptimizedImage'
 
 // Memoized DishItem component
 const DishItem = memo(({ item }) => {
@@ -17,12 +18,15 @@ const DishItem = memo(({ item }) => {
       <div className="flex items-center space-x-3">
         {/* Ingredient Image on the left */}
         <div className="w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 flex-shrink-0 shadow-sm">
-          <img 
-            src={item.image} 
+          <OptimizedImage
+            src={item.image}
             alt={item.name}
             className="w-full h-full object-cover"
             onError={handleImageError}
             loading="lazy"
+            width={40}
+            height={40}
+            sizes="40px"
           />
           {/* Fallback Icon */}
           <div className={`w-full h-full bg-gradient-to-br ${item.color} flex items-center justify-center text-lg shadow-md`} style={{display: 'none'}}>
@@ -153,6 +157,7 @@ const VideoPlayer = memo(({ onVideoError }) => {
         title="Traditional Onam Feast Video"
       >
         <source src="/sadya-video.mp4" type="video/mp4" />
+        <track kind="captions" srcLang="en" label="English" default />
         Your browser does not support the video tag.
       </video>
       

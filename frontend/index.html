@@ -13,14 +13,17 @@
     <title>ONAM - Celebration of Kerala's Tradition & Culture</title>
     
     <!-- Google Fonts - Preconnect for faster loading -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
     
-    <!-- Font stylesheets -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Great+Vibes:wght@400&display=swap">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+Malayalam:wght@400&display=swap">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prata:wght@400&display=swap">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap">
+    <!-- Critical fonts - loaded immediately with display=swap -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Prata:wght@400&display=swap">
+    
+    <!-- Non-critical fonts - loaded asynchronously -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Great+Vibes:wght@400&family=Noto+Serif+Malayalam:wght@400&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Great+Vibes:wght@400&family=Noto+Serif+Malayalam:wght@400&display=swap">
+    </noscript>
   </head>
   <body>
     <div id="root"></div>

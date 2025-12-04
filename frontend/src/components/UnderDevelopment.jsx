@@ -41,8 +41,8 @@ const UnderDevelopment = () => {
             <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4 font-sans">
               Discover the sacred traditions and spiritual practices of Onam
             </p>
-            <div className="inline-flex items-center text-xs sm:text-sm text-orange-600 font-medium">
-              <span className="bg-orange-100 px-2 sm:px-3 py-1 rounded-full">In Development</span>
+            <div className="inline-flex items-center text-xs sm:text-sm font-medium">
+              <span className="bg-orange-100 text-orange-800 px-2 sm:px-3 py-1 rounded-full">In Development</span>
             </div>
           </div>
 
@@ -57,8 +57,8 @@ const UnderDevelopment = () => {
             <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4 font-sans">
               Share and relive precious Onam moments and experiences
             </p>
-            <div className="inline-flex items-center text-xs sm:text-sm text-green-600 font-medium">
-              <span className="bg-green-100 px-2 sm:px-3 py-1 rounded-full">In Development</span>
+            <div className="inline-flex items-center text-xs sm:text-sm font-medium">
+              <span className="bg-green-100 text-green-800 px-2 sm:px-3 py-1 rounded-full">In Development</span>
             </div>
           </div>
         </div>

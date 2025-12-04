@@ -25,7 +25,11 @@ export default defineConfig({
         }
       }
     },
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 1000,
+    // Enable compression in build
+    reportCompressedSize: true,
+    // Optimize asset handling
+    assetsInlineLimit: 4096, // Inline assets smaller than 4kb
   },
   preview: {
     port: 4173,

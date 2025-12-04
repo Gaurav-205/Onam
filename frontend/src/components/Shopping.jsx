@@ -3,6 +3,7 @@ import { useCart } from '../context/CartContext'
 import { useToast } from '../hooks/useToast'
 import Toast from './Toast'
 import { shoppingItems } from '../data/shoppingItems'
+import OptimizedImage from './OptimizedImage'
 
 // Memoized ProductCard component with Add to Cart and Quantity Controls
 const ProductCard = memo(({ item, onAddToCart, onUpdateQuantity, isInCart, itemQuantity, onShowToast }) => {
@@ -78,15 +79,16 @@ const ProductCard = memo(({ item, onAddToCart, onUpdateQuantity, isInCart, itemQ
 
         {/* Product Image */}
         {!imageError && (
-          <img 
-            src={item.image} 
+          <OptimizedImage
+            src={item.image}
             alt={`${item.name} - ${item.description}`}
-            className={`w-full h-full object-cover transition-opacity duration-300 ${
-              imageLoaded ? 'opacity-100' : 'opacity-0'
-            }`}
+            className="w-full h-full object-cover"
+            loading="lazy"
+            width={400}
+            height={256}
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             onLoad={handleImageLoad}
             onError={handleImageError}
-            loading="lazy"
           />
         )}
         

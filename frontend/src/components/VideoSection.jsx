@@ -127,6 +127,7 @@ const VideoSection = () => {
                   title="Onam Celebration Video"
                 >
                   <source src="/onam-celebration-video.mp4" type="video/mp4" />
+                  <track kind="captions" srcLang="en" label="English" default />
                   <p className="text-white bg-black/50 p-4 rounded">
                     Your browser does not support the video tag. 
                     <a 

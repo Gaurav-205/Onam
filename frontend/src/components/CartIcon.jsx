@@ -7,10 +7,10 @@ const CartIcon = memo(({ isScrolled = true, isActive = false }) => {
 
   // Color logic matching Navbar items
   const iconColor = isActive
-    ? 'text-onam-gold'
+    ? 'text-onam-gold-dark'
     : isScrolled
-    ? 'text-gray-600 hover:text-onam-gold'
-    : 'text-white/90 hover:text-onam-gold'
+    ? 'text-gray-700 hover:text-onam-gold-dark'
+    : 'text-white hover:text-onam-gold'
 
   const bgHover = isScrolled
     ? 'hover:bg-gray-100'

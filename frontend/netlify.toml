@@ -2,30 +2,48 @@
   publish = "dist"
   command = "npm run build"
 
+# Security headers for all files
 [[headers]]
-  for = "*.js"
+  for = "/*"
   [headers.values]
-    Content-Type = "application/javascript"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Note: Netlify automatically handles Brotli/Gzip compression for text-based assets
+# No need to set Content-Encoding headers manually
+
+# Cache static assets
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
-  for = "*.jsx"
+  for = "*.jpg"
   [headers.values]
-    Content-Type = "application/javascript"
+    Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
-  for = "*.mjs"
+  for = "*.jpeg"
   [headers.values]
-    Content-Type = "application/javascript"
+    Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
-  for = "*.css"
+  for = "*.png"
   [headers.values]
-    Content-Type = "text/css"
+    Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
-  for = "*.html"
+  for = "*.webp"
   [headers.values]
-    Content-Type = "text/html"
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "*.woff2"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
 
 [[redirects]]
   from = "/*"

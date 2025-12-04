@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, memo } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import CartIcon from './CartIcon'
+import OptimizedImage from './OptimizedImage'
 
 // Memoized navigation items - some are routes, some are scroll sections
 const navItems = [
@@ -16,10 +17,10 @@ const NavItem = memo(({ item, isActive, isScrolled, onScrollClick }) => {
   const location = useLocation()
   
   const textColor = isActive
-    ? 'text-onam-gold font-semibold hover:text-onam-green'
+    ? 'text-onam-gold-dark font-semibold hover:text-onam-green-dark'
     : isScrolled 
-      ? 'text-gray-600 hover:text-onam-gold hover:bg-gray-100' 
-      : 'text-white/90 hover:text-onam-gold hover:bg-white/10'
+      ? 'text-gray-700 hover:text-onam-gold-dark hover:bg-gray-100' 
+      : 'text-white hover:text-onam-gold hover:bg-white/10'
 
   const handleClick = (e) => {
     if (item.type === 'scroll') {
@@ -86,13 +87,16 @@ const Logo = memo(() => {
       className="flex items-center space-x-2 transition-transform duration-200 focus:outline-none rounded-lg p-1 hover:scale-105 sm:hover:scale-105"
       aria-label="Navigate to home page"
     >
-    <img 
+    <OptimizedImage 
       src="/logo.png" 
       alt="ONAM Logo" 
       className="w-8 h-8 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 xl:w-14 xl:h-14 object-contain"
       loading="eager"
+      width={56}
+      height={56}
+      sizes="(max-width: 640px) 32px, (max-width: 768px) 40px, (max-width: 1024px) 48px, (max-width: 1280px) 56px, 56px"
     />
-    <span className="text-xl sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-ornate font-normal text-onam-gold">
+    <span className="text-xl sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-ornate font-normal text-onam-gold-dark">
       Onam
     </span>
   </Link>
@@ -299,8 +303,8 @@ const Navbar = ({ currentSection, scrollToSection }) => {
                       }}
                       className={`px-4 py-2 text-left transition-colors duration-200 ${
                         isActive
-                          ? 'text-onam-gold font-semibold hover:text-onam-green'
-                          : 'text-gray-600 hover:text-onam-gold hover:bg-gray-50'
+                          ? 'text-onam-gold-dark font-semibold hover:text-onam-green-dark'
+                          : 'text-gray-700 hover:text-onam-gold-dark hover:bg-gray-50'
                       }`}
                       aria-label={`Navigate to ${item.label} section`}
                     >
@@ -324,8 +328,8 @@ const Navbar = ({ currentSection, scrollToSection }) => {
                     }}
                     className={`px-4 py-2 text-left transition-colors duration-200 ${
                       isActive
-                        ? 'text-onam-gold font-semibold hover:text-onam-green'
-                        : 'text-gray-600 hover:text-onam-gold hover:bg-gray-50'
+                        ? 'text-onam-gold-dark font-semibold hover:text-onam-green-dark'
+                        : 'text-gray-700 hover:text-onam-gold-dark hover:bg-gray-50'
                     }`}
                     aria-label={`Navigate to ${item.label} page`}
                     aria-current={isActive ? 'page' : undefined}
