@@ -6,6 +6,7 @@ import OptimizedImage from './OptimizedImage'
 // Memoized navigation items - some are routes, some are scroll sections
 const navItems = [
   { id: 'home', label: 'Home', path: '/', type: 'scroll' },
+  { id: 'shopping', label: 'Shopping', path: '/shopping', type: 'route' },
   { id: 'sadya', label: 'Sadya', path: '/sadya', type: 'scroll' },
   { id: 'events', label: 'Events', path: '/events', type: 'scroll' },
   { id: 'under-development', label: 'Coming Soon', path: '/coming-soon', type: 'route' }

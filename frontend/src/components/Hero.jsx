@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, memo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react'
 import { HEADINGS } from '../constants/headings'
 import { APP_CONFIG } from '../config/app'
 
@@ -99,6 +99,7 @@ const ScrollIndicator = memo(({ showScrollIndicator, isScrolled }) => (
 ScrollIndicator.displayName = 'ScrollIndicator'
 
 const Hero = () => {
+  const videoRef = useRef(null)
   const [videoError, setVideoError] = useState(false)
   const [videoLoaded, setVideoLoaded] = useState(false)
   const [videoCanPlay, setVideoCanPlay] = useState(false)
@@ -192,10 +193,9 @@ const Hero = () => {
     setVideoError(false)
   }, [])
   
-  // Try to play video when it's ready - but don't treat autoplay failure as error
   useEffect(() => {
     if (videoCanPlay && !videoError) {
-      const video = document.querySelector('#hero-background-video')
+      const video = videoRef.current
       if (video) {
         // Try to play the video
         const playPromise = video.play()
@@ -206,15 +206,7 @@ const Hero = () => {
               setVideoError(false)
               setVideoLoaded(true)
             })
-            .catch((error) => {
-              // Autoplay was prevented - this is normal on mobile
-              // Video is still loaded and visible, just not autoplaying
-              // Don't treat this as an error - video will show first frame
-              if (import.meta.env.MODE === 'development' && error.name !== 'NotAllowedError') {
-                // Only log if it's not just an autoplay restriction
-                console.log('Video play error:', error.name)
-              }
-              // Keep video visible even if not playing - show first frame
+            .catch(() => {
               setVideoError(false)
               setVideoLoaded(true) // Mark as loaded so it shows
             })
@@ -236,18 +228,7 @@ const Hero = () => {
     }
   }, [videoLoaded, videoCanPlay, videoError])
   
-  // Add timeout to detect if video is taking too long to load (mobile networks)
-  useEffect(() => {
-    const loadTimeout = setTimeout(() => {
-      if (!videoLoaded && !videoCanPlay && import.meta.env.MODE === 'development') {
-        // Video is taking too long - might be network issue
-        // But don't show error yet, give it more time
-        console.log('Video loading slowly...')
-      }
-    }, 5000) // 5 second timeout
-    
-    return () => clearTimeout(loadTimeout)
-  }, [videoLoaded, videoCanPlay])
+  // Video loading timeout handled by browser - no need for manual timeout
 
   // Optimized scroll handlers with useCallback
   const handleVideoScroll = useCallback(() => {
@@ -368,6 +349,7 @@ const Hero = () => {
           {/* Always show video element - let browser handle loading */}
           {/* Video should always be in DOM, just control visibility */}
           <video
+            ref={videoRef}
             id="hero-background-video"
             autoPlay
             loop

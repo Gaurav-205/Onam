@@ -11,13 +11,9 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // Only log errors in development to avoid console pollution in production
     if (import.meta.env.MODE === 'development') {
       console.error('Onam website error:', error, errorInfo)
     }
-    
-    // In production, you could send this to an error tracking service
-    // Example: Sentry.captureException(error, { contexts: { react: errorInfo } })
   }
 
   render() {

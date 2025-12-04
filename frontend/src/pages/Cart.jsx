@@ -1,5 +1,5 @@
-import { useCallback, memo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { memo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { parsePrice, formatPrice } from '../utils/price'
 import OptimizedImage from '../components/OptimizedImage'
@@ -135,12 +135,8 @@ CartItem.displayName = 'CartItem'
 
 const Cart = () => {
   const { cartItems, updateQuantity, removeFromCart, totalPrice, totalItems, clearCart } = useCart()
-  const navigate = useNavigate()
 
-  const handleCheckout = useCallback(() => {
-    if (cartItems.length === 0) return
-    navigate('/checkout')
-  }, [cartItems.length, navigate])
+  // Checkout is disabled - not available
 
   const isEmpty = cartItems.length === 0
 
@@ -223,10 +219,11 @@ const Cart = () => {
                 </div>
 
                 <button
-                  onClick={handleCheckout}
-                  className="w-full bg-onam-gold text-white font-semibold py-3 px-6 rounded-full hover:bg-amber-600 transition-colors mb-4"
+                  disabled
+                  className="w-full bg-gray-400 text-white font-semibold py-3 px-6 rounded-full cursor-not-allowed opacity-60 mb-4"
+                  title="Checkout is currently not available"
                 >
-                  Proceed to Checkout
+                  Checkout - NOT AVAILABLE
                 </button>
 
                 <button
