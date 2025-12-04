@@ -113,7 +113,6 @@ const Hero = () => {
   const [isScrolled, setIsScrolled] = useState(false)
   const [currentHeading, setCurrentHeading] = useState(0)
   const [isFading, setIsFading] = useState(false)
-  const [fontsLoaded, setFontsLoaded] = useState(false)
 
   // Memoized heading text and classes
   const currentHeadingData = useMemo(() => HEADINGS[currentHeading] || HEADINGS[0], [currentHeading])
@@ -330,11 +329,8 @@ const Hero = () => {
 
   // Font loading effect with error handling
   useEffect(() => {
-    loadFonts().then(() => {
-      setFontsLoaded(true)
-    }).catch(() => {
-      // Fallback: show content even if fonts fail to load
-      setFontsLoaded(true)
+    loadFonts().catch(() => {
+      // Fallback: fonts will load asynchronously
     })
   }, [])
 

@@ -30,19 +30,8 @@ const OptimizedImage = memo(({
   const [imageLoaded, setImageLoaded] = useState(false)
   const [fallbackError, setFallbackError] = useState(false)
 
-  // Validate src
-  if (!src || typeof src !== 'string') {
-    return null
-  }
-
-  // Handle image path - keep original path if it exists, otherwise try to generate
-  // Remove extension from src if present for WebP generation
-  const baseSrc = src.replace(/\.(jpg|jpeg|png|webp)$/i, '')
-  
-  // Generate image paths - WebP version and fallback
-  const webpSrc = `${baseSrc}.webp`
-  // Use original src as fallback (it should work if file exists)
-  const fallbackSrc = src
+  // Use original src (it should work if file exists)
+  const fallbackSrc = src || ''
   
   const handleError = useCallback((e) => {
     // Only set error state if WebP fails and we haven't already tried fallback
@@ -68,6 +57,11 @@ const OptimizedImage = memo(({
       onLoad(e)
     }
   }, [onLoad])
+
+  // Validate src - must be after hooks
+  if (!src || typeof src !== 'string') {
+    return null
+  }
 
   // If WebP failed, fallback to original (prevent infinite error loop)
   if (imageError && !fallbackError) {

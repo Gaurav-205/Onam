@@ -10,7 +10,7 @@
  */
 
 import sharp from 'sharp'
-import { readdir, stat, mkdir } from 'fs/promises'
+import { readdir, stat } from 'fs/promises'
 import { join, dirname, extname, basename } from 'path'
 import { existsSync } from 'fs'
 

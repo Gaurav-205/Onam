@@ -27,11 +27,22 @@ export default defineConfig([
     },
   },
   {
-    files: ['vite.config.js', '*.config.js'],
+    files: ['vite.config.js', '*.config.js', 'scripts/**/*.js'],
     languageOptions: {
       globals: {
         ...globals.node,
       },
+    },
+  },
+  {
+    files: ['src/test/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+    rules: {
+      'no-unused-vars': ['warn', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
 ])
