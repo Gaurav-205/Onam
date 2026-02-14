@@ -20,8 +20,12 @@ const VideoSection = () => {
         // Small delay to ensure smooth transition
         setTimeout(() => {
           if (videoRef.current && isVisible && isVideoLoaded) {
-            videoRef.current.play().catch(() => {
+            videoRef.current.play().catch((playError) => {
               // Autoplay prevented - silent fail (browser policy)
+              if (import.meta.env.MODE === 'development') {
+                // eslint-disable-next-line no-console
+                console.log('Video autoplay prevented:', playError.name)
+              }
             })
             setIsVideoPlaying(true)
           }
@@ -57,7 +61,13 @@ const VideoSection = () => {
     // Auto-restart video if still in view
     if (isIntersecting && videoRef.current) {
       videoRef.current.currentTime = 0
-      videoRef.current.play().catch(() => {})
+      videoRef.current.play().catch((playError) => {
+        // Autoplay prevented or video ended - silent fail
+        if (import.meta.env.MODE === 'development') {
+          // eslint-disable-next-line no-console
+          console.log('Video replay prevented:', playError.name)
+        }
+      })
     }
   }, [isIntersecting])
 

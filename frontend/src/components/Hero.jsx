@@ -150,9 +150,7 @@ const Hero = () => {
         // MEDIA_ERR_DECODE (3) - decode error, real problem
         // MEDIA_ERR_SRC_NOT_SUPPORTED (4) - format not supported
         if (errorCode === 3 || errorCode === 4) {
-          if (import.meta.env.MODE === 'development') {
-            console.warn('Video failed to load:', video.error)
-          }
+          // Video decode or format error - show fallback
           setVideoError(true)
           setVideoLoaded(false)
           setVideoCanPlay(false)
@@ -202,7 +200,12 @@ const Hero = () => {
               setVideoError(false)
               setVideoLoaded(true)
             })
-            .catch(() => {
+            .catch((playError) => {
+              // Autoplay prevented - mark as loaded anyway
+              if (import.meta.env.MODE === 'development') {
+                // eslint-disable-next-line no-console
+                console.log('Video autoplay prevented:', playError.name)
+              }
               setVideoError(false)
               setVideoLoaded(true) // Mark as loaded so it shows
             })
@@ -237,8 +240,12 @@ const Hero = () => {
     const backgroundVideo = document.querySelector('#hero-background-video')
     if (backgroundVideo && (videoCanPlay || videoLoaded) && !videoError) {
       if (isVisible) {
-        backgroundVideo.play().catch(() => {
+        backgroundVideo.play().catch((playError) => {
           // Autoplay prevented - normal on mobile, don't treat as error
+          if (import.meta.env.MODE === 'development') {
+            // eslint-disable-next-line no-console
+            console.log('Background video autoplay prevented:', playError.name)
+          }
         })
       } else {
         backgroundVideo.pause()
@@ -251,10 +258,11 @@ const Hero = () => {
     setIsScrolled(scrolled)
   }, [])
 
-  // Throttled scroll handler with useCallback
-  const throttledScroll = useCallback(() => {
+  // Consolidated useEffect for scroll handling with proper throttling
+  useEffect(() => {
     let ticking = false
-    return () => {
+    
+    const scrollHandler = () => {
       if (!ticking) {
         ticking = true
         requestAnimationFrame(() => {
@@ -264,16 +272,13 @@ const Hero = () => {
         })
       }
     }
-  }, [handleVideoScroll, handleScrollState])
-
-  // Consolidated useEffect for scroll handling
-  useEffect(() => {
-    const scrollHandler = throttledScroll()
+    
     window.addEventListener('scroll', scrollHandler, { passive: true })
+    
     return () => {
       window.removeEventListener('scroll', scrollHandler)
     }
-  }, [throttledScroll])
+  }, [handleVideoScroll, handleScrollState])
 
   // Scroll indicator timer
   useEffect(() => {
@@ -329,14 +334,18 @@ const Hero = () => {
 
   // Font loading effect with error handling
   useEffect(() => {
-    loadFonts().catch(() => {
+    loadFonts().catch((fontError) => {
       // Fallback: fonts will load asynchronously
+      if (import.meta.env.MODE === 'development') {
+        // eslint-disable-next-line no-console
+        console.log('Font loading delayed:', fontError.message)
+      }
     })
   }, [])
 
   return (
     <>
-      <section id="home" className="min-h-screen h-screen flex items-center justify-center relative overflow-hidden">
+      <section id="home" className="min-h-screen flex items-center justify-center relative overflow-hidden">
         {/* Video Background - Primary */}
         <div className="absolute inset-0 w-full h-full">
           {/* Always show video element - let browser handle loading */}

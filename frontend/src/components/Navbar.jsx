@@ -44,13 +44,8 @@ const NavItem = memo(({ item, isActive, isScrolled, onScrollClick }) => {
   }
 
   const handleLinkClick = () => {
-    // Smooth scroll to top when clicking route-based navigation
-    requestAnimationFrame(() => {
-      window.scrollTo({ 
-        top: 0, 
-        behavior: 'smooth' 
-      })
-    })
+    // Instant scroll to top when clicking route-based navigation (no animation)
+    window.scrollTo(0, 0)
   }
 
   return (
@@ -71,13 +66,8 @@ NavItem.displayName = 'NavItem'
 // Memoized Logo component
 const Logo = memo(() => {
   const handleLogoClick = () => {
-    // Smooth scroll to top when clicking logo
-    requestAnimationFrame(() => {
-      window.scrollTo({ 
-        top: 0, 
-        behavior: 'smooth' 
-      })
-    })
+    // Instant scroll to top when clicking logo (no animation)
+    window.scrollTo(0, 0)
   }
   
   return (
@@ -156,26 +146,24 @@ const Navbar = ({ currentSection, scrollToSection }) => {
     setIsScrolled(scrolled)
   }, [location.pathname])
   
-  // Throttled scroll handler
-  const throttledScroll = useCallback(() => {
-    let ticking = false
-    return () => {
-      if (!ticking) {
-        ticking = true
-        requestAnimationFrame(() => {
-          handleScroll()
-          ticking = false
-        })
-      }
-    }
-  }, [handleScroll])
-  
-  // Scroll event listener for home page
+  // Scroll event listener for home page with proper throttling
   useEffect(() => {
     if (location.pathname === '/') {
       handleScroll() // Initial check
-      const scrollHandler = throttledScroll()
+      
+      let ticking = false
+      const scrollHandler = () => {
+        if (!ticking) {
+          ticking = true
+          requestAnimationFrame(() => {
+            handleScroll()
+            ticking = false
+          })
+        }
+      }
+      
       window.addEventListener('scroll', scrollHandler, { passive: true })
+      
       return () => {
         window.removeEventListener('scroll', scrollHandler)
       }
@@ -183,7 +171,7 @@ const Navbar = ({ currentSection, scrollToSection }) => {
       setIsScrolled(true)
       setActiveScrollSection('home')
     }
-  }, [location.pathname, handleScroll, throttledScroll])
+  }, [location.pathname, handleScroll])
 
 
   // Responsive navigation handler
@@ -318,12 +306,7 @@ const Navbar = ({ currentSection, scrollToSection }) => {
                     key={item.id}
                     to={item.path}
                     onClick={() => {
-                      requestAnimationFrame(() => {
-                        window.scrollTo({ 
-                          top: 0, 
-                          behavior: 'smooth' 
-                        })
-                      })
+                      window.scrollTo(0, 0)
                       setIsMenuOpen(false)
                     }}
                     className={`px-4 py-3 text-left transition-colors duration-200 w-full ${

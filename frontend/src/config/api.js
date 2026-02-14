@@ -70,7 +70,13 @@ export const apiRequest = async (url, options = {}, retryCount = 0) => {
     if (timeoutId) clearTimeout(timeoutId)
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
+      let errorData = {}
+      try {
+        errorData = await response.json()
+      } catch (parseError) {
+        // Response is not JSON, use default error
+        errorData = { message: `HTTP error! status: ${response.status}` }
+      }
       const error = new Error(errorData.message || `HTTP error! status: ${response.status}`)
       error.status = response.status
       throw error

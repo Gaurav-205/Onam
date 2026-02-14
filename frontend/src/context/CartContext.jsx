@@ -18,14 +18,25 @@ export const CartProvider = ({ children }) => {
 
   // Load cart from localStorage on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem('onam_cart')
-    if (savedCart) {
-      try {
-        setCartItems(JSON.parse(savedCart))
-      } catch {
-        // Clear corrupted cart data
-        localStorage.removeItem('onam_cart')
+    try {
+      const savedCart = localStorage.getItem('onam_cart')
+      if (savedCart) {
+        try {
+          const parsedCart = JSON.parse(savedCart)
+          // Validate parsed data is an array
+          if (Array.isArray(parsedCart)) {
+            setCartItems(parsedCart)
+          } else {
+            // Invalid data format - clear it
+            localStorage.removeItem('onam_cart')
+          }
+        } catch (parseError) {
+          // Clear corrupted cart data
+          localStorage.removeItem('onam_cart')
+        }
       }
+    } catch (storageError) {
+      // localStorage not available or blocked - cart will work in memory only
     }
   }, [])
 
@@ -33,9 +44,14 @@ export const CartProvider = ({ children }) => {
   useEffect(() => {
     try {
       localStorage.setItem('onam_cart', JSON.stringify(cartItems))
-    } catch {
+    } catch (storageError) {
       // Handle quota exceeded or other localStorage errors silently
       // Cart will still work in memory, just won't persist
+      // Only log in development
+      if (import.meta.env.MODE === 'development') {
+        // eslint-disable-next-line no-console
+        console.warn('Failed to save cart to localStorage:', storageError.name)
+      }
     }
   }, [cartItems])
 
@@ -43,9 +59,7 @@ export const CartProvider = ({ children }) => {
   const addToCart = useCallback((product) => {
     // Validate product before adding
     if (!product || !product.id) {
-      if (import.meta.env.MODE === 'development') {
-        console.error('Invalid product: product and product.id are required')
-      }
+      // Silent fail - invalid product
       return
     }
 

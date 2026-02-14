@@ -4,10 +4,16 @@ const Toast = memo(({ message, type = 'success', onClose, duration = 3000 }) => 
   const [isVisible, setIsVisible] = useState(true)
 
   useEffect(() => {
+    // Validate duration is a positive number
+    const validDuration = typeof duration === 'number' && duration > 0 ? duration : 3000
+    
     const timer = setTimeout(() => {
       setIsVisible(false)
-      setTimeout(() => onClose(), 300) // Wait for fade out animation
-    }, duration)
+      // Ensure onClose is a function before calling
+      if (typeof onClose === 'function') {
+        setTimeout(() => onClose(), 300) // Wait for fade out animation
+      }
+    }, validDuration)
 
     return () => clearTimeout(timer)
   }, [duration, onClose])
@@ -29,7 +35,9 @@ const Toast = memo(({ message, type = 'success', onClose, duration = 3000 }) => 
         <button
           onClick={() => {
             setIsVisible(false)
-            setTimeout(() => onClose(), 300)
+            if (typeof onClose === 'function') {
+              setTimeout(() => onClose(), 300)
+            }
           }}
           className="text-white/80 hover:text-white transition-colors"
           aria-label="Close notification"

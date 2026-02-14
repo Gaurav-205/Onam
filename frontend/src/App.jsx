@@ -1,7 +1,37 @@
-import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { lazy, Suspense, useLayoutEffect } from 'react'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import Layout from './components/Layout'
 import { PageSkeleton } from './components/SkeletonLoader'
+
+// Scroll restoration component - runs BEFORE paint
+function ScrollToTop() {
+  const { pathname } = useLocation()
+
+  // Disable browser scroll restoration once
+  useLayoutEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual'
+    }
+  }, [])
+
+  // Scroll to top BEFORE browser paints (synchronous)
+  useLayoutEffect(() => {
+    // Disable smooth scrolling temporarily
+    document.documentElement.classList.add('route-changing')
+    
+    // Force immediate scroll to top before any rendering
+    window.scrollTo(0, 0)
+    
+    // Re-enable smooth scrolling after a brief delay
+    const timer = setTimeout(() => {
+      document.documentElement.classList.remove('route-changing')
+    }, 50)
+    
+    return () => clearTimeout(timer)
+  }, [pathname])
+
+  return null
+}
 
 // Lazy load pages for better performance
 const Home = lazy(() => import('./pages/Home'))
@@ -12,7 +42,8 @@ const ComingSoon = lazy(() => import('./pages/ComingSoon'))
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true }}>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route 

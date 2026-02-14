@@ -1,5 +1,5 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { useCallback, useMemo, useEffect } from 'react'
+import { useCallback, useMemo } from 'react'
 import Navbar from './Navbar'
 import Footer from './Footer'
 
@@ -7,24 +7,13 @@ const Layout = () => {
   const location = useLocation()
   const navigate = useNavigate()
   
-  // Smooth scroll to top helper function
+  // Smooth scroll to top helper function (only used for manual scrolling)
   const smoothScrollToTop = useCallback(() => {
     window.scrollTo({ 
       top: 0, 
       behavior: 'smooth' 
     })
   }, [])
-
-  // Scroll to top whenever route changes (except for home page sections)
-  useEffect(() => {
-    // Only scroll to top for separate pages, not for home page sections
-    if (location.pathname !== '/') {
-      // Use setTimeout to ensure content is rendered before scrolling
-      setTimeout(() => {
-        smoothScrollToTop()
-      }, 100)
-    }
-  }, [location.pathname, smoothScrollToTop])
 
   // Convert pathname to section ID for Navbar compatibility
   const currentSection = useMemo(() => {
@@ -38,9 +27,12 @@ const Layout = () => {
   const scrollToElement = useCallback((elementId) => {
     const element = document.getElementById(elementId)
     if (element) {
-      element.scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'start'
+      const yOffset = -80 // Offset for fixed navbar
+      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset
+      
+      window.scrollTo({ 
+        top: y,
+        behavior: 'smooth'
       })
     }
   }, [])
@@ -65,12 +57,10 @@ const Layout = () => {
       } else {
         // Navigate to home first, then scroll to section after navigation
         navigate('/')
+        // Use a longer delay to ensure DOM is ready
         setTimeout(() => {
-          // Wait for route change and DOM update
-          requestAnimationFrame(() => {
-            setTimeout(() => scrollToElement(elementId), 100)
-          })
-        }, 100)
+          scrollToElement(elementId)
+        }, 300)
       }
     } else if (routeMap[sectionId]) {
       // Navigate to separate page (scroll to top happens in useEffect)
@@ -88,7 +78,7 @@ const Layout = () => {
   const isHomePage = location.pathname === '/'
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-red-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-red-50 overflow-x-hidden">
       <Navbar currentSection={currentSection} scrollToSection={scrollToSection} />
       <main className={isHomePage ? '' : 'pt-16'}>
         <Outlet />

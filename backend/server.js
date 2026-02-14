@@ -381,7 +381,8 @@ const gracefulShutdown = (signal) => {
         logger.info('MongoDB connection closed')
         process.exit(0)
       })
-    }).catch(() => {
+    }).catch((err) => {
+      logger.error('Failed to close MongoDB connection:', err.message)
       process.exit(0)
     })
   })

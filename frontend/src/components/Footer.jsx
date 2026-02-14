@@ -154,12 +154,7 @@ const Footer = ({ scrollToSection }) => {
                 key={index}
                 to={link.path}
                 onClick={() => {
-                  requestAnimationFrame(() => {
-                    window.scrollTo({ 
-                      top: 0, 
-                      behavior: 'smooth' 
-                    })
-                  })
+                  window.scrollTo(0, 0)
                 }}
                 className="text-gray-300 hover:text-yellow-400 transition-colors duration-200 font-medium tracking-wide text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-gray-900 rounded"
                 aria-label={`Navigate to ${link.label} page`}

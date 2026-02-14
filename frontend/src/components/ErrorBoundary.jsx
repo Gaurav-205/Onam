@@ -11,7 +11,9 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
+    // Log error in development mode only
     if (import.meta.env.MODE === 'development') {
+      // eslint-disable-next-line no-console
       console.error('Onam website error:', error, errorInfo)
     }
   }
