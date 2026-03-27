@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, memo } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import CartIcon from './CartIcon'
 import OptimizedImage from './OptimizedImage'
 
 // Memoized navigation items - some are routes, some are scroll sections
@@ -256,12 +255,8 @@ const Navbar = ({ currentSection, scrollToSection }) => {
             </div>
           )}
 
-          {/* Cart Icon and Mobile Menu Button */}
+          {/* Mobile Menu Button */}
           <div className="flex items-center justify-end space-x-2 flex-shrink-0">
-            <CartIcon 
-              isScrolled={isScrolled || !isHomePage}
-              isActive={location.pathname === '/cart'}
-            />
             {showMobileMenu && (
               <MobileMenuButton 
                 isScrolled={isScrolled || !isHomePage}

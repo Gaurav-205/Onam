@@ -68,7 +68,6 @@ const VideoPlayer = memo(({ onVideoError }) => {
             videoRef.current.play().catch((playError) => {
               // Autoplay prevented - silent fail (browser policy)
               if (import.meta.env.MODE === 'development') {
-                // eslint-disable-next-line no-console
                 console.log('Video autoplay prevented:', playError.name)
               }
             })
@@ -91,6 +90,7 @@ const VideoPlayer = memo(({ onVideoError }) => {
     })
 
     const currentSection = sectionRef.current
+    const currentVideo = videoRef.current
     if (currentSection) {
       observer.observe(currentSection)
     }
@@ -101,9 +101,8 @@ const VideoPlayer = memo(({ onVideoError }) => {
       }
       observer.disconnect()
       // Ensure video is paused when component unmounts
-      const video = videoRef.current
-      if (video) {
-        video.pause()
+      if (currentVideo) {
+        currentVideo.pause()
         setIsPlaying(false)
       }
     }
@@ -133,7 +132,6 @@ const VideoPlayer = memo(({ onVideoError }) => {
       videoRef.current.play().catch((playError) => {
         // Autoplay prevented or video ended - silent fail
         if (import.meta.env.MODE === 'development') {
-          // eslint-disable-next-line no-console
           console.log('Video replay prevented:', playError.name)
         }
       })

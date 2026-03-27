@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import { randomUUID } from 'crypto'
 import { APP_CONFIG } from '../config/app.js'
 import { logger } from '../utils/logger.js'
 
@@ -89,6 +90,11 @@ const paymentSchema = new mongoose.Schema({
     type: String,
     trim: true,
     default: null
+  },
+  verificationStatus: {
+    type: String,
+    enum: ['unverified', 'verified'],
+    default: 'unverified'
   }
 }, { _id: false })
 
@@ -177,9 +183,8 @@ orderSchema.pre('save', async function(next) {
     const prefix = APP_CONFIG?.ORDER?.PREFIX || 'ONAM'
     
     // Set fallback orderNumber immediately
-    const timestamp = Date.now().toString().slice(-8)
-    const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
-    this.orderNumber = `${prefix}-${datePrefix}-${timestamp}${randomSuffix}`
+    const fallbackSuffix = randomUUID().replace(/-/g, '').slice(0, 12).toUpperCase()
+    this.orderNumber = `${prefix}-${datePrefix}-${fallbackSuffix}`
     
     // Try to use atomic counter if database is connected
     try {
@@ -239,9 +244,8 @@ orderSchema.pre('save', async function(next) {
     const month = String(date.getMonth() + 1).padStart(2, '0')
     const day = String(date.getDate()).padStart(2, '0')
     const datePrefix = `${year}${month}${day}`
-    const timestamp = Date.now().toString()
-    const randomSuffix = Math.floor(Math.random() * 100000).toString().padStart(5, '0')
-    this.orderNumber = `ONAM-${datePrefix}-${timestamp}${randomSuffix}`
+    const randomSuffix = randomUUID().replace(/-/g, '').slice(0, 16).toUpperCase()
+    this.orderNumber = `ONAM-${datePrefix}-${randomSuffix}`
   }
   
   next()

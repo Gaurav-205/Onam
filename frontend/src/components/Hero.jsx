@@ -203,7 +203,6 @@ const Hero = () => {
             .catch((playError) => {
               // Autoplay prevented - mark as loaded anyway
               if (import.meta.env.MODE === 'development') {
-                // eslint-disable-next-line no-console
                 console.log('Video autoplay prevented:', playError.name)
               }
               setVideoError(false)
@@ -243,7 +242,6 @@ const Hero = () => {
         backgroundVideo.play().catch((playError) => {
           // Autoplay prevented - normal on mobile, don't treat as error
           if (import.meta.env.MODE === 'development') {
-            // eslint-disable-next-line no-console
             console.log('Background video autoplay prevented:', playError.name)
           }
         })
@@ -337,7 +335,6 @@ const Hero = () => {
     loadFonts().catch((fontError) => {
       // Fallback: fonts will load asynchronously
       if (import.meta.env.MODE === 'development') {
-        // eslint-disable-next-line no-console
         console.log('Font loading delayed:', fontError.message)
       }
     })

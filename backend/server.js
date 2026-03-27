@@ -20,7 +20,11 @@ const envPath = join(__dirname, '.env')
 const envResult = dotenv.config({ path: envPath })
 
 if (envResult.error) {
-  logger.warn(`Failed to load .env file from ${envPath}:`, envResult.error.message)
+  if (envResult.error.code === 'ENOENT') {
+    logger.info(`No .env file found at ${envPath}; using existing environment variables`)
+  } else {
+    logger.warn(`Failed to load .env file from ${envPath}:`, envResult.error.message)
+  }
 } else {
   logger.info(`Loaded .env file from ${envPath}`)
 }

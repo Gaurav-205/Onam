@@ -4,6 +4,11 @@
  */
 
 export const APP_CONFIG = {
+  // Feature Flags
+  FEATURES: {
+    CHECKOUT_ENABLED: process.env.CHECKOUT_ENABLED === 'true',
+  },
+
   // Order Configuration
   ORDER: {
     PREFIX: 'ONAM',

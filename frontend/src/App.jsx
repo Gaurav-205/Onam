@@ -1,5 +1,5 @@
 import { lazy, Suspense, useLayoutEffect } from 'react'
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import Layout from './components/Layout'
 import { PageSkeleton } from './components/SkeletonLoader'
 
@@ -36,8 +36,6 @@ function ScrollToTop() {
 // Lazy load pages for better performance
 const Home = lazy(() => import('./pages/Home'))
 const Shopping = lazy(() => import('./pages/Shopping'))
-const Cart = lazy(() => import('./pages/Cart'))
-const Checkout = lazy(() => import('./pages/Checkout'))
 const ComingSoon = lazy(() => import('./pages/ComingSoon'))
 
 function App() {
@@ -63,20 +61,12 @@ function App() {
             } 
           />
           <Route 
-            path="cart" 
-            element={
-              <Suspense fallback={<PageSkeleton type="cart" />}>
-                <Cart />
-              </Suspense>
-            } 
+            path="cart"
+            element={<Navigate to="/coming-soon" replace />}
           />
-          <Route 
-            path="checkout" 
-            element={
-              <Suspense fallback={<PageSkeleton type="checkout" />}>
-                <Checkout />
-              </Suspense>
-            } 
+          <Route
+            path="checkout"
+            element={<Navigate to="/coming-soon" replace />}
           />
           <Route 
             path="coming-soon" 

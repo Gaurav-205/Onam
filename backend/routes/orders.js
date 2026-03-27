@@ -106,7 +106,9 @@ const validateOrder = [
     .trim()
     .escape()
     .isLength({ max: 100 })
-    .withMessage('Transaction ID must be less than 100 characters'),
+    .withMessage('Transaction ID must be less than 100 characters')
+    .matches(/^[a-zA-Z0-9_-]{6,100}$/)
+    .withMessage('Transaction ID format is invalid'),
   
   // Validate total amount
   body('totalAmount')
@@ -126,6 +128,14 @@ const validateOrder = [
 router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatabaseConnection, async (req, res) => {
   const requestId = getRequestId(req)
   const requestStartTime = Date.now()
+
+  if (!APP_CONFIG.FEATURES.CHECKOUT_ENABLED) {
+    return res.status(503).json({
+      success: false,
+      message: 'Checkout is currently disabled',
+      requestId
+    })
+  }
   
   try {
     // Validate request body exists
@@ -195,6 +205,20 @@ router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatab
       }
     }
 
+    // Client-provided UPI transaction references are stored as unverified.
+    // Real payment verification requires PSP/provider webhooks and server-side signature checks.
+    const sanitizedPayment = {
+      method: payment.method,
+      upiId: null,
+      transactionId: null,
+      verificationStatus: 'unverified'
+    }
+
+    if (payment.method === 'upi') {
+      sanitizedPayment.upiId = payment.upiId
+      sanitizedPayment.transactionId = payment.transactionId
+    }
+
     // Calculate total from items to verify (with safety checks)
     const calculatedTotal = orderItems.reduce((sum, item) => {
       const itemTotal = Number(item.total) || 0
@@ -232,7 +256,7 @@ router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatab
     const orderData = {
       studentInfo,
       orderItems,
-      payment,
+      payment: sanitizedPayment,
       totalAmount,
       status: 'pending'
     }
@@ -281,6 +305,7 @@ router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatab
         orderId: savedOrder._id,
         orderNumber: savedOrder.orderNumber,
         status: savedOrder.status,
+        paymentVerificationStatus: savedOrder.payment?.verificationStatus || 'unverified',
         totalAmount: savedOrder.totalAmount,
         orderDate: savedOrder.orderDate
       },

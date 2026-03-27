@@ -14,7 +14,7 @@ Backend server for Onam Festival website with MongoDB database integration.
 
 ## 📋 Prerequisites
 
-- Node.js (v16 or higher)
+- Node.js (v20 or higher)
 - MongoDB (local or MongoDB Atlas)
 - npm or yarn
 
@@ -172,6 +172,7 @@ Body:
 | `PORT` | Server port | `3000` |
 | `FRONTEND_URL` | Frontend URL(s) for CORS (comma-separated for multiple) | `http://localhost:5173,https://onammitadt.netlify.app` |
 | `NODE_ENV` | Environment (development/production) | `development` |
+| `CHECKOUT_ENABLED` | Enable order creation endpoint | `false` |
 | `UPI_ID` | UPI ID for payments (required in production) | None |
 | `LOG_LEVEL` | Logging level (error/warn/info/debug) | `info` |
 | `WHATSAPP_GROUP_LINK` | WhatsApp group invite link | None |
@@ -191,6 +192,7 @@ MONGODB_URI=your-mongodb-atlas-connection-string
 PORT=10000
 FRONTEND_URL=https://onammitadt.netlify.app
 NODE_ENV=production
+CHECKOUT_ENABLED=true
 UPI_ID=your-upi-id@ybl
 LOG_LEVEL=info
 

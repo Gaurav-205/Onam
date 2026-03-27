@@ -3,10 +3,17 @@
  * Centralized API endpoint configuration
  */
 
-// Get API base URL from environment or use default
-// Can be either: 'http://localhost:3000' or 'http://localhost:3000/api'
-const envApiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
-const API_BASE_URL = envApiUrl.endsWith('/api') ? envApiUrl : `${envApiUrl}/api`
+// Use explicit API URL from env when available.
+// In development, fallback to localhost. In production, fallback to same-origin.
+const envApiUrl = import.meta.env.VITE_API_BASE_URL?.trim()
+const fallbackApiUrl = import.meta.env.DEV ? 'http://localhost:3000' : window.location.origin
+const resolvedApiUrl = envApiUrl || fallbackApiUrl
+
+if (!envApiUrl && import.meta.env.PROD) {
+  console.warn('VITE_API_BASE_URL is not set. Falling back to same-origin API URL.')
+}
+
+const API_BASE_URL = resolvedApiUrl.endsWith('/api') ? resolvedApiUrl : `${resolvedApiUrl}/api`
 
 // Helper to normalize URL and ensure proper /api path
 const normalizeApiUrl = (url) => {
@@ -19,7 +26,7 @@ const normalizeApiUrl = (url) => {
 }
 
 export const API_ENDPOINTS = {
-  GET_CONFIG: normalizeApiUrl(envApiUrl),
+  GET_CONFIG: normalizeApiUrl(resolvedApiUrl),
   CREATE_ORDER: `${API_BASE_URL}/orders`,
   GET_ORDER: (orderId) => `${API_BASE_URL}/orders/${orderId}`,
   GET_ORDERS: `${API_BASE_URL}/orders`,
@@ -73,7 +80,7 @@ export const apiRequest = async (url, options = {}, retryCount = 0) => {
       let errorData = {}
       try {
         errorData = await response.json()
-      } catch (parseError) {
+      } catch {
         // Response is not JSON, use default error
         errorData = { message: `HTTP error! status: ${response.status}` }
       }

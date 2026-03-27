@@ -11,10 +11,29 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-const inputFile = path.join(__dirname, '../public/onam-cultural-night.jpg')
-const outputFile = path.join(__dirname, '../public/onam-cultural-night-optimized.jpg')
+const PUBLIC_DIR = path.join(__dirname, '../public')
+
+const buildPaths = () => {
+  const inputArg = process.argv[2]
+  const outputArg = process.argv[3]
+
+  if (!inputArg) {
+    const defaultInput = path.join(PUBLIC_DIR, 'onam-cultural-night.jpg')
+    const defaultOutput = path.join(PUBLIC_DIR, 'onam-cultural-night-optimized.jpg')
+    return { inputFile: defaultInput, outputFile: defaultOutput, fromDefault: true }
+  }
+
+  const resolvedInput = path.isAbsolute(inputArg) ? inputArg : path.resolve(process.cwd(), inputArg)
+  const resolvedOutput = outputArg
+    ? (path.isAbsolute(outputArg) ? outputArg : path.resolve(process.cwd(), outputArg))
+    : path.join(path.dirname(resolvedInput), `${path.parse(resolvedInput).name}-optimized.jpg`)
+
+  return { inputFile: resolvedInput, outputFile: resolvedOutput, fromDefault: false }
+}
 
 const optimizeLargeImage = async () => {
+  const { inputFile, outputFile, fromDefault } = buildPaths()
+
   try {
     // Check if file exists
     await fs.access(inputFile)
@@ -55,8 +74,13 @@ const optimizeLargeImage = async () => {
     
   } catch (error) {
     if (error.code === 'ENOENT') {
+      if (fromDefault) {
+        console.warn(`⚠️  Skipping optimization: default file not found (${inputFile})`)
+        console.warn('Provide a file path: node scripts/optimize-large-image.js <input-file> [output-file]')
+        return
+      }
       console.error(`❌ Error: File not found: ${inputFile}`)
-      console.error(`Please ensure the image exists in the public directory.`)
+      console.error('Please provide a valid input file path.')
     } else {
       console.error(`❌ Error optimizing image:`, error.message)
     }

@@ -21,7 +21,8 @@ export const isValidEmail = (email) => {
 export const isValidPhone = (phone) => {
   if (!phone || typeof phone !== 'string') return false
   const cleaned = phone.replace(/\D/g, '')
-  return /^[0-9]{10}$/.test(cleaned)
+  // Support local 10-digit numbers and numbers prefixed with India country code.
+  return /^[0-9]{10}$/.test(cleaned) || /^91[0-9]{10}$/.test(cleaned)
 }
 
 /**
