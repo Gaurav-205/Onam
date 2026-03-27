@@ -6,6 +6,7 @@
   Full-stack cultural portal for MIT ADT University Onam celebrations
 
   [![Live Demo](https://img.shields.io/badge/Live%20Demo-onammitadt.netlify.app-00C7B7?style=flat-square&logo=netlify&logoColor=white)](https://onammitadt.netlify.app)
+  [![CI Workflow](https://github.com/Gaurav-205/Onam/actions/workflows/ci.yml/badge.svg)](https://github.com/Gaurav-205/Onam/actions/workflows/ci.yml)
   [![Deploy Workflow](https://github.com/Gaurav-205/Onam/actions/workflows/deploy.yml/badge.svg)](https://github.com/Gaurav-205/Onam/actions/workflows/deploy.yml)
   [![Node](https://img.shields.io/badge/Node.js-%3E%3D20-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
   [![License](https://img.shields.io/badge/License-ISC-orange?style=flat-square)](backend/package.json)
@@ -43,15 +44,17 @@ The cart and checkout user flow is currently disabled intentionally.
 | Frontend | React 18, Vite 7, React Router 7, Tailwind CSS 3, Vitest |
 | Backend | Node.js 20, Express 4, MongoDB, Mongoose 8, Nodemailer 8, express-validator |
 | Infrastructure | Netlify (frontend), Render-compatible backend, MongoDB Atlas/local MongoDB |
-| CI | GitHub Actions workflow at .github/workflows/deploy.yml |
+| CI/CD | GitHub Actions workflows at .github/workflows/ci.yml and .github/workflows/deploy.yml |
 
 ---
 
 ## Screenshots
 
-| Pookalam | Tug of War | Cultural Night |
-|:---:|:---:|:---:|
-| ![Pookalam](frontend/public/pookalam.jpg) | ![Tug of War](frontend/public/tug-of-war-championship.jpg) | ![Cultural Night](frontend/public/onam-cultural-night.jpg) |
+<p align="center">
+  <img src="frontend/public/pookalam.jpg" alt="Pookalam" width="280" />
+  <img src="frontend/public/tug-of-war-championship.jpg" alt="Tug of War" width="280" />
+  <img src="frontend/public/onam-cultural-night.jpg" alt="Cultural Night" width="280" />
+</p>
 
 ---
 
@@ -109,6 +112,7 @@ Backend: http://localhost:3000
 Onam/
 ├── .github/
 │   └── workflows/
+│       ├── ci.yml
 │       └── deploy.yml
 ├── backend/
 │   ├── config/
@@ -153,7 +157,8 @@ Onam/
 
 | Workflow | Trigger | What it does |
 |----------|---------|--------------|
-| deploy.yml | Push / PR to main/master | Installs dependencies, lints frontend, builds frontend |
+| ci.yml | Push / PR to main/master | Runs backend tests and frontend lint, tests, and build |
+| deploy.yml | After ci.yml success on main/master or manual run | Builds deploy artifact and prepares deployment |
 
 ---
 
