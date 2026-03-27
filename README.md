@@ -52,11 +52,11 @@ The cart and checkout user flow is currently disabled intentionally.
 
 > Screenshots below are representative. The live app at [onammitadt.netlify.app](https://onammitadt.netlify.app) reflects the current state.
 
-| Pookalam | Tug of War | Cultural Night |
+| Home Page | Events Page | Cultural Highlights Page |
 |:---:|:---:|:---:|
-| <img src="frontend/public/pookalam.jpg" alt="Pookalam" width="260" /> | <img src="frontend/public/tug-of-war-championship.jpg" alt="Tug of War" width="260" /> | <img src="frontend/public/onam-cultural-night.jpg" alt="Cultural Night" width="260" /> |
+| <img src="frontend/public/pookalam.jpg" alt="Home Page" width="260" /> | <img src="frontend/public/tug-of-war-championship.jpg" alt="Events Page" width="260" /> | <img src="frontend/public/onam-cultural-night.jpg" alt="Cultural Highlights Page" width="260" /> |
 
-Additional sections like Events, Sadya, and Shopping are available through the main navigation, with responsive layouts tuned for both mobile and desktop.
+Additional pages like Sadya, Shopping, and Coming Soon are available through the main navigation, with responsive layouts tuned for both mobile and desktop.
 
 ---
 
