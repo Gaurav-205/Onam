@@ -17,16 +17,28 @@ const __dirname = dirname(__filename)
 
 // Load .env file explicitly from backend directory
 const envPath = join(__dirname, '.env')
+const envExamplePath = join(__dirname, '.env.example')
 const envResult = dotenv.config({ path: envPath })
 
 if (envResult.error) {
   if (envResult.error.code === 'ENOENT') {
     logger.info(`No .env file found at ${envPath}; using existing environment variables`)
+
+    const exampleEnvResult = dotenv.config({ path: envExamplePath })
+    if (exampleEnvResult.error) {
+      logger.warn(`Could not load fallback defaults from ${envExamplePath}:`, exampleEnvResult.error.message)
+    } else {
+      logger.info(`Loaded fallback defaults from ${envExamplePath}`)
+    }
   } else {
     logger.warn(`Failed to load .env file from ${envPath}:`, envResult.error.message)
   }
 } else {
   logger.info(`Loaded .env file from ${envPath}`)
+}
+
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = 'development'
 }
 
 const app = express()

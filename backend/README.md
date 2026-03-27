@@ -87,6 +87,36 @@ npm start
 
 Server will run on `http://localhost:3000`
 
+## Troubleshooting
+
+### Log shows: No .env file found
+
+Create a local environment file:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+### Log shows: MongoDB connection failed (ECONNREFUSED)
+
+This means MongoDB is not running at the configured host and port.
+
+1. Start local MongoDB service on Windows:
+
+```powershell
+net start MongoDB
+```
+
+2. Confirm your connection string in .env:
+
+```env
+MONGODB_URI=mongodb://localhost:27017/onam-festival
+```
+
+3. If local MongoDB is unavailable, switch to MongoDB Atlas and update MONGODB_URI.
+
+The API can still start without MongoDB, but order-related routes will not work until the database is reachable.
+
 ## 📡 API Endpoints
 
 ### Health Check
