@@ -54,7 +54,7 @@ The cart and checkout user flow is currently disabled intentionally.
 
 | Home Page | Events Page | Shopping |
 |:---:|:---:|:---:|
-| <img src="frontend/public/pookalam.jpg" alt="Home Page" width="260" /> | <img src="frontend/public/tug-of-war-championship.jpg" alt="Events Page" width="260" /> | <img src="frontend/public/onam-cultural-night.jpg" alt="Shopping" width="260" /> |
+| <img src="frontend/public/picture1.png" alt="Home Page" width="260" /> | <img src="frontend/public/picture2.png" alt="Events Page" width="260" /> | <img src="frontend/public/picture3.png" alt="Shopping" width="260" /> |
 
 Additional pages like Sadya, Shopping, and Coming Soon are available through the main navigation, with responsive layouts tuned for both mobile and desktop.
 
