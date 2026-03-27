@@ -31,6 +31,7 @@ if (envResult.error) {
 
 const app = express()
 const PORT = process.env.PORT || 3000
+let server
 
 // Trust proxy - Required for Render and other reverse proxy hosting providers
 // This allows Express to correctly identify client IPs behind proxies
@@ -375,27 +376,37 @@ app.use((err, req, res, next) => {
 // Graceful shutdown handler
 const gracefulShutdown = (signal) => {
   logger.info(`${signal} received. Starting graceful shutdown...`)
-  
-  server.close(() => {
-    logger.info('HTTP server closed')
-    
-    // Close database connection
+
+  const forceExitTimer = setTimeout(() => {
+    logger.error('Forced shutdown after timeout')
+    process.exit(1)
+  }, 10000)
+
+  const closeDatabaseAndExit = () => {
     import('mongoose').then(mongoose => {
       mongoose.default.connection.close(false, () => {
         logger.info('MongoDB connection closed')
+        clearTimeout(forceExitTimer)
         process.exit(0)
       })
     }).catch((err) => {
       logger.error('Failed to close MongoDB connection:', err.message)
+      clearTimeout(forceExitTimer)
       process.exit(0)
     })
-  })
-  
+  }
+
+  if (server?.listening) {
+    server.close(() => {
+      logger.info('HTTP server closed')
+      closeDatabaseAndExit()
+    })
+  } else {
+    logger.warn('HTTP server was not listening during shutdown; closing database connection directly')
+    closeDatabaseAndExit()
+  }
+
   // Force shutdown after 10 seconds
-  setTimeout(() => {
-    logger.error('Forced shutdown after timeout')
-    process.exit(1)
-  }, 10000)
 }
 
 // Register shutdown handlers
@@ -415,7 +426,7 @@ process.on('unhandledRejection', (reason, promise) => {
 })
 
 // Start server with error handling
-const server = app.listen(PORT, () => {
+server = app.listen(PORT, () => {
   const isProduction = process.env.NODE_ENV === 'production'
   const serverUrl = isProduction 
     ? `Server running on port ${PORT}` 

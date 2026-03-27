@@ -90,6 +90,13 @@ Frontend:
 cp frontend/.env.example frontend/.env
 ```
 
+PowerShell (Windows) alternative:
+
+```powershell
+Copy-Item backend/.env.example backend/.env
+Copy-Item frontend/.env.example frontend/.env
+```
+
 ### 3. Run locally
 
 ```bash
@@ -120,7 +127,12 @@ Onam/
 │   ├── models/
 │   ├── routes/
 │   ├── utils/
-│   │   └── email/
+│   │   ├── email/
+│   │   ├── emailService.js
+│   │   ├── logger.js
+│   │   └── rateLimiter.js
+│   ├── scripts/
+│   │   └── syntax-check.js
 │   ├── server.js
 │   └── package.json
 ├── frontend/
@@ -182,6 +194,14 @@ npm run build
 # Backend
 cd backend
 npm test
+```
+
+The backend check currently validates JavaScript syntax for all backend files.
+
+If backend dev startup shows "Port 3000 is already in use", set a different value in backend/.env, for example:
+
+```text
+PORT=3001
 ```
 
 ---
