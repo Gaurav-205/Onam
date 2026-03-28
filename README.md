@@ -20,6 +20,23 @@ This project is a full-stack Onam festival platform for MIT ADT University. It p
 
 The cart and checkout user flow is currently disabled intentionally.
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Screenshots](#screenshots)
+- [Quick Start](#quick-start)
+- [Environment Variables](#environment-variables)
+- [Project Structure](#project-structure)
+- [API Routes](#api-routes)
+- [Available Scripts](#available-scripts)
+- [CI/CD](#cicd)
+- [Deployment Checklist](#deployment-checklist)
+- [Troubleshooting](#troubleshooting)
+- [Roadmap](#roadmap)
+- [License](#license)
+
 ---
 
 ## Features
@@ -60,7 +77,7 @@ Additional pages like Sadya, Shopping, and Coming Soon are available through the
 
 ---
 
-## Local Setup
+## Quick Start
 
 ### Prerequisites
 
@@ -68,7 +85,7 @@ Additional pages like Sadya, Shopping, and Coming Soon are available through the
 - npm >= 10
 - MongoDB (local or Atlas)
 
-### 1. Clone and install
+### 1. Clone and install dependencies
 
 ```bash
 git clone https://github.com/Gaurav-205/Onam.git
@@ -99,7 +116,7 @@ Copy-Item backend/.env.example backend/.env
 Copy-Item frontend/.env.example frontend/.env
 ```
 
-### 3. Run locally
+### 3. Start the app locally
 
 ```bash
 # Terminal 1
@@ -112,6 +129,50 @@ cd frontend && npm run dev
 Frontend: http://localhost:5173
 
 Backend: http://localhost:3000
+
+Health endpoint: http://localhost:3000/health
+
+### 4. Verify core flow
+
+1. Open the frontend and browse Home, Events, and Shopping sections.
+2. Open backend health endpoint and confirm API status is returned.
+3. If checkout is intended for local testing, set `CHECKOUT_ENABLED=true` in `backend/.env`.
+
+---
+
+## Environment Variables
+
+### Backend (`backend/.env`)
+
+| Variable | Required | Description | Example |
+|----------|----------|-------------|---------|
+| `NODE_ENV` | No | Runtime mode (`development` or `production`) | `development` |
+| `PORT` | No | Backend listening port | `3000` |
+| `FRONTEND_URL` | Yes | Allowed CORS origins (comma-separated for multiple) | `http://localhost:5173,https://onammitadt.netlify.app` |
+| `MONGODB_URI` | Yes | MongoDB connection string | `mongodb://localhost:27017/onam-festival` |
+| `CHECKOUT_ENABLED` | No | Enables order creation route (`POST /api/orders`) | `false` |
+| `UPI_ID` | Recommended | UPI target shown in config endpoint | `your-upi-id@ybl` |
+| `WHATSAPP_GROUP_LINK` | Optional | Group invite link for responses/emails | `https://chat.whatsapp.com/...` |
+| `EMAIL_USER` | Optional | Sender email for notifications | `example@gmail.com` |
+| `EMAIL_PASSWORD` | Optional | App password/SMTP password | `xxxx xxxx xxxx xxxx` |
+| `EMAIL_SERVICE` | No | Predefined service (`gmail`, `outlook`, etc.) | `gmail` |
+| `EMAIL_FROM_NAME` | No | Display sender name | `Onam Festival - MIT ADT University` |
+| `EMAIL_HOST` | Optional | Custom SMTP host | `smtp.example.com` |
+| `EMAIL_PORT` | No | SMTP port | `587` |
+| `EMAIL_SECURE` | No | Use secure SMTP (`true`/`false`) | `false` |
+| `EMAIL_DEBUG` | No | Extra email debug logs | `false` |
+| `LOG_LEVEL` | No | Logging verbosity | `info` |
+
+### Frontend (`frontend/.env`)
+
+| Variable | Required | Description | Example |
+|----------|----------|-------------|---------|
+| `VITE_API_BASE_URL` | Yes | Backend base URL (without forcing `/api`) | `http://localhost:3000` |
+
+Notes:
+
+- Frontend automatically appends `/api` where needed.
+- In production, if `VITE_API_BASE_URL` is missing, frontend falls back to same-origin.
 
 ---
 
@@ -156,14 +217,84 @@ Onam/
 
 ## API Routes
 
-| Prefix | Routes |
-|--------|--------|
-| /health | GET health status |
-| /api/config | GET public frontend config |
-| /api/orders | POST create order, GET list by studentId, GET by order id |
-| /api/test-email | GET email connection diagnostic |
-| /api/test-email-send | POST send test email |
-| /api/email-diagnostics | GET non-sensitive email config status |
+| Method | Path | Purpose |
+|--------|------|---------|
+| `GET` | `/health` | API health + database connectivity status |
+| `GET` | `/api/config` | Public runtime config (`upiId`, communication links) |
+| `POST` | `/api/orders` | Create a new order (disabled unless `CHECKOUT_ENABLED=true`) |
+| `GET` | `/api/orders/:orderId` | Fetch order by MongoDB order id |
+| `GET` | `/api/orders?studentId=...` | Query orders by `studentId`, `email`, or `status` |
+| `PATCH` | `/api/orders/:orderId/status` | Update order status |
+| `GET` | `/api/test-email` | Email transport diagnostic |
+| `POST` | `/api/test-email-send` | Send a test email to a provided address |
+| `GET` | `/api/email-diagnostics` | Safe email configuration status |
+
+### Example: Create Order
+
+```bash
+curl -X POST http://localhost:3000/api/orders \
+  -H "Content-Type: application/json" \
+  -d '{
+    "studentInfo": {
+      "name": "Test Student",
+      "studentId": "MITADT2026XYZ",
+      "email": "student@example.com",
+      "phone": "9876543210",
+      "course": "B.Tech",
+      "department": "Computer Science",
+      "year": "2nd Year",
+      "hostel": "Hostel A"
+    },
+    "orderItems": [
+      {
+        "id": "mundu-001",
+        "name": "Mundu",
+        "quantity": 1,
+        "price": 280,
+        "total": 280
+      }
+    ],
+    "payment": {
+      "method": "cash"
+    },
+    "totalAmount": 280
+  }'
+```
+
+Order query notes:
+
+- At least one query filter is required for `GET /api/orders`.
+- Supported filters: `studentId`, `email`, `status`, `page`, `limit`.
+
+---
+
+## Available Scripts
+
+### Frontend (`frontend/package.json`)
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start Vite dev server |
+| `npm run build` | Create production build |
+| `npm run build:prod` | Build with `NODE_ENV=production` |
+| `npm run preview` | Preview built frontend |
+| `npm run preview:prod` | Preview on host/port suited for deployment checks |
+| `npm run lint` | Run ESLint |
+| `npm test` | Run Vitest |
+| `npm run test:ui` | Run Vitest UI |
+| `npm run test:coverage` | Run tests with coverage |
+| `npm run optimize:images` | Optimize frontend images |
+| `npm run optimize:large-image` | Optimize large image assets |
+
+### Backend (`backend/package.json`)
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start backend with nodemon |
+| `npm start` | Start backend normally |
+| `npm run prod` | Start backend in production mode |
+| `npm test` | Run backend syntax checks |
+| `npm run test:email` | Run email testing utility |
 
 ---
 
@@ -176,11 +307,44 @@ Onam/
 
 ---
 
-## Notes
+## Deployment Checklist
 
-- Cart and checkout routes are intentionally disabled for now.
-- Backend order creation is controlled by CHECKOUT_ENABLED in backend environment configuration.
-- Cart-related frontend state files were removed as part of cleanup.
+Before production deployment, verify:
+
+1. `FRONTEND_URL` includes deployed frontend origin(s).
+2. `MONGODB_URI` points to production Atlas cluster.
+3. `CHECKOUT_ENABLED=true` only when checkout should be publicly live.
+4. `UPI_ID` is configured for payment instructions.
+5. `EMAIL_USER` and `EMAIL_PASSWORD` are set if confirmations are required.
+6. `/health` reports `database: connected` after deployment.
+
+---
+
+## Troubleshooting
+
+### Port already in use
+
+If backend startup reports port conflict, set a different `PORT` in `backend/.env`.
+
+```text
+PORT=3001
+```
+
+### MongoDB unavailable
+
+If health endpoint reports degraded status, verify MongoDB is running and `MONGODB_URI` is valid.
+
+### CORS blocked request
+
+Add your frontend origin to `FRONTEND_URL` in `backend/.env`.
+
+### Email diagnostics
+
+Use these routes for safe email debugging:
+
+- `GET /api/test-email`
+- `GET /api/email-diagnostics`
+- `POST /api/test-email-send`
 
 ---
 
@@ -200,11 +364,14 @@ npm test
 
 The backend check currently validates JavaScript syntax for all backend files.
 
-If backend dev startup shows "Port 3000 is already in use", set a different value in backend/.env, for example:
+---
 
-```text
-PORT=3001
-```
+## Roadmap
+
+- Re-enable cart and checkout flow when payment and operations are finalized.
+- Add authenticated admin operations for order management.
+- Expand automated API tests beyond syntax validation.
+- Add observability dashboard metrics for production usage.
 
 ---
 
