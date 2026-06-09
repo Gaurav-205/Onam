@@ -1,19 +1,11 @@
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { useCallback, useMemo } from 'react'
 import Navbar from './Navbar'
 import Footer from './Footer'
 
 const Layout = () => {
   const location = useLocation()
-  const navigate = useNavigate()
   
-  // Smooth scroll to top helper function (only used for manual scrolling)
-  const smoothScrollToTop = useCallback(() => {
-    window.scrollTo({ 
-      top: 0, 
-      behavior: 'smooth' 
-    })
-  }, [])
 
   // Convert pathname to section ID for Navbar compatibility
   const currentSection = useMemo(() => {
