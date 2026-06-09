@@ -1,4 +1,4 @@
-import { useState, useCallback, memo } from 'react'
+import { useState, useCallback, memo, useRef, useEffect } from 'react'
 
 /**
  * OptimizedImage Component
@@ -29,6 +29,13 @@ const OptimizedImage = memo(({
   const [imageError, setImageError] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
   const [fallbackError, setFallbackError] = useState(false)
+  const imgRef = useRef(null)
+
+  useEffect(() => {
+    if (imgRef.current && imgRef.current.complete) {
+      setImageLoaded(true)
+    }
+  }, [])
 
   // Use original src (it should work if file exists)
   const fallbackSrc = src || ''
@@ -67,6 +74,7 @@ const OptimizedImage = memo(({
   if (imageError && !fallbackError) {
     return (
       <img
+        ref={imgRef}
         src={fallbackSrc}
         alt={alt || ''}
         className={className}
@@ -90,6 +98,7 @@ const OptimizedImage = memo(({
   // The picture element can cause issues if WebP files don't exist
   return (
     <img
+      ref={imgRef}
       src={fallbackSrc}
       alt={alt || ''}
       className={`${className} ${imageLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}

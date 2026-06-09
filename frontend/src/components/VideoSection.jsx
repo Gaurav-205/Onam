@@ -113,12 +113,13 @@ const VideoSection = () => {
                 <video
                   ref={videoRef}
                   className="w-full h-full rounded-xl sm:rounded-2xl object-cover transition-opacity duration-300"
-                  style={{ opacity: isVideoLoaded ? 1 : 0 }}
                   controls
                   preload="metadata"
                   muted
                   playsInline
+                  defaultMuted
                   loop
+                  poster="/onam-video-thumbnail.jpg"
                   onLoadStart={() => {
                     setIsVideoLoaded(false)
                   }}

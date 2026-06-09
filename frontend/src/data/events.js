@@ -18,7 +18,7 @@ export const upcomingEvents = [
   },
   {
     id: 3,
-    image: '/onam-cultural-night.jpg',
+    image: '/onam-cultural-night.png',
     title: 'Onam Cultural Night',
     description: 'Celebrate Onam with traditional music, dance performances, and cultural activities. Experience the vibrant spirit of Kerala through art and entertainment.'
   },
