@@ -17,8 +17,14 @@ export const checkDatabaseConnection = async (req, res, next) => {
     
     if (mongoose.default.connection.readyState !== 1) {
       const endpoint = `${req.method} ${req.path}`
-      logger.warn(`[${requestId}] Database not connected for ${endpoint}`)
       
+      // Allow in-memory fallback in development or if explicitly enabled
+      if (process.env.NODE_ENV === 'development' || process.env.DB_FALLBACK === 'true') {
+        logger.warn(`[${requestId}] Database not connected. Using in-memory fallback for ${endpoint}`)
+        return next()
+      }
+
+      logger.warn(`[${requestId}] Database not connected for ${endpoint}`)
       return res.status(503).json({
         success: false,
         message: 'Database is not available. Please try again later.',
@@ -29,6 +35,12 @@ export const checkDatabaseConnection = async (req, res, next) => {
     next()
   } catch (error) {
     logger.error(`[${requestId}] Error checking database connection:`, error)
+    
+    if (process.env.NODE_ENV === 'development' || process.env.DB_FALLBACK === 'true') {
+      logger.warn(`[${requestId}] Error checking database. Using in-memory fallback for ${req.method} ${req.path}`)
+      return next()
+    }
+
     return res.status(503).json({
       success: false,
       message: 'Database is not available. Please try again later.',

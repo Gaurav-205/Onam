@@ -23,56 +23,19 @@ const Layout = () => {
     return 'home'
   }, [location.pathname])
 
-  // Helper function to scroll to a section element
+  // Helper function to scroll to a section element using native smooth scroll
   const scrollToElement = useCallback((elementId) => {
     const element = document.getElementById(elementId)
     if (element) {
-      const yOffset = -80 // Offset for fixed navbar
-      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset
-      
-      window.scrollTo({ 
-        top: y,
-        behavior: 'smooth'
-      })
+      element.scrollIntoView({ behavior: 'smooth' })
     }
   }, [])
 
-  // Navigation handler for Navbar - smart scrolling based on context
+  // Navigation handler for Navbar - scroll directly on the single-page layout
   const scrollToSection = useCallback((sectionId) => {
-    // Sections that are on the home page (scroll navigation)
-    const homePageSections = ['home', 'sadya', 'events', 'under-development']
-    
-    // Sections that have separate pages (route navigation)
-    const routeMap = {
-      'under-development': '/coming-soon'
-    }
-    
-    // If it's a home page section
-    if (homePageSections.includes(sectionId)) {
-      const elementId = sectionId === 'home' ? 'home' : sectionId
-      
-      // If we're already on home page, scroll directly to section
-      if (location.pathname === '/') {
-        scrollToElement(elementId)
-      } else {
-        // Navigate to home first, then scroll to section after navigation
-        navigate('/')
-        // Use a longer delay to ensure DOM is ready
-        setTimeout(() => {
-          scrollToElement(elementId)
-        }, 300)
-      }
-    } else if (routeMap[sectionId]) {
-      // Navigate to separate page (scroll to top happens in useEffect)
-      const route = routeMap[sectionId]
-      if (route !== location.pathname) {
-        navigate(route)
-      } else {
-        // If already on the page, just scroll to top
-        smoothScrollToTop()
-      }
-    }
-  }, [location.pathname, navigate, smoothScrollToTop, scrollToElement])
+    const elementId = sectionId === 'home' ? 'home' : sectionId
+    scrollToElement(elementId)
+  }, [scrollToElement])
 
   // Determine if we're on home page (no top padding needed for hero section)
   const isHomePage = location.pathname === '/'

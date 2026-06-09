@@ -345,8 +345,6 @@ const Hero = () => {
       <section id="home" className="min-h-screen flex items-center justify-center relative overflow-hidden">
         {/* Video Background - Primary */}
         <div className="absolute inset-0 w-full h-full">
-          {/* Always show video element - let browser handle loading */}
-          {/* Video should always be in DOM, just control visibility */}
           <video
             ref={videoRef}
             id="hero-background-video"
@@ -355,9 +353,8 @@ const Hero = () => {
             muted
             playsInline
             preload="auto"
-            className={`w-full h-full object-cover transition-opacity duration-700 absolute inset-0 ${
-              videoCanPlay || videoLoaded ? 'opacity-100 z-20' : 'opacity-0 z-10'
-            }`}
+            poster="/onam-video-thumbnail.jpg"
+            className="w-full h-full object-cover absolute inset-0 z-20"
             style={{ objectPosition: 'center center' }}
             onError={handleVideoError}
             onLoadedMetadata={handleVideoLoadedMetadata}
@@ -367,7 +364,6 @@ const Hero = () => {
             aria-hidden="true"
           >
             <source src="/onam-background.mp4" type="video/mp4" />
-            {/* Fallback message for browsers that don't support video */}
             Your browser does not support the video tag.
           </video>
           
@@ -375,10 +371,8 @@ const Hero = () => {
           <div 
             className={`w-full h-full bg-gradient-to-br from-onam-green via-onam-gold to-onam-red absolute inset-0 transition-opacity duration-700 ${
               videoError 
-                ? 'opacity-100 z-20' 
-                : videoLoaded || videoCanPlay 
-                  ? 'opacity-0 z-0' 
-                  : 'opacity-50 z-0'
+                ? 'opacity-100 z-30' 
+                : 'opacity-0 z-0'
             }`}
           ></div>
           

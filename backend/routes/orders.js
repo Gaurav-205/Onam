@@ -1,6 +1,6 @@
 import express from 'express'
 import { body, query } from 'express-validator'
-import Order from '../models/Order.js'
+import { OrderService } from '../services/OrderService.js'
 import { logger } from '../utils/logger.js'
 import { sendOrderConfirmationEmail } from '../utils/emailService.js'
 import { APP_CONFIG } from '../config/app.js'
@@ -266,9 +266,7 @@ router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatab
       orderData.orderDate = new Date(orderDate)
     }
 
-    const order = new Order(orderData)
-
-    const savedOrder = await order.save()
+    const savedOrder = await OrderService.createOrder(orderData)
     
     const requestDuration = Date.now() - requestStartTime
     logger.info(`[${requestId}] Order created successfully: ${savedOrder.orderNumber} (${requestDuration}ms)`)
@@ -389,7 +387,7 @@ router.get('/:orderId', queryLimiter, validateObjectId, checkDatabaseConnection,
   
   try {
     const orderId = req.params.orderId.trim()
-    const order = await Order.findById(orderId)
+    const order = await OrderService.getOrderById(orderId)
     
     if (!order) {
       logger.debug(`[${requestId}] Order not found: ${orderId}`)
@@ -458,15 +456,15 @@ router.get('/', queryLimiter, validateQueryParams, handleValidationErrors, check
     logger.debug(`[${requestId}] Orders query: studentId=${studentId || 'N/A'}, email=${email || 'N/A'}, status=${status || 'N/A'}, page=${pageNum}, limit=${finalLimit}`)
 
     // Get total count for pagination metadata
-    const totalCount = await Order.countDocuments(queryObj)
+    const totalCount = await OrderService.countOrders(queryObj)
     const totalPages = Math.ceil(totalCount / finalLimit)
 
     // Fetch orders with pagination
-    const orders = await Order.find(queryObj)
-      .sort({ orderDate: -1 })
-      .skip(skip)
-      .limit(finalLimit)
-      .lean() // Use lean() for better performance when not modifying documents
+    const orders = await OrderService.getOrders(queryObj, {
+      sort: { orderDate: -1 },
+      skip,
+      limit: finalLimit
+    })
     
     logger.debug(`[${requestId}] Orders query returned ${orders.length} results (page ${pageNum}/${totalPages}, total: ${totalCount})`)
 
@@ -510,11 +508,7 @@ router.patch('/:orderId/status', queryLimiter, validateObjectId, checkDatabaseCo
       })
     }
 
-    const order = await Order.findByIdAndUpdate(
-      orderId,
-      { status: status.trim() },
-      { new: true, runValidators: true }
-    )
+    const order = await OrderService.updateOrderStatus(orderId, status)
 
     if (!order) {
       logger.warn(`[${requestId}] Order status update failed - order not found: ${orderId}`)

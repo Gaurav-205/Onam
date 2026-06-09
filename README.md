@@ -330,9 +330,18 @@ If backend startup reports port conflict, set a different `PORT` in `backend/.en
 PORT=3001
 ```
 
-### MongoDB unavailable
+### MongoDB unavailable / In-Memory Fallback Mode
 
-If health endpoint reports degraded status, verify MongoDB is running and `MONGODB_URI` is valid.
+If MongoDB is not running locally (e.g. `MONGODB_URI` is disconnected), the backend will automatically enter **In-Memory Fallback Mode** in development. 
+
+This enables you to:
+1. Access the API and configure checkout features successfully.
+2. Submit mock order registrations.
+3. Query and update orders in-memory.
+
+The health endpoint `/health` will report a degraded status (`"status":"degraded"`) while MongoDB is offline, but all API endpoints will continue to work normally by persisting state in memory.
+
+If you want to run with a real database, verify MongoDB is running locally or that your `MONGODB_URI` is valid.
 
 ### CORS blocked request
 

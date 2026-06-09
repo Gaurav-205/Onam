@@ -54,27 +54,19 @@ function App() {
           />
           <Route 
             path="shopping" 
-            element={
-              <Suspense fallback={<PageSkeleton type="shopping" />}>
-                <Shopping />
-              </Suspense>
-            } 
+            element={<Navigate to="/" replace state={{ scrollTo: 'shopping' }} />}
           />
           <Route 
             path="cart"
-            element={<Navigate to="/coming-soon" replace />}
+            element={<Navigate to="/" replace state={{ scrollTo: 'under-development' }} />}
           />
           <Route
             path="checkout"
-            element={<Navigate to="/coming-soon" replace />}
+            element={<Navigate to="/" replace state={{ scrollTo: 'under-development' }} />}
           />
           <Route 
             path="coming-soon" 
-            element={
-              <Suspense fallback={<PageSkeleton />}>
-                <ComingSoon />
-              </Suspense>
-            } 
+            element={<Navigate to="/" replace state={{ scrollTo: 'under-development' }} />}
           />
         </Route>
       </Routes>
