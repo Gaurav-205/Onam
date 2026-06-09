@@ -381,7 +381,6 @@ const Hero = () => {
             playsInline
             defaultMuted
             preload="auto"
-            poster="/onam-video-thumbnail.jpg"
             className="w-full h-full object-cover absolute inset-0 z-20"
             style={{ objectPosition: 'center center' }}
             onError={handleVideoError}
