@@ -216,15 +216,42 @@ const Hero = () => {
   // Also try to show video when metadata is loaded (for mobile where autoplay might fail)
   useEffect(() => {
     if (videoLoaded && !videoCanPlay && !videoError) {
-      // Video metadata is loaded but canPlay hasn't fired yet
-      // Show the video anyway - it might just be slow to decode
       const video = document.querySelector('#hero-background-video')
       if (video) {
-        // Try to seek to first frame to make it visible
         video.currentTime = 0.1
       }
     }
   }, [videoLoaded, videoCanPlay, videoError])
+
+  // Play video on first user interaction (touch, click, scroll) to override mobile restriction
+  useEffect(() => {
+    const startVideo = () => {
+      const video = videoRef.current
+      if (video && video.paused) {
+        video.play()
+          .then(() => {
+            setVideoLoaded(true)
+            setVideoCanPlay(true)
+          })
+          .catch(() => {
+            // Silently swallow play blocking errors
+          })
+      }
+      cleanupListeners()
+    }
+
+    const cleanupListeners = () => {
+      window.removeEventListener('touchstart', startVideo)
+      window.removeEventListener('click', startVideo)
+      window.removeEventListener('scroll', startVideo)
+    }
+
+    window.addEventListener('touchstart', startVideo, { passive: true })
+    window.addEventListener('click', startVideo, { passive: true })
+    window.addEventListener('scroll', startVideo, { passive: true })
+
+    return cleanupListeners
+  }, [])
   
   // Video loading timeout handled by browser - no need for manual timeout
 
@@ -352,6 +379,7 @@ const Hero = () => {
             loop
             muted
             playsInline
+            defaultMuted
             preload="auto"
             poster="/onam-video-thumbnail.jpg"
             className="w-full h-full object-cover absolute inset-0 z-20"
