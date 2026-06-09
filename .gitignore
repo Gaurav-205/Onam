@@ -39,3 +39,9 @@ Thumbs.db
 *.pid.lock
 tmp/
 temp/
+
+# Agent Skills
+.agents/
+.kilocode/
+.trae/
+skills-lock.json
