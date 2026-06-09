@@ -40,8 +40,11 @@ Thumbs.db
 tmp/
 temp/
 
-# Agent Skills
+# Agent Skills & Configurations
 .agents/
+.claude/
+.commandcode/
 .kilocode/
+.kiro/
 .trae/
 skills-lock.json
