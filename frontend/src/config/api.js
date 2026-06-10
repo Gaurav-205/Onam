@@ -30,6 +30,8 @@ export const API_ENDPOINTS = {
   CREATE_ORDER: `${API_BASE_URL}/orders`,
   GET_ORDER: (orderId) => `${API_BASE_URL}/orders/${orderId}`,
   GET_ORDERS: `${API_BASE_URL}/orders`,
+  GET_PRODUCTS: `${API_BASE_URL}/products`,
+  PROCESS_PAYMENT: `${API_BASE_URL}/payments/process`,
 }
 
 /**
@@ -119,10 +121,34 @@ export const apiRequest = async (url, options = {}, retryCount = 0) => {
 /**
  * Create order API call
  */
-export const createOrder = async (orderData) => {
+export const createOrder = async (orderData, idempotencyKey) => {
+  const headers = {}
+  if (idempotencyKey) {
+    headers['Idempotency-Key'] = idempotencyKey
+  }
   return apiRequest(API_ENDPOINTS.CREATE_ORDER, {
     method: 'POST',
     body: JSON.stringify(orderData),
+    headers
+  })
+}
+
+/**
+ * Fetch products list
+ */
+export const fetchProducts = async () => {
+  return apiRequest(API_ENDPOINTS.GET_PRODUCTS, {
+    method: 'GET',
+  })
+}
+
+/**
+ * Process payment
+ */
+export const processPayment = async (paymentData) => {
+  return apiRequest(API_ENDPOINTS.PROCESS_PAYMENT, {
+    method: 'POST',
+    body: JSON.stringify(paymentData),
   })
 }
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, memo } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import OptimizedImage from './OptimizedImage'
+import { useCart } from '../context/CartContext'
 
 // Memoized navigation items - all are scroll sections on the single page
 const navItems = [
@@ -91,6 +92,7 @@ const MobileMenuButton = memo(({ isScrolled, onClick, isMenuOpen }) => (
 MobileMenuButton.displayName = 'MobileMenuButton'
 
 const Navbar = ({ currentSection, scrollToSection }) => {
+  const { openCart, totalItems } = useCart()
   const location = useLocation()
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -212,8 +214,27 @@ const Navbar = ({ currentSection, scrollToSection }) => {
             </div>
           )}
 
-          {/* Mobile Menu Button */}
-          <div className="flex items-center justify-end space-x-2 flex-shrink-0">
+          {/* Cart Icon & Mobile Menu Button */}
+          <div className="flex items-center justify-end space-x-3 flex-shrink-0">
+            <button
+              onClick={openCart}
+              className={`relative p-2 rounded-full transition-all duration-200 ${
+                isScrolled || !isHomePage
+                  ? 'text-gray-700 hover:text-onam-green-dark hover:bg-gray-100'
+                  : 'text-white hover:text-onam-gold hover:bg-white/10'
+              }`}
+              aria-label={`Open shopping cart, ${totalItems} items`}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 bg-onam-red text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-white animate-bounce-slow">
+                  {totalItems}
+                </span>
+              )}
+            </button>
+
             {showMobileMenu && (
               <MobileMenuButton 
                 isScrolled={isScrolled || !isHomePage}

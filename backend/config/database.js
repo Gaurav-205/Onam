@@ -20,6 +20,23 @@ const connectDB = async () => {
     logger.info(`MongoDB Connected: ${conn.connection.host}`)
     logger.info(`Database: ${conn.connection.name}`)
 
+    // Seed products if not present
+    try {
+      const Product = (await import('../models/Product.js')).default
+      const productCount = await Product.countDocuments()
+      if (productCount === 0) {
+        const defaultProducts = [
+          { productId: 'mundu-001', name: 'Mundu', priceValue: 280, stock: 15 },
+          { productId: 'saree-001', name: 'Kerala Saree', priceValue: 350, stock: 12 },
+          { productId: 'sadya-001', name: 'Sadya', priceValue: 250, stock: 30 }
+        ]
+        await Product.insertMany(defaultProducts)
+        logger.info('✓ Database seeded with initial products inventory')
+      }
+    } catch (seedError) {
+      logger.error('Failed to seed products inventory:', seedError)
+    }
+
     // Handle connection events
     mongoose.connection.on('error', (err) => {
       logger.error('MongoDB connection error:', err)

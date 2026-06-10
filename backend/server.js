@@ -5,6 +5,8 @@ import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import connectDB from './config/database.js'
 import orderRoutes from './routes/orders.js'
+import productRoutes from './routes/products.js'
+import paymentRoutes from './routes/payments.js'
 import { logger } from './utils/logger.js'
 import { defaultLimiter, lightLimiter } from './utils/rateLimiter.js'
 import { getDatabaseStatus } from './middleware/database.js'
@@ -352,6 +354,8 @@ app.post('/api/test-email-send', lightLimiter, async (req, res) => {
 // API Routes
 // Apply stricter rate limiting to order creation
 app.use('/api/orders', orderRoutes)
+app.use('/api/products', productRoutes)
+app.use('/api/payments', paymentRoutes)
 
 // 404 handler
 app.use((req, res) => {

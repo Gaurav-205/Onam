@@ -93,7 +93,7 @@ const validateOrder = [
   
   // Validate payment
   body('payment.method')
-    .isIn(['cash', 'upi'])
+    .isIn(['cash', 'upi', 'card'])
     .withMessage('Valid payment method is required'),
   body('payment.upiId')
     .optional()
@@ -106,9 +106,7 @@ const validateOrder = [
     .trim()
     .escape()
     .isLength({ max: 100 })
-    .withMessage('Transaction ID must be less than 100 characters')
-    .matches(/^[a-zA-Z0-9_-]{6,100}$/)
-    .withMessage('Transaction ID format is invalid'),
+    .withMessage('Transaction ID must be less than 100 characters'),
   
   // Validate total amount
   body('totalAmount')
@@ -122,6 +120,13 @@ const validateOrder = [
     .escape()
     .isLength({ max: 500 })
     .withMessage('Notes must be less than 500 characters'),
+  
+  body('idempotencyKey')
+    .optional()
+    .trim()
+    .escape()
+    .isUUID()
+    .withMessage('Idempotency key must be a valid UUID'),
 ]
 
 // Create new order (with stricter rate limiting)
@@ -136,6 +141,9 @@ router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatab
       requestId
     })
   }
+
+  // Extract idempotency key from headers or request body
+  const idempotencyKey = req.headers['idempotency-key'] || req.headers['x-idempotency-key'] || req.body.idempotencyKey
   
   try {
     // Validate request body exists
@@ -156,6 +164,29 @@ router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatab
         message: 'Missing required fields: studentInfo, orderItems, payment, and totalAmount are required',
         requestId
       })
+    }
+
+    // Check for existing order with same idempotency key (read-side check)
+    if (idempotencyKey) {
+      const existingOrders = await OrderService.getOrders({ idempotencyKey })
+      if (existingOrders && existingOrders.length > 0) {
+        const existingOrder = existingOrders[0]
+        logger.info(`[${requestId}] Idempotent request: Order ${existingOrder.orderNumber} already processed. Returning cached result.`)
+        return res.status(200).json({
+          success: true,
+          message: 'Order retrieved successfully (idempotent)',
+          order: {
+            orderId: existingOrder._id,
+            orderNumber: existingOrder.orderNumber,
+            status: existingOrder.status,
+            paymentVerificationStatus: existingOrder.payment?.verificationStatus || 'unverified',
+            totalAmount: existingOrder.totalAmount,
+            orderDate: existingOrder.orderDate
+          },
+          whatsappLink: APP_CONFIG.COMMUNICATION.WHATSAPP_GROUP_LINK || null,
+          requestId
+        })
+      }
     }
 
     // Validate orderItems is an array
@@ -205,18 +236,13 @@ router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatab
       }
     }
 
-    // Client-provided UPI transaction references are stored as unverified.
-    // Real payment verification requires PSP/provider webhooks and server-side signature checks.
+    // Clean payment payload
     const sanitizedPayment = {
       method: payment.method,
-      upiId: null,
-      transactionId: null,
-      verificationStatus: 'unverified'
-    }
-
-    if (payment.method === 'upi') {
-      sanitizedPayment.upiId = payment.upiId
-      sanitizedPayment.transactionId = payment.transactionId
+      upiId: payment.method === 'upi' ? payment.upiId : null,
+      transactionId: payment.method === 'upi' ? payment.transactionId : null,
+      gatewayPaymentId: payment.gatewayPaymentId || null,
+      verificationStatus: payment.verificationStatus || 'unverified'
     }
 
     // Calculate total from items to verify (with safety checks)
@@ -252,20 +278,21 @@ router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatab
       })
     }
 
-    // Create order (orderDate is optional - schema will default to Date.now)
+    // Create order data
     const orderData = {
+      idempotencyKey: idempotencyKey || null,
       studentInfo,
       orderItems,
       payment: sanitizedPayment,
       totalAmount,
-      status: 'pending'
+      status: sanitizedPayment.verificationStatus === 'verified' ? 'confirmed' : 'pending'
     }
     
-    // Only include orderDate if provided (schema has default)
     if (orderDate) {
       orderData.orderDate = new Date(orderDate)
     }
 
+    // Process order with atomic stock checks and database transactions
     const savedOrder = await OrderService.createOrder(orderData)
     
     const requestDuration = Date.now() - requestStartTime
@@ -274,33 +301,35 @@ router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatab
     // Get WhatsApp link for response and email
     const whatsappLink = APP_CONFIG.COMMUNICATION.WHATSAPP_GROUP_LINK || null
 
-    // Send confirmation email (non-blocking)
-    try {
-      const orderPlainObject = savedOrder.toObject ? savedOrder.toObject() : JSON.parse(JSON.stringify(savedOrder))
-      sendOrderConfirmationEmail(orderPlainObject, whatsappLink)
-        .then(result => {
-          if (result.success) {
-            logger.info(`[${requestId}] Order confirmation email sent for order ${savedOrder.orderNumber}`)
-          } else {
-            logger.warn(`[${requestId}] Failed to send email for order ${savedOrder.orderNumber}: ${result.message}`)
-          }
-        })
-        .catch(err => {
-          const errorMessage = err?.message || err?.error || 'Unknown error occurred'
-          logger.error(`[${requestId}] Email sending error for order ${savedOrder.orderNumber}:`, {
-            message: errorMessage,
-            error: err
+    // Send confirmation email (non-blocking) - only if payment is verified or cash
+    if (savedOrder.status === 'confirmed' || savedOrder.payment?.method === 'cash') {
+      try {
+        const orderPlainObject = savedOrder.toObject ? savedOrder.toObject() : JSON.parse(JSON.stringify(savedOrder))
+        sendOrderConfirmationEmail(orderPlainObject, whatsappLink)
+          .then(result => {
+            if (result.success) {
+              logger.info(`[${requestId}] Order confirmation email sent for order ${savedOrder.orderNumber}`)
+            } else {
+              logger.warn(`[${requestId}] Failed to send email for order ${savedOrder.orderNumber}: ${result.message}`)
+            }
           })
-        })
-    } catch (emailError) {
-      logger.error(`[${requestId}] Error initiating email for order ${savedOrder.orderNumber}:`, emailError)
+          .catch(err => {
+            const errorMessage = err?.message || err?.error || 'Unknown error occurred'
+            logger.error(`[${requestId}] Email sending error for order ${savedOrder.orderNumber}:`, {
+              message: errorMessage,
+              error: err
+            })
+          })
+      } catch (emailError) {
+        logger.error(`[${requestId}] Error initiating email for order ${savedOrder.orderNumber}:`, emailError)
+      }
     }
 
     res.status(201).json({
       success: true,
       message: 'Order created successfully',
       order: {
-        orderId: savedOrder._id,
+        orderId: savedOrder._id || savedOrder.id,
         orderNumber: savedOrder.orderNumber,
         status: savedOrder.status,
         paymentVerificationStatus: savedOrder.payment?.verificationStatus || 'unverified',

@@ -79,7 +79,7 @@ const paymentSchema = new mongoose.Schema({
   method: {
     type: String,
     required: true,
-    enum: ['cash', 'upi']
+    enum: ['cash', 'upi', 'card']
   },
   upiId: {
     type: String,
@@ -91,9 +91,14 @@ const paymentSchema = new mongoose.Schema({
     trim: true,
     default: null
   },
+  gatewayPaymentId: {
+    type: String,
+    trim: true,
+    default: null
+  },
   verificationStatus: {
     type: String,
-    enum: ['unverified', 'verified'],
+    enum: ['unverified', 'pending', 'verified', 'failed'],
     default: 'unverified'
   }
 }, { _id: false })
@@ -111,6 +116,12 @@ const orderSchema = new mongoose.Schema({
       },
       message: 'Order number must be generated'
     }
+  },
+  idempotencyKey: {
+    type: String,
+    unique: true,
+    sparse: true,
+    index: true
   },
   studentInfo: {
     type: studentInfoSchema,

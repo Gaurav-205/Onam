@@ -38,39 +38,43 @@ const Home = lazy(() => import('./pages/Home'))
 const Shopping = lazy(() => import('./pages/Shopping'))
 const ComingSoon = lazy(() => import('./pages/ComingSoon'))
 
+import { CartProvider } from './context/CartContext'
+
 function App() {
   return (
-    <BrowserRouter future={{ v7_startTransition: true }}>
-      <ScrollToTop />
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route 
-            index 
-            element={
-              <Suspense fallback={<PageSkeleton type="home" />}>
-                <Home />
-              </Suspense>
-            } 
-          />
-          <Route 
-            path="shopping" 
-            element={<Navigate to="/" replace state={{ scrollTo: 'shopping' }} />}
-          />
-          <Route 
-            path="cart"
-            element={<Navigate to="/" replace state={{ scrollTo: 'under-development' }} />}
-          />
-          <Route
-            path="checkout"
-            element={<Navigate to="/" replace state={{ scrollTo: 'under-development' }} />}
-          />
-          <Route 
-            path="coming-soon" 
-            element={<Navigate to="/" replace state={{ scrollTo: 'under-development' }} />}
-          />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <CartProvider>
+      <BrowserRouter future={{ v7_startTransition: true }}>
+        <ScrollToTop />
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route 
+              index 
+              element={
+                <Suspense fallback={<PageSkeleton type="home" />}>
+                  <Home />
+                </Suspense>
+              } 
+            />
+            <Route 
+              path="shopping" 
+              element={<Navigate to="/" replace state={{ scrollTo: 'shopping' }} />}
+            />
+            <Route 
+              path="cart"
+              element={<Navigate to="/" replace state={{ scrollTo: 'under-development' }} />}
+            />
+            <Route
+              path="checkout"
+              element={<Navigate to="/" replace state={{ scrollTo: 'under-development' }} />}
+            />
+            <Route 
+              path="coming-soon" 
+              element={<Navigate to="/" replace state={{ scrollTo: 'under-development' }} />}
+            />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </CartProvider>
   )
 }
 

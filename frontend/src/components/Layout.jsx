@@ -2,6 +2,8 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { useCallback, useMemo } from 'react'
 import Navbar from './Navbar'
 import Footer from './Footer'
+import CartDrawer from './CartDrawer'
+import CheckoutModal from './CheckoutModal'
 
 const Layout = () => {
   const location = useLocation()
@@ -39,6 +41,10 @@ const Layout = () => {
         <Outlet />
       </main>
       <Footer scrollToSection={scrollToSection} />
+      
+      {/* Overlays */}
+      <CartDrawer />
+      <CheckoutModal />
     </div>
   )
 }
