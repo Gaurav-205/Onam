@@ -8,6 +8,7 @@ import { orderLimiter } from '../utils/rateLimiter.js'
 import { checkDatabaseConnection } from '../middleware/database.js'
 import { handleValidationErrors, validateObjectId } from '../middleware/validation.js'
 import { getRequestId } from '../middleware/requestId.js'
+import { requireAdmin } from '../middleware/adminAuth.js'
 
 const router = express.Router()
 
@@ -119,6 +120,7 @@ router.post(
 // Simulates PSP webhook callback notifying backend of transaction completions asynchronously
 router.post(
   '/webhook',
+  requireAdmin,
   checkDatabaseConnection,
   async (req, res) => {
     const requestId = getRequestId(req)

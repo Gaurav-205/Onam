@@ -151,6 +151,7 @@ Health endpoint: http://localhost:3000/health
 | `FRONTEND_URL` | Yes | Allowed CORS origins (comma-separated for multiple) | `http://localhost:5173,https://onammitadt.netlify.app` |
 | `MONGODB_URI` | Yes | MongoDB connection string | `mongodb://localhost:27017/onam-festival` |
 | `CHECKOUT_ENABLED` | No | Enables order creation route (`POST /api/orders`) | `false` |
+| `ADMIN_API_KEY` | Recommended | Shared key (`X-Admin-Key` header) for admin routes; unset means those routes return 401 | long random string |
 | `UPI_ID` | Recommended | UPI target shown in config endpoint | `your-upi-id@ybl` |
 | `WHATSAPP_GROUP_LINK` | Optional | Group invite link for responses/emails | `https://chat.whatsapp.com/...` |
 | `EMAIL_USER` | Optional | Sender email for notifications | `example@gmail.com` |
@@ -223,10 +224,10 @@ Onam/
 | `GET` | `/api/config` | Public runtime config (`upiId`, communication links) |
 | `POST` | `/api/orders` | Create a new order (disabled unless `CHECKOUT_ENABLED=true`) |
 | `GET` | `/api/orders/:orderId` | Fetch order by MongoDB order id |
-| `GET` | `/api/orders?studentId=...` | Query orders by `studentId`, `email`, or `status` |
-| `PATCH` | `/api/orders/:orderId/status` | Update order status |
+| `GET` | `/api/orders?studentId=...` | Query orders by `studentId`, `email`, or `status` (admin: `X-Admin-Key`) |
+| `PATCH` | `/api/orders/:orderId/status` | Update order status (admin: `X-Admin-Key`) |
 | `GET` | `/api/test-email` | Email transport diagnostic |
-| `POST` | `/api/test-email-send` | Send a test email to a provided address |
+| `POST` | `/api/test-email-send` | Send a test email to a provided address (admin: `X-Admin-Key`) |
 | `GET` | `/api/email-diagnostics` | Safe email configuration status |
 
 ### Example: Create Order

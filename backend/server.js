@@ -12,6 +12,7 @@ import { defaultLimiter, lightLimiter } from './utils/rateLimiter.js'
 import { getDatabaseStatus } from './middleware/database.js'
 import { APP_CONFIG } from './config/app.js'
 import { requestIdMiddleware, getRequestId } from './middleware/requestId.js'
+import { requireAdmin } from './middleware/adminAuth.js'
 
 // Load environment variables from .env file in backend directory
 const __filename = fileURLToPath(import.meta.url)
@@ -295,7 +296,6 @@ app.get('/api/email-diagnostics', lightLimiter, async (req, res) => {
   res.json({
     success: true,
     ...config,
-    emailPasswordLength: process.env.EMAIL_PASSWORD ? process.env.EMAIL_PASSWORD.length : 0,
     environment: process.env.NODE_ENV || 'development',
     timestamp: new Date().toISOString(),
     requestId
@@ -303,7 +303,7 @@ app.get('/api/email-diagnostics', lightLimiter, async (req, res) => {
 })
 
 // Send test email endpoint (for testing email functionality)
-app.post('/api/test-email-send', lightLimiter, async (req, res) => {
+app.post('/api/test-email-send', requireAdmin, lightLimiter, async (req, res) => {
   const requestId = getRequestId(req)
   try {
     const { email } = req.body

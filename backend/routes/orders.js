@@ -8,6 +8,7 @@ import { orderLimiter, queryLimiter } from '../utils/rateLimiter.js'
 import { checkDatabaseConnection } from '../middleware/database.js'
 import { handleValidationErrors, validateObjectId, isValidOrderStatus } from '../middleware/validation.js'
 import { getRequestId } from '../middleware/requestId.js'
+import { requireAdmin } from '../middleware/adminAuth.js'
 
 const router = express.Router()
 
@@ -215,6 +216,15 @@ router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatab
           requestId
         })
       }
+      // Prices come from the product catalog, never from the client
+      const product = await OrderService.getProductById(item.id)
+      if (!product || Number(item.price) !== product.priceValue || Number(item.total) !== product.priceValue * Number(item.quantity)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid product or price for order item at index ${i}`,
+          requestId
+        })
+      }
     }
 
     // Additional validation for UPI payment
@@ -226,23 +236,15 @@ router.post('/', orderLimiter, validateOrder, handleValidationErrors, checkDatab
       })
     }
 
-    if (payment.method === 'upi') {
-      if (!payment.upiId || !payment.transactionId) {
-        return res.status(400).json({
-          success: false,
-          message: 'UPI ID and Transaction ID are required for UPI payment',
-          requestId
-        })
-      }
-    }
-
     // Clean payment payload
     const sanitizedPayment = {
       method: payment.method,
-      upiId: payment.method === 'upi' ? payment.upiId : null,
-      transactionId: payment.method === 'upi' ? payment.transactionId : null,
-      gatewayPaymentId: payment.gatewayPaymentId || null,
-      verificationStatus: payment.verificationStatus || 'unverified'
+      // UPI details are attached later by /api/payments/process
+      upiId: payment.method === 'upi' ? payment.upiId || null : null,
+      transactionId: payment.method === 'upi' ? payment.transactionId || null : null,
+      gatewayPaymentId: null,
+      // Clients may never mark their own payment as verified
+      verificationStatus: payment.verificationStatus === 'pending' ? 'pending' : 'unverified'
     }
 
     // Calculate total from items to verify (with safety checks)
@@ -446,7 +448,7 @@ router.get('/:orderId', queryLimiter, validateObjectId, checkDatabaseConnection,
 })
 
 // Get orders by student ID or email (with pagination)
-router.get('/', queryLimiter, validateQueryParams, handleValidationErrors, checkDatabaseConnection, async (req, res) => {
+router.get('/', requireAdmin, queryLimiter, validateQueryParams, handleValidationErrors, checkDatabaseConnection, async (req, res) => {
   const requestId = getRequestId(req)
   
   try {
@@ -521,7 +523,7 @@ router.get('/', queryLimiter, validateQueryParams, handleValidationErrors, check
 })
 
 // Update order status
-router.patch('/:orderId/status', queryLimiter, validateObjectId, checkDatabaseConnection, async (req, res) => {
+router.patch('/:orderId/status', requireAdmin, queryLimiter, validateObjectId, checkDatabaseConnection, async (req, res) => {
   const requestId = getRequestId(req)
   
   try {

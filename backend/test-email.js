@@ -79,6 +79,7 @@ async function testEmailFunctionality() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'X-Admin-Key': process.env.ADMIN_API_KEY || '',
       },
       body: JSON.stringify({ email: TEST_EMAIL }),
     })
