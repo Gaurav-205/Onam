@@ -42,5 +42,5 @@ jobs:
         path: frontend/dist
 
     - name: Deployment placeholder
-      run: echo "Build artifact generated. Add platform deploy step here (Netlify/Render/etc.)."
+      run: echo "Build artifact generated. Add platform deploy step here (Vercel/Render)."
 

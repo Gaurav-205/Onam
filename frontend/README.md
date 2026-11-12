@@ -86,21 +86,21 @@ npm run dev
 
 ## 🌐 Production Deployment
 
-### Netlify Deployment
+### Vercel Deployment
 
-The frontend is configured for Netlify deployment:
+The frontend is configured for Vercel deployment (`vercel.json`, project root directory `frontend`):
 
 1. **Build Settings:**
    - Build command: `npm run build`
-   - Publish directory: `dist`
+   - Output directory: `dist`
 
-2. **Environment Variables (in Netlify Dashboard):**
+2. **Environment Variables (in Vercel project settings):**
    ```env
    VITE_API_BASE_URL=https://onam-vaot.onrender.com/api
    ```
 
 3. **Deployed URLs:**
-   - Frontend: https://onammitadt.netlify.app
+   - Frontend: https://onam-bice.vercel.app
    - Backend API: https://onam-vaot.onrender.com
 
 **Note:** The UPI ID is fetched from the backend API, so no need to set `VITE_UPI_ID` in production.

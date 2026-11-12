@@ -200,7 +200,7 @@ Body:
 |----------|-------------|---------|
 | `MONGODB_URI` | MongoDB connection string | `mongodb://localhost:27017/onam-festival` |
 | `PORT` | Server port | `3000` |
-| `FRONTEND_URL` | Frontend URL(s) for CORS (comma-separated for multiple) | `http://localhost:5173,https://onammitadt.netlify.app` |
+| `FRONTEND_URL` | Frontend URL(s) for CORS (comma-separated for multiple) | `http://localhost:5173,https://onam-bice.vercel.app` |
 | `NODE_ENV` | Environment (development/production) | `development` |
 | `CHECKOUT_ENABLED` | Enable order creation endpoint | `false` |
 | `UPI_ID` | UPI ID for payments (required in production) | None |
@@ -220,7 +220,7 @@ For deployment on Render, set these environment variables:
 ```env
 MONGODB_URI=your-mongodb-atlas-connection-string
 PORT=10000
-FRONTEND_URL=https://onammitadt.netlify.app
+FRONTEND_URL=https://onam-bice.vercel.app
 NODE_ENV=production
 CHECKOUT_ENABLED=true
 UPI_ID=your-upi-id@ybl
@@ -241,7 +241,7 @@ EMAIL_SERVICE=gmail
 
 **Important:** 
 - Render automatically sets `PORT`, but you can override it
-- Make sure `FRONTEND_URL` includes your Netlify domain
+- Make sure `FRONTEND_URL` includes your Vercel domain
 - `UPI_ID` is required - orders will fail without it
 - `EMAIL_USER` and `EMAIL_PASSWORD` are required for email notifications
 - For Gmail, use an [App Password](https://support.google.com/accounts/answer/185833) instead of your regular password

@@ -69,21 +69,21 @@ if (trustProxyValue) {
 // CORS Configuration with validation - MUST be before other middleware
 // This ensures CORS headers are set before any route handlers
 // Supports multiple origins: comma-separated in FRONTEND_URL env var
-// Default includes localhost for development and Netlify for production
+// Default includes localhost for development and Vercel for production
 const defaultOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
-  'https://onammitadt.netlify.app'
+  'https://onam-bice.vercel.app'
 ]
 
 let allowedOrigins = process.env.FRONTEND_URL 
   ? process.env.FRONTEND_URL.split(',').map(url => url.trim().replace(/\/$/, '')).filter(url => url.length > 0)
   : [...defaultOrigins]
 
-// Always include Netlify origin if not already present (normalize URLs for comparison)
+// Always include the Vercel production origin if not already present (normalize URLs for comparison)
 const normalizedOrigins = allowedOrigins.map(url => url.replace(/\/$/, ''))
-if (!normalizedOrigins.includes('https://onammitadt.netlify.app')) {
-  allowedOrigins.push('https://onammitadt.netlify.app')
+if (!normalizedOrigins.includes('https://onam-bice.vercel.app')) {
+  allowedOrigins.push('https://onam-bice.vercel.app')
 }
 
 // Log allowed origins

@@ -5,7 +5,7 @@
 
   Full-stack cultural portal for MIT ADT University Onam celebrations
 
-  [![Live Demo](https://img.shields.io/badge/Live%20Demo-onammitadt.netlify.app-00C7B7?style=flat-square&logo=netlify&logoColor=white)](https://onammitadt.netlify.app)
+  [![Live Demo](https://img.shields.io/badge/Live%20Demo-onam--bice.vercel.app-000000?style=flat-square&logo=vercel&logoColor=white)](https://onam-bice.vercel.app)
   [![CI Workflow](https://github.com/Gaurav-205/Onam/actions/workflows/ci.yml/badge.svg)](https://github.com/Gaurav-205/Onam/actions/workflows/ci.yml)
   [![Deploy Workflow](https://github.com/Gaurav-205/Onam/actions/workflows/deploy.yml/badge.svg)](https://github.com/Gaurav-205/Onam/actions/workflows/deploy.yml)
   [![Node](https://img.shields.io/badge/Node.js-%3E%3D20-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
@@ -60,14 +60,14 @@ The cart and checkout user flow is currently disabled intentionally.
 |-------|-------------|
 | Frontend | React 18, Vite 7, React Router 7, Tailwind CSS 3, Vitest |
 | Backend | Node.js 20, Express 4, MongoDB, Mongoose 8, Nodemailer 8, express-validator |
-| Infrastructure | Netlify (frontend), Render-compatible backend, MongoDB Atlas/local MongoDB |
+| Infrastructure | Vercel (frontend), Render-compatible backend, MongoDB Atlas/local MongoDB |
 | CI/CD | GitHub Actions workflows at .github/workflows/ci.yml and .github/workflows/deploy.yml |
 
 ---
 
 ## Screenshots
 
-> Screenshots below are representative. The live app at [onammitadt.netlify.app](https://onammitadt.netlify.app) reflects the current state.
+> Screenshots below are representative. The live app at [onam-bice.vercel.app](https://onam-bice.vercel.app) reflects the current state.
 
 | Home Page | Events Page | Shopping |
 |:---:|:---:|:---:|
@@ -148,7 +148,7 @@ Health endpoint: http://localhost:3000/health
 |----------|----------|-------------|---------|
 | `NODE_ENV` | No | Runtime mode (`development` or `production`) | `development` |
 | `PORT` | No | Backend listening port | `3000` |
-| `FRONTEND_URL` | Yes | Allowed CORS origins (comma-separated for multiple) | `http://localhost:5173,https://onammitadt.netlify.app` |
+| `FRONTEND_URL` | Yes | Allowed CORS origins (comma-separated for multiple) | `http://localhost:5173,https://onam-bice.vercel.app` |
 | `MONGODB_URI` | Yes | MongoDB connection string | `mongodb://localhost:27017/onam-festival` |
 | `CHECKOUT_ENABLED` | No | Enables order creation route (`POST /api/orders`) | `false` |
 | `ADMIN_API_KEY` | Recommended | Shared key (`X-Admin-Key` header) for admin routes; unset means those routes return 401 | long random string |
